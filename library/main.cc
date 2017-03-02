@@ -1,5 +1,5 @@
 #include <iostream>
 
 int main() {
-	cout << "Hello Mata Nui!\n";
+	std::cout << "Hello Mata Nui!\n";
 }
