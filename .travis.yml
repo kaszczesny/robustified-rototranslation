@@ -1,18 +1,23 @@
-#sudo: required
-#before_install:
-  
-# Enable C++ support
-language: cpp
+language: android
 
-# Compiler selection
-compiler:
-  - gcc
+cache:
+  - directories:
+    - opencv
   
-#install:
+before_install:
+  - sudo apt-get update
+  - TRAVIS=1
 
-# Build steps
+install:
+  - yes y | ./install.sh
+
+env:
+  - BUILD=library
+  - BUILD=tex
+
 script:
-  - cd library && g++ main.cc
+  - cd ${BUILD} && ./run.sh
+
 notifications:
   slack:
     secure: ZfMjaktFyTQjcJisWPGx7VmV2oTAh7l/Q3Sb69Im7Lz7XtrbTZFqcYQ9BAO9ij0HUnZJ8d3dLB5Inv2J1jgWrFAJ0IdM1sjnpuARGG+s/qOxMDkExHwForC1nGeWT43K+i2dc4ZuXIoMS5X4PxVI1hFjzj3cT326tAbBqTNUQK4MgflrEDwFSPsteTP23jqsG8vtJIM47/QD6fioRas3OtjD916M0Hs/O1O3lOXbXRWPQBmv4/mE+L6CRmIKIWHJunHIgI1OgKmQLLxsxrvnFTy4/OO/Etjgw57TmvEvmSRE6WJ6dQD0HHwNPhw/J/ntSUQCg5KcXld4IQ12ZrDDHpF2YO+kzdXB039eIl1vuRaSykO9HWFJGXuq77ktGGiYYmEghbxsTd4QxVNsnwy4zrVDIjODBzl3HQzx58uxNSXnB7ddyoXtUKxjVn9G+8FeTQbrvETQlTehI4jgRGXpPjyoLvygBIrMynYl4fvsv3HQQTRYvl0GpGPbW8pcCFmU0HWQTc8dQFQ5+2JjqsE/DgKKBGTh1gZM2uaQ+DO+IAXmgeIY1T7fPSzz1gS+b94LfToOtfhtqTFQmrSrXt5bjJw0FyG95FJNAnLaBjr/Sec4uE4fsKFRaFF0ipf3WNlEyqmK9vOy4qU7c3waELwsRI0b/VnWhbHmmm+5IQ+DCw0=
