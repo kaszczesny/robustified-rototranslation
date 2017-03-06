@@ -9,5 +9,4 @@ bibtex ${ARTICLE} &&
 pdflatex -halt-on-error -interaction errorstopmode ${ARTICLE} &&
 pdflatex -halt-on-error -interaction errorstopmode ${ARTICLE}
 
-echo $?
 exit $?

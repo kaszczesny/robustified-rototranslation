@@ -50,7 +50,7 @@ function install_opencv {
 
 case "$BUILD" in
 	tex)
-		sudo apt-get install -y texlive-base texlive-binaries texlive-science texlive-lang-polish texlive-bibtex-extra
+		sudo apt-get install -y texlive-base texlive-binaries texlive-science texlive-lang-polish texlive-bibtex-extra texlive-fonts-recommended
 		;;
 
 	library)
