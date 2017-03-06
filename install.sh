@@ -26,7 +26,7 @@ case $yn in
 		sudo apt-get install -y texlive-base texlive-latex-recommended texlive-latex-extra texlive-binaries texlive-science texlive-lang-polish texlive-bibtex-extra texlive-fonts-recommended latexdiff texstudio
 
 		# OpenCV dependencies
-		sudo apt-get install -y build-essential
+		sudo apt-get install -y build-essential g++-5
 		sudo apt-get install -y cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
 		sudo apt-get install -y python-dev python-numpy python3-dev python3-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev
 		;;

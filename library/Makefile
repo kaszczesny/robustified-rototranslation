@@ -5,7 +5,7 @@ SRC_O=$(SRC_CC:%.cc=%.o)
 TESTS_CC=$(shell find ./tests -name *.cc)
 TESTS_O=$(TESTS_CC:%.cc=%.o)
 
-CC=g++
+CC=g++-5
 CCFLAGS=-Wall -Wextra -pedantic -Werror -std=c++11 $(shell pkg-config --cflags --libs opencv)
 
 
