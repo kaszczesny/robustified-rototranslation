@@ -9,7 +9,7 @@ before_install:
   - TRAVIS=1
 
 install:
-  - yes y | ./install.sh
+  - ./install-travis.sh
 
 env:
   - BUILD=library

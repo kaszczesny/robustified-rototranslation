@@ -9,31 +9,27 @@ fi
 read -p "Perform apt-get install (y/n): " yn
 case $yn in
 	[YyTt]* ) 
-		if [ -z "$TRAVIS" ]; then
-			sudo apt-get update
+		sudo apt-get update
 	
-			# git Large File Storage
-			dpkg -s git-lfs
-			if [ $? -eq 1 ]; then
-				curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-				sudo apt-get install -y git-lfs
-				git lfs install --local
-			fi
-
-			# octave
-			sudo apt-get install -y octave liboctave-dev octave-image octave-io octave-statistics octave-quaternion
-
-			# latex
-			sudo apt-get install -y latexdiff texstudio
+		# git Large File Storage
+		dpkg -s git-lfs
+		if [ $? -eq 1 ]; then
+			curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+			sudo apt-get install -y git-lfs
+			git lfs install --local
 		fi
 
+		# octave
+		sudo apt-get install -y octave liboctave-dev octave-image octave-io octave-statistics octave-quaternion
+
 		# latex
-		sudo apt-get install -y texlive-science texlive-lang-polish texlive-lang-european texlive-bibtex-extra
+		sudo apt-get install -y texlive-science texlive-lang-polish texlive-lang-european texlive-bibtex-extra latexdiff texstudio pdflatex
 
 		# OpenCV dependencies
 		sudo apt-get install -y build-essential
 		sudo apt-get install -y cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
 		sudo apt-get install -y python-dev python-numpy python3-dev python3-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev
+		;;
 esac
 
 mkdir -p opencv/build
@@ -52,7 +48,6 @@ if [ ! -d "opencv_contrib-3.1.0" ]; then
 	tar -xf opencv_contrib.tar.gz
 	rm -f opencv_contrib.tar.gz
 fi
-
 
 
 # OpenCV build (C++ & Octave)
@@ -105,33 +100,32 @@ case $yn in
 		sudo sh -c 'echo "/usr/local/lib" > /etc/ld.so.conf.d/opencv3.conf'
 		sudo ldconfig
 		cd ..
+		;;
 esac
 
 # Octave MEX files
-if [ -z "$TRAVIS" ]; then
-	read -p "Build MEX files for Octave (y/n): " yn
-	case $yn in
-		[YyTt]* )
-			if [ ! -d "mexopencv-3.1.0" ]; then
-				curl -L https://github.com/kyamagu/mexopencv/archive/v3.1.0.tar.gz > mexopencv.tar.gz
-				tar -xf mexopencv.tar.gz
-				rm -f mexopencv.tar.gz
-			fi
-			cd mexopencv-3.1.0
-			make clean WITH_OCTAVE=true
-			#make all contrib WITH_OCTAVE=true WITH_CONTRIB=true NO_CV_PKGCONFIG_HACK=true
-			make all WITH_OCTAVE=true WITH_CONTRIB=false
-			cd ..
+read -p "Build MEX files for Octave (y/n): " yn
+case $yn in
+	[YyTt]* )
+		if [ ! -d "mexopencv-3.1.0" ]; then
+			curl -L https://github.com/kyamagu/mexopencv/archive/v3.1.0.tar.gz > mexopencv.tar.gz
+			tar -xf mexopencv.tar.gz
+			rm -f mexopencv.tar.gz
+		fi
+		cd mexopencv-3.1.0
+		make clean WITH_OCTAVE=true
+		#make all contrib WITH_OCTAVE=true WITH_CONTRIB=true NO_CV_PKGCONFIG_HACK=true
+		make all WITH_OCTAVE=true WITH_CONTRIB=false
+		cd ..
 
-			cat << EOF > ../octave/setup_opencv.m
+		cat << EOF > ../octave/setup_opencv.m
 #!/usr/local/bin/octave -f
 
 addpath('${PWD}/mexopencv-3.1.0');
 addpath('${PWD}/mexopencv-3.1.0/+cv/private');
 disp('https://github.com/kyamagu/mexopencv/wiki/Gotchas');
 EOF
-
-	esac
-fi
+		;;
+esac
 
 cd ..
