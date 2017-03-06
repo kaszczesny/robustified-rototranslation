@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 
-g++ main.cc
+make clean && make test && ./test
+
