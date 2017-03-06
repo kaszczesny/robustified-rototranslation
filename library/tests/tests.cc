@@ -128,7 +128,7 @@ int main() {
 		dummy_are_even
 	};
 	vector<dummy_are_even_t> dummy_are_even_t_args {{0, 2, "A message from the depths"}, {4, 6, ""}, {0, 0, "abc"}};
-	success &= run_tests<dummy_are_even_t>("Unit test demonstration - 1", dummy_are_even_t_funs, dummy_are_even_t_args);
+	success &= run_tests<dummy_are_even_t>("Unit test demonstration - 2", dummy_are_even_t_funs, dummy_are_even_t_args);
 
 
 	/* OpenCV test - to check if everything is linked as expected */

@@ -16,10 +16,10 @@ all: $(SRC_O)
 
 .PHONY: test
 test: all $(TESTS_O)
-	$(CC) -o test $(TESTS_O) $(CCFLAGS)
+	$(CC) -o $@ $(TESTS_O) $(CCFLAGS)
 
 %.o: %.cc
-	$(CC) -c $< -o $@  $(CCFLAGS)
+	$(CC) -c $< -o $@  $(CCFLAGS) $(MOREFLAGS)
 
 	
 

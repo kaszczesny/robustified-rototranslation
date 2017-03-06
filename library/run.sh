@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
 
-gcc --version
-make clean && make test && ./test
+make clean && make test MOREFLAGS="-D NO_DISPLAY" && ./test
 

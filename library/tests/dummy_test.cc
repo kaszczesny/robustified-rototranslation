@@ -53,8 +53,10 @@ bool dummy_test(void *arg) {
 
 	filter2D(im, im, CV_8U, kernel);
 
+#ifndef NO_DISPLAY
 	imshow("im", im);
 	waitKey(1500);
+#endif
 	
 	Mat im_ref = imread("../data/dummy_test.png");
 
