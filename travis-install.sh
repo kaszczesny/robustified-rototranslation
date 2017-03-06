@@ -52,7 +52,7 @@ case "$BUILD" in
 	tex)
 		yes "" | sudo add-apt-repository ppa:texlive-backports/ppa
 		sudo apt-get update -qq
-		sudo apt-get install -y texlive texlive-base texlive-latex-recommended texlive-latex-extra texlive-binaries texlive-science texlive-lang-polish texlive-bibtex-extra texlive-fonts-recommended
+		sudo apt-get install  --no-install-recommends -y texlive texlive-base texlive-latex-recommended texlive-latex-extra texlive-binaries texlive-science texlive-lang-polish texlive-bibtex-extra texlive-fonts-recommended
 		;;
 
 	library)
