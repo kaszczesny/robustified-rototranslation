@@ -1,12 +1,13 @@
-\documentclass[11pt]{aghdpl}
-% \documentclass[en,11pt]{aghdpl}  % praca w języku angielskim
+% \documentclass[11pt]{aghdpl}
+\documentclass[en,11pt]{aghdpl}  % praca w języku angielskim
 
 % Lista wszystkich języków stanowiących języki pozycji bibliograficznych użytych w pracy.
 % (Zgodnie z zasadami tworzenia bibliografii każda pozycja powinna zostać utworzona zgodnie z zasadami języka, w którym dana publikacja została napisana.)
-\usepackage[english,polish]{babel}
+% \usepackage[english,polish]{babel}
+\usepackage[english]{babel}
 
 % Użyj polskiego łamania wyrazów (zamiast domyślnego angielskiego).
-\usepackage{polski}
+% \usepackage{polski}
 
 \usepackage[utf8]{inputenc}
 
@@ -43,9 +44,9 @@ backend=bibtex
 
 \usepackage{csquotes}
 % Ponieważ `csquotes` nie posiada polskiego stylu, można skorzystać z mocno zbliżonego stylu chorwackiego.
-\DeclareQuoteAlias{croatian}{polish}
+% \DeclareQuoteAlias{croatian}{polish}
 
-\addbibresource{bibliografia.bib}
+\addbibresource{bibliography.bib}
 
 % Nie wyświetlaj wybranych pól.
 %\AtEveryBibitem{\clearfield{note}}
@@ -85,8 +86,8 @@ backend=bibtex
 % ------------------------
 
 \AtBeginDocument{
-	\renewcommand{\tablename}{Tabela}
-	\renewcommand{\figurename}{Rys.}
+	\renewcommand{\tablename}{Table}
+	\renewcommand{\figurename}{Fig.}
 }
 
 % ------------------------
@@ -105,37 +106,34 @@ backend=bibtex
 
 %---------------------------------------------------------------------------
 
-\author{Marcin Szpyrka}
-\shortauthor{M. Szpyrka}
+\author{Krzysztof Szczęsny, Jan Twardowski}
+\shortauthor{K. Szczęsny, J. Twardowski}
 
-%\titlePL{Przygotowanie bardzo długiej i pasjonującej pracy dyplomowej w~systemie~\LaTeX}
-%\titleEN{Preparation of a very long and fascinating bachelor or master thesis in \LaTeX}
-
-\titlePL{Przygotowanie pracy dyplomowej w~systemie~\LaTeX}
-\titleEN{Thesis in \LaTeX}
+\titlePL{Algorytm do wyznaczania pozycji i orientacji obiektu na podstawie sekwencji wideo.}
+\titleEN{Algorithm for visual odometry.}
 
 
-\shorttitlePL{Przygotowanie pracy dyplomowej w~systemie \LaTeX} % skrócona wersja tytułu jeśli jest bardzo długi
-\shorttitleEN{Preparation of a long and fascinating thesis in \LaTeX}
+\shorttitlePL{Algorytm do wyznaczania pozycji i orientacji obiektu na podstawie sekwencji wideo.} % skrócona wersja tytułu jeśli jest bardzo długi
+\shorttitleEN{Algorithm for visual odometry.}
 
-\thesistype{Praca dyplomowa magisterska}
-%\thesistype{Master of Science Thesis}
+%\thesistype{Praca dyplomowa magisterska}
+\thesistype{Master of Science Thesis}
 
-\supervisor{prof. dr hab. Marcin Szpyrka}
-%\supervisor{Marcin Szpyrka PhD, DSc}
+%\supervisor{dr inż. Jarosław Bułat}
+\supervisor{Jarosław Bułat, PhD}
 
-\degreeprogramme{Informatyka}
-%\degreeprogramme{Computer Science}
+%\degreeprogramme{Teleinformatyka}
+\degreeprogramme{Teleinformatics}
 
-\date{2015}
+\date{2017}
 
-\department{Katedra Informatyki Stosowanej}
-%\department{Department of Applied Computer Science}
+%\department{Katedra Telekomunikacji}
+\department{Department of Telecommunications}
 
-\faculty{Wydział Elektrotechniki, Automatyki,\protect\\[-1mm] Informatyki i Inżynierii Biomedycznej}
-%\faculty{Faculty of Electrical Engineering, Automatics, Computer Science and Biomedical Engineering}
+%\faculty{Wydział Informatyki, Elektroniki i Telekomunikacji}
+\faculty{Faculty of Computer Science, Electronics and Telecommunications}
 
-\acknowledgements{Serdecznie dziękuję \dots tu ciąg dalszych podziękowań np. dla promotora, żony, sąsiada itp.}
+\acknowledgements{Serdecznie dziękuję \dots tu ciąg dalszych podziękowań np. dla promotora, żony, sąsiada, żony sąsiada itp.}
 
 
 \setlength{\cftsecnumwidth}{10mm}
@@ -162,19 +160,18 @@ backend=bibtex
 \tableofcontents
 \clearpage
 
-\include{rozdzial3}
-\include{rozdzial1}
-\include{rozdzial2}
-\include{tests}
 
+\include{chapter_1}
+\include{chapter_2}
+\include{chapter_3}
+\include{chapter_4_tests}
 
-
-% itd.
-% \appendix
-% \include{dodatekA}
-% \include{dodatekB}
-% itd.
 
 \printbibliography
+
+
+% \appendix
+% \include{appendix_A}
+% \include{appendix_B}
 
 \end{document}
