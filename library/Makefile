@@ -21,8 +21,13 @@ test: all $(TESTS_O)
 %.o: %.cc
 	$(CC) -c $< -o $@  $(CCFLAGS) $(MOREFLAGS)
 
-	
+
+
+.PHONY: doc
+doc:
+	./doxyfile
+
 
 .PHONY: clean
 clean:
-	rm -f test src/*.o tests/*.o
+	rm -rf test src/*.o tests/*.o html/

@@ -9,7 +9,7 @@ fi
 read -p "Perform apt-get install (y/n): " yn
 case $yn in
 	[YyTt]* ) 
-		sudo apt-get update
+		sudo apt-get update -qq
 	
 		# git Large File Storage
 		dpkg -s git-lfs
@@ -18,6 +18,9 @@ case $yn in
 			sudo apt-get install -y git-lfs
 			git lfs install --local
 		fi
+
+		# documentation
+		sudo apt-get install -y graphviz doxygen
 
 		# octave
 		sudo apt-get install -y octave liboctave-dev octave-image octave-io octave-statistics octave-quaternion

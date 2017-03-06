@@ -29,7 +29,8 @@ In the `library/` directory execute:
  * `make all` to compile the library,
  * `make test` to compile the library and unit tests (`./test` executable),
  * `make clean` to remove compiled files,
- * `./run.sh` to compile the library and unit tests & run them (this will run special UT version for Travis - with no windows).
+ * `./run.sh` to compile the library and unit tests & run them (this will run special UT version for Travis - with no windows),
+ * `make doc` to generate documentation.
 
 # Remarks
 OpenCV 3.1 was chosen due to [mexopencv](https://github.com/kyamagu/mexopencv) constraints.

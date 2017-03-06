@@ -39,10 +39,10 @@
 
 using namespace std;
 
-static const char* tty_red = "033[1;31m";
-static const char* tty_green = "\033[1;32m";
-static const char* tty_magenta = "\033[1;35m";
-static const char* tty_normal = "\033[0m";
+static const char* tty_red = "\033[1;31m"; ///< enables bold red font
+static const char* tty_green = "\033[1;32m"; ///< enables bold green font
+static const char* tty_magenta = "\033[1;35m"; ///< enables bold magenta font
+static const char* tty_normal = "\033[0m"; ///< return font to normal
 
 /**
  * Performs unit tests that take no parameters.
@@ -86,9 +86,9 @@ template<typename arg> bool run_tests( const char* title, const vector< bool (*)
 		} else {
 			ss << "FAILED!";
 			cout << tty_red << ss.str() << tty_normal << endl;
-			success = false;
 		}
 		
+		success &= test_success;
 		ss.str(""); //clear
 	}
 
@@ -133,7 +133,6 @@ int main() {
 
 	/* OpenCV test - to check if everything is linked as expected */
 	vector< bool (*)(void *) > void_funs {
-		dummy_test,
 		dummy_test
 	};
 	success &= run_tests< void * >("Dummy OpenCV tests", void_funs);
