@@ -20,7 +20,7 @@ install:
 
 env:
   - BUILD=library
-  - BUILD=tex
+#  - BUILD=tex
 
 script:
   - cd ${BUILD} && ./run.sh
