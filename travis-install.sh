@@ -50,13 +50,9 @@ function install_opencv {
 
 case "$BUILD" in
 	tex)
-		sudo apt-get install -y texlive-base texlive-latex-recommended texlive-latex-extra texlive-binaries texlive-science texlive-lang-polish texlive-bibtex-extra texlive-fonts-recommended
-
-		# https://github.com/scottclowe/latex-continuous-integration/blob/master/.travis.yml
-		travis_retry wget https://github.com/scottkosty/install-tl-ubuntu/raw/master/install-tl-ubuntu
-		chmod +x ./install-tl-ubuntu
-		sudo ./install-tl-ubuntu
-		export PATH="/opt/texbin:$PATH"
+		sudo add-apt-repository ppa:texlive-backports/ppa
+		sudo apt-get update -qq
+		sudo apt-get install -y texlive texlive-base texlive-latex-recommended texlive-latex-extra texlive-binaries texlive-science texlive-lang-polish texlive-bibtex-extra texlive-fonts-recommended
 		;;
 
 	library)

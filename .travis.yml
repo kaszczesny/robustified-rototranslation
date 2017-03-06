@@ -5,7 +5,7 @@ cache:
     - opencv
   
 before_install:
-  - sudo apt-get update
+  - sudo apt-get update -qq
   - TRAVIS=1
 
 install:
