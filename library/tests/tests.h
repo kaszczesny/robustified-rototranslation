@@ -35,6 +35,7 @@
 #define TESTS_H
 
 bool dummy_test(void *);
+bool dummy_test2(void *);
 bool dummy_is_even(int n);
 /**
  * @brief Example structure that could be passed into unit test function as argument
@@ -50,4 +51,17 @@ struct dummy_are_even_t {
 };
 bool dummy_are_even(dummy_are_even_t s);
 
+/**
+ * @brief Example structure that could be passed into unit test function as argument but different
+ */
+struct dummy_addition_t {
+	/// There must be a constructor that takes an int (default_arg)
+	dummy_addition_t(int) {}; 
+	/// Facilitates vector initialization
+	dummy_addition_t(int a, int b, int c): a(a), b(b), c(c) {};
+	int a;
+	int b;
+	int c;
+};
+bool dummy_addition(dummy_addition_t s);
 #endif
