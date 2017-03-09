@@ -131,9 +131,20 @@ int main() {
 	success &= run_tests<dummy_are_even_t>("Unit test demonstration - 2", dummy_are_even_t_funs, dummy_are_even_t_args);
 
 
+	/* Unit test demonstration - 3 */
+	vector< bool (*)(dummy_addition_t) > dummy_addition_t_funs {
+		dummy_addition,
+		dummy_addition,
+		dummy_addition,
+		dummy_addition
+	};
+	vector<dummy_addition_t> dummy_addition_t_args {{0, 2, 2}, {4, 6, 10}, {0, 0, 0}, {1, 7, 8}};
+	success &= run_tests<dummy_addition_t>("Unit test demonstration - 3", dummy_addition_t_funs, dummy_addition_t_args);
+
 	/* OpenCV test - to check if everything is linked as expected */
 	vector< bool (*)(void *) > void_funs {
-		dummy_test
+		dummy_test,
+		dummy_test2
 	};
 	success &= run_tests< void * >("Dummy OpenCV tests", void_funs);
 

@@ -6,7 +6,7 @@ AGH University of Science and Technology, Department of Telecommunications.
 Supervisor: Jarosław Bułat, PhD.
 
 # Installation
-Run `./install.sh` (without sudo - because we don't want ). It will:
+Run `./install.sh` (without sudo - because we don't want the build files to be owned by root). It will:
  * install dependencies and tools,
  * fetch OpenCV 3.1 sources,
  * compile OpenCV (for the moment without `contrib`),
