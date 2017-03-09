@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 
-g++ main.cc
+make clean && make test MOREFLAGS="-D NO_DISPLAY" && ./test
+

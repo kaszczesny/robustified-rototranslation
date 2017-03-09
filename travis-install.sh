@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
 function install_opencv {
+	# g++ 5 (C++11 support)
+	sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+	sudo apt-get update -qq
+	sudo apt-get install -y g++-5
+	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 90
+
 	# OpenCV dependencies
 	sudo apt-get install -y build-essential
 	sudo apt-get install -y cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
