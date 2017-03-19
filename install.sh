@@ -6,10 +6,11 @@ if [ "$EUID" -eq 0 ]; then
 fi
 
 
-read -p "Perform apt-get install (y/n): " yn
+read -p "Perform apt-get install? (y/n): " yn
 case $yn in
 	[YyTt]* ) 
 		sudo apt-get update -qq
+		sudo apt-get install -y curl
 	
 		# git Large File Storage
 		dpkg -s git-lfs
@@ -17,6 +18,7 @@ case $yn in
 			curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
 			sudo apt-get install -y git-lfs
 			git lfs install --local
+			git lfs pull
 		fi
 
 		# documentation
@@ -29,12 +31,12 @@ case $yn in
 		sudo apt-get install -y texlive-base texlive-latex-recommended texlive-latex-extra texlive-binaries texlive-science texlive-lang-polish texlive-bibtex-extra texlive-fonts-recommended latexdiff texstudio
 
 		# OpenCV dependencies
-		sudo apt-get install -y build-essential g++-5 curl
+		sudo apt-get install -y build-essential g++-5
 		sudo apt-get install -y cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
 		sudo apt-get install -y python-dev python-numpy python3-dev python3-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev
 
 		g++-5 --version
-		if [ $? -ne 0 ]
+		if [ $? -ne 0 ]; then
 			sudo ln -s /usr/bin/g++ /usr/bin/g++-5
 		fi
 		;;
@@ -59,7 +61,7 @@ fi
 
 
 # OpenCV build (C++ & Octave)
-read -p "Build OpenCV 3.1.0 for C++ and Octave (y/n): " yn
+read -p "Build OpenCV 3.1.0 for C++? WARNING: this will uninstall existing OpenCV! (y/n): " yn
 case $yn in
 	[YyTt]* ) cd build
 		sudo make uninstall
@@ -112,7 +114,7 @@ case $yn in
 esac
 
 # Octave MEX files
-read -p "Build MEX files for Octave (y/n): " yn
+read -p "Build MEX files for Octave? (y/n): " yn
 case $yn in
 	[YyTt]* )
 		if [ ! -d "mexopencv-3.1.0" ]; then
