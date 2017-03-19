@@ -33,6 +33,9 @@
 #include "common.h"
 #include <limits>
 
+using namespace PublicStructs;
+using namespace EdgeAlgorithms;
+
 config_t::config_t(void):
 	camera_height(std::numeric_limits<floating>::quiet_NaN())
 {

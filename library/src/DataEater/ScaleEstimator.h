@@ -1,8 +1,8 @@
 /**
- * @file RobustifiedRototranslation.cc RobustifiedRototranslation class implementation
+ * @file ScaleEstimator.h ScaleEstimator class definition
  *
  * @author Krzysztof Szczęsny, Jan Twardowski
- * @date Created on: 14 March 2017
+ * @date Created on: 19 March 2017
  * @version 1.0
  * @copyright Copyright (c) 2017 Krzysztof Szczęsny, Jan Twardowski
  * @par License
@@ -30,45 +30,33 @@
  * SOFTWARE.
  */
 
-#include <iostream>
-#include "RobustifiedRototranslation.h"
-#include "internal.h"
-#include "Scheduler.h"
+#ifndef ScaleEstimator_H_
+#define ScaleEstimator_H_
+
+#include "../internal.h"
 
 using namespace Constants;
-using namespace PublicStructs;
 using namespace Structs;
 using namespace EdgeAlgorithms;
 
-RobustifiedRototranslation::RobustifiedRototranslation(uint32_t img_width, uint32_t img_height, const char *calibration_config, edge_algorithm_config_t edge_algorithm_config, const config_t *config) :
-	scheduler_(nullptr)
-{
-	(void)img_width;
-	(void)img_height;
-	(void)calibration_config;
-	(void)edge_algorithm_config;
-	(void)config;
-}
+namespace DataEater {
 
-RobustifiedRototranslation::~RobustifiedRototranslation() {
-	this->Stop();
-	delete this->scheduler_;
-}
+/**
+ * @brief Todo
+ * @todo everything
+ * @todo everything^2
+ * @todo only during initialization?
+ */
+class ScaleEstimator {
+	public:
+		
 
-bool RobustifiedRototranslation::NewFrame(uint8_t *img, const gps_t &gps) {
-	(void)img;
-	(void)gps;
-	return true;
-}
+	#ifndef TEST
+	private:
+	#endif
+		
+};
 
-//RobustifiedRototranslation::GetFeedback() {}
+} //namespace DataEater
 
-void RobustifiedRototranslation::Stop(void) {
-	
-}
-
-RobustifiedRototranslation::RobustifiedRototranslation(void) :
-	scheduler_(nullptr)
-{
-	std::cout << "RR object created" << std::endl;
-}
+#endif

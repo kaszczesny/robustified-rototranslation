@@ -46,6 +46,8 @@
  */
 typedef float floating;
 
+/// Structures that should be visible to the user
+namespace PublicStructs {
 /// Optional library configuration parameters
 /// @todo add other stuff (such as flags for denoising, stabilization, object recognition)
 struct config_t {
@@ -73,6 +75,8 @@ struct gps_t {
 	floating longitude; ///< Longitude coeddificient
 	floating quality; ///< GPS quality metric (HDOP). The less the better
 };
+
+} //namespace PublicStructs
 
 /// Algorithms for edge detection and their config structures
 namespace EdgeAlgorithms {

@@ -57,7 +57,7 @@ class RobustifiedRototranslation {
 		 * @param[in] edge_algorithm_config edge detection algorithm choice & its arguments
 		 * @param[in] config optional parameters
 		 */
-		RobustifiedRototranslation(uint32_t img_width, uint32_t img_height, const char *calibration_config, EdgeAlgorithms::edge_algorithm_config_t edge_algorithm_config, const config_t *config=nullptr);
+		RobustifiedRototranslation(uint32_t img_width, uint32_t img_height, const char *calibration_config, EdgeAlgorithms::edge_algorithm_config_t edge_algorithm_config, const PublicStructs::config_t *config=nullptr);
 		
 		/// Stops threads and deletes the Scheduler.
 		~RobustifiedRototranslation();
@@ -72,7 +72,7 @@ class RobustifiedRototranslation {
 		 * @todo more args?
 		 * @todo implementation: save current timestamp & sequence number
 		 */
-		bool NewFrame(uint8_t *img, const gps_t &gps);
+		bool NewFrame(uint8_t *img, const PublicStructs::gps_t &gps);
 		
 		//GetFeedback()
 		

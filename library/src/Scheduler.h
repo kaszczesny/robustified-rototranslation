@@ -34,6 +34,10 @@
 #define SCHEDULER_H_
 
 #include "internal.h"
+#include "DataEater/EdgeExtractor.h"
+#include "DataEater/EdgeTracker.h"
+#include "DataEater/Mapper.h"
+#include "DataEater/ScaleEstimator.h"
 
 using namespace Constants;
 using namespace Structs;
@@ -58,6 +62,14 @@ class Scheduler {
 		 * @param[in] calibration_config path to the calbration file
 		 */
 		void LoadCalibrationConfig(const char *calibration_config);
+		
+		/// @name Submodules
+		///@{
+		DataEater::EdgeExtractor edge_extractor_;
+		DataEater::EdgeTracker edge_tracker_;
+		DataEater::Mapper mapper_;
+		DataEater::ScaleEstimator scale_estimator_;
+		///@}
 		
 		cv::Size_<uint32_t> size_; ///< Downscaled image size
 		

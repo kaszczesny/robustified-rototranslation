@@ -51,7 +51,7 @@ namespace Structs {
 /// @todo maybe would be nice to POD
 struct frame_input_t {
 	cv::Mat_<uint8_t> img; ///< The downscaled image
-	gps_t gps; ///< World coordinates of the frame
+	PublicStructs::gps_t gps; ///< World coordinates of the frame
 	uint64_t timestamp; ///< frame creation timestamp [ns]
 	uint32_t seq; ///< frame sequence number
 };
@@ -92,6 +92,9 @@ struct frame_output_t {
 };
 
 } //namespace Structs
+
+/// Submodules that do data processing
+namespace DataEater {}
 
 #endif
 
