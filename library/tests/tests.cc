@@ -39,13 +39,15 @@
 
 using namespace std;
 
+namespace UnitTests {
+
 static const char* tty_red = "\033[1;31m"; ///< enables bold red font
 static const char* tty_green = "\033[1;32m"; ///< enables bold green font
 static const char* tty_magenta = "\033[1;35m"; ///< enables bold magenta font
 static const char* tty_normal = "\033[0m"; ///< return font to normal
 
 /**
- * Performs unit tests that take no parameters.
+ * Performs unit tests that take exactly 1 parameter.
  * @tparam arg type of the single argument that will be supplied to unit testing functions.
  * @param[in] title title of the test suite
  * @param[in] f_ptrs vector of pointer to unit tests
@@ -96,6 +98,10 @@ template<typename arg> bool run_tests( const char* title, const vector< bool (*)
 	return success;
 }
 
+} //namespace UnitTests
+
+using namespace UnitTests;
+
 /**
  * The main function for unit testing.
  * Each unit test function must take 1 parameter and return a boolean:
@@ -112,6 +118,7 @@ int main() {
 	}
 
 	/* Unit test demonstration - 1 */
+	/*
 	vector< bool (*)(int) > int_funs { //functions
 		dummy_is_even,
 		dummy_is_even
@@ -119,9 +126,11 @@ int main() {
 	vector<int> int_args {0, 2}; //and their arguments
 	// vector<int> int_args {1, 2}; //this one will obviously not pass
 	success &= run_tests<int>("Unit test demonstration - 1", int_funs, int_args);
+	*/
 
 
 	/* Unit test demonstration - 2 */
+	/*
 	vector< bool (*)(dummy_are_even_t) > dummy_are_even_t_funs {
 		dummy_are_even,
 		dummy_are_even,
@@ -129,9 +138,11 @@ int main() {
 	};
 	vector<dummy_are_even_t> dummy_are_even_t_args {{0, 2, "A message from the depths"}, {4, 6, ""}, {0, 0, "abc"}};
 	success &= run_tests<dummy_are_even_t>("Unit test demonstration - 2", dummy_are_even_t_funs, dummy_are_even_t_args);
+	*/
 
 
 	/* Unit test demonstration - 3 */
+	/*
 	vector< bool (*)(dummy_addition_t) > dummy_addition_t_funs {
 		dummy_addition,
 		dummy_addition,
@@ -140,11 +151,13 @@ int main() {
 	};
 	vector<dummy_addition_t> dummy_addition_t_args {{0, 2, 2}, {4, 6, 10}, {0, 0, 0}, {1, 7, 8}};
 	success &= run_tests<dummy_addition_t>("Unit test demonstration - 3", dummy_addition_t_funs, dummy_addition_t_args);
+	*/
 
 	/* OpenCV test - to check if everything is linked as expected */
 	vector< bool (*)(void *) > void_funs {
 		dummy_test,
-		dummy_test2
+		dummy_test2,
+		library_dummy_test
 	};
 	success &= run_tests< void * >("Dummy OpenCV tests", void_funs);
 
