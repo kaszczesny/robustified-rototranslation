@@ -113,7 +113,7 @@ for yter = 1+win_s:size(dog, 1)-win_s
     KLpos = [KLpos; yter, xter];
     KLposSubpix = [KLposSubpix; ys+yter, xs+xter];
     KLidx = [KLidx; 0, 0];
-    KLgrad = [KLgrad; theta(1:2)'];
+    KLgrad = [KLgrad; theta([2 1])'];
     KLrho = [KLrho, 0, 0];
   end
 end
