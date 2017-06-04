@@ -85,8 +85,8 @@ for yter = 1+win_s:size(dog, 1)-win_s
     
     % todo: limit horrendeous values (if abs(a) > sth then a = sth*sign(a))
     
-    xs_art(yter,xter) = xs;
-    ys_art(yter,xter) = ys;
+    xs_im(yter,xter) = xs;
+    ys_im(yter,xter) = ys;
     
     
     if visualize
@@ -103,7 +103,7 @@ for yter = 1+win_s:size(dog, 1)-win_s
     
     % local normal vector, normalized to versor after projection to z=0
     n = [-theta(1) -theta(2) 1];
-    n = n ./ sqrt(sum(n([1 2]).^2));
+    %n = n ./ sqrt(sum(n([1 2]).^2));
     vec_x(yter,xter) = n(2); %weirdly, n(1) and n(2) are swapped
     vec_y(yter,xter) = n(1);
     
@@ -124,8 +124,9 @@ KLidx = KeylineJoiner((edge_probability == 5), KLpos, KLgrad, KLidx);
 
 
 %% VISUALS %%
+[y x] = meshgrid(1:size(dog,2), 1:size(dog,1));
 figure; imagesc(edge_probability); axis equal; colormap jet; colorbar;
-hold on; quiver(vec_y, vec_x);
+hold on; quiver(ys_im+y, xs_im+x, vec_y, vec_x);
 
 keylines = zeros([size(im),3], 'uint8');
 for idx = 1:KLctr

@@ -18,4 +18,4 @@ test_1 = @(n2gI) n2gI > (thresh_grad*max_img_value).^2; % n2gI was squared, but 
 win_s = 2;
 PosNegThresh = 0.2;
 
-visualize = 1;
+visualize = 0;
