@@ -19,3 +19,6 @@ win_s = 2;
 PosNegThresh = 0.2;
 
 visualize = 0;
+
+% auxiliary image
+max_r = 5;

@@ -146,3 +146,8 @@ for idx = 1:KLctr
 end
 figure; imshow(keylines);
 hold on; quiver(ys_im+y, xs_im+x, vec_y, vec_x);
+
+
+%% AUXILIARY IMAGE %%
+[distance_field, KLidx_field] = AuxiliaryImage(size(im), max_r, KLctr, KLpos, KLposSubpix, KLidx, KLgrad);
+figure; imagesc(distance_field);axis equal
