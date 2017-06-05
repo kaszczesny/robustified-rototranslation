@@ -144,4 +144,5 @@ for idx = 1:KLctr
     next = KLidx(next,2);
   end  
 end
-figure; imshow(keylines); 
+figure; imshow(keylines);
+hold on; quiver(ys_im+y, xs_im+x, vec_y, vec_x);
