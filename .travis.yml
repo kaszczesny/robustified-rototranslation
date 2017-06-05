@@ -1,5 +1,9 @@
 language: android
 
+branches:
+  except:
+    - prototype
+
 cache:
   - directories:
     - opencv
