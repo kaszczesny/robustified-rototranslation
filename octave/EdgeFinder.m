@@ -27,7 +27,7 @@ KLpos = []; % pixel position
 KLposSubpix = []; % subpixel position
 KLidx = []; % index of previous/next keyline
 KLgrad = []; % local third derivative vector
-KLrho = []; % estimated inverse depth
+KLrho = []; % estimated inverse depth and inverse depth uncertainty
 
 
 %% TESTS INIT %%
@@ -114,13 +114,25 @@ for yter = 1+win_s:size(dog, 1)-win_s
     KLposSubpix = [KLposSubpix; ys+yter, xs+xter];
     KLidx = [KLidx; 0, 0];
     KLgrad = [KLgrad; theta([2 1])'];
-    KLrho = [KLrho, 0, 0];
+    KLrho = [KLrho, RHO_INIT, RHO_MAX];
   end
 end
 
 
 %% KEYLINE JOINING %%
-KLidx = KeylineJoiner((edge_probability == 5), KLpos, KLgrad, KLidx);
+[KLidx, KLref] = KeylineJoiner((edge_probability == 5), KLpos, KLgrad, KLidx);
+
+if visualize
+  img = im*0;
+  for i=1:length(KLidx)
+    if KLref(i)
+     img(KLpos(i,1), KLpos(i,2))=1;
+    else
+     img(KLpos(i,1),KLpos(i,2))=2;
+    end
+  end
+  figure;imagesc(img);axis equal;
+end
 
 
 %% VISUALS %%

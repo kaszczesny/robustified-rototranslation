@@ -22,3 +22,8 @@ visualize = 0;
 
 % auxiliary image
 max_r = 5;
+
+%global tracker
+RHO_MAX = 20; % init inverse depth uncertainty
+RHO_INIT = 1; % init inverse depth 
+

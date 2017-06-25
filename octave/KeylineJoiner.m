@@ -1,4 +1,4 @@
-function [KLidx] = KeylineJoiner (mask, KLpos, KLgrad, KLidx)
+function [KLidx, KLref] = KeylineJoiner (mask, KLpos, KLgrad, KLidx)
 % @param mask - mask of pixels that were identified as edges
 
 edges3 = [  zeros( 1, size(mask, 2) + 2);
@@ -67,5 +67,14 @@ end
 
 size(KLpos)
 KLpos -= 1;
+KLref = zeros(1, length(KLidx));
 
-% todo: get rid of 3-pixel edges now, instead of global tracker
+
+% get rid of 3-pixel edges now, instead of global tracker
+for iter = 1:length(KLidx)
+  if KLidx(iter, 1) == 0 || KLidx(iter,2) == 0
+    KLref(iter) = 0;
+  else
+    KLref(iter) = 1;
+  end
+end
