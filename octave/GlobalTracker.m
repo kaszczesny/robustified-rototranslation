@@ -95,7 +95,8 @@ function [...
   
   % todo: rozciagnij vel i rot do macierzy
   
-  
+  Ptm = zeros(pnum, 3); %LTCV of transformed 3d coordinates
+  PtIm = zeros(pnum, 3); %LTCV of transformed image coordinates
   fi=0;
   
   for iter = 1:pnum
@@ -147,10 +148,66 @@ function [...
   end
   
   if(ProcJF)
-    % todo: licz se to
+    
+    Jm = zeros(pnum, 6);
+    RhoTmp0 = zeros(pnum, 1);
+    
+    RhoTmp0 = zf * PtIm(:, 3); %z coordinate constant mul
+    
+    %x
+    Jm(:,2) = RhoTmp0 .* df_dPi(:,2);
+    %y
+    Jm(:,1) = RhoTmp0 .* df_dPi(:,1);
+    %z-x
+    RhoTmp0 = PtIm(:,3) .* PtIm(:,2);
+    Jm(:,3) = RhoTmp0 .* df_dPi(:,2);
+    %z-y
+    RhoTmp0 = PtIm(:,3) .* PtIm(:,1);
+    Jm(:,3) += RhoTmp0 .* df_dPi(:,1);
+    
+    %x
+    Jm(:,5) = Jm(:,1) .* Ptm(:,3);
+    Jm(:,5) += Jm(:,3) .* Ptm(:,1);
+    %y
+    Jm(:,4) = Jm(:,2) .* Ptm(:,3);
+    Jm(:,4) += Jm(:,3) .* Ptm(:,2);
+    %z
+    RhoTmp0 = Jm(:,2) .*Ptm(:,1);
+    Jm(:,6) = -1 * RhoTmp0;
+    Jm(:,6) += Jm(:, 1) .* Ptm(:,2);
+    
+    %there should be a fragment to 0 the non-4-divisible knum, but due to no need for it in octave we'll omit this part
+    
+    %dot product on half of the JtJ
+    for iter=1:6
+      for jter=iter:6
+        JtJ(iter, jter) = dot(Jm(:,iter), Jm(:,jter));
+      end
+      JtF(iter) = dot(Jm(:,iter), fm);
+    end
+    
+    %wrongly estimated signs (?) I DONT KNOW IF ITS CORRECT, JACOBIANS SCARE ME
+    for iter=1:2
+      JtF(iter+2) *= -1;
+      for jter=1:2
+        JtJ(iter, jter+2) *= -1;
+        JtJ(iter+2, jter+4) *= -1;
+      end
+    end
+    
+    %symmetrize the matrix
+    for iter=1:6
+      for jter=iter+1:6
+        JtJ(jter, iter) = JtJ(iter, jter);
+      end
+    end
+    
+    %again, ommiting the part where its not divisible by 4
+    
+    
   end
  
-  score = sum(fm.*fm); %dot product
+  score = dot(fm, fm); %dot product
  
   if(UsePriors)
     % todo: uzyj sobie, zawsze false
