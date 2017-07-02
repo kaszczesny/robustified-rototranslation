@@ -10,6 +10,7 @@ function [ ...
     KLidx, KLrho, ...
     rel_error, ... % Estimated relative error on the state (init with zero)
     rel_error_score, ... % Estimated relative error on the score (init with 0)
+    distance_field, KLidx_field % Auxilary image results
 )
   % based on Minimizer_RV
   % performs Equation (8) minimization
@@ -52,9 +53,18 @@ function [s_rho] = EstimateQuantile(KLrho)
   end
 end
 
+function R = RotationMatrix(w)
+  % https://pixhawk.org/_media/dev/know-how/jlblanco2010geometry3d_techrep.pdf
+  % https://github.com/edrosten/TooN/blob/master/so3.h#L254
+  % w is a vector that defines rotation axis; it's length is the rotation angle
+  
+  skewSymmetric = [0 -w(3) w(2); w(3) 0 -w(1); -w(2) w(1) 0];
+  return expm(skewSymmetric);
+end
+
 function [...
     score, ...
-    JtJ, JtF, KLm_id_forward, ...
+    JtJ, JtF, KLforward, ...
     P0m, DResidualNew
 ] = TryVelRot(
     ReWeight, ... % Rewighting switch
@@ -67,19 +77,28 @@ function [...
     PV0, ... % Model uncertainty 3x3
     W0p, ... % Rotation Model 3x1
     PW0, ... % Model uncertainty 3x3
-    KLpos, KLrho, ... % keylines
+    KLpos, KLrho, KLgrad, KLforward, ... % keylines
     P0m, ... % linear transpose coodinates vector of 3D klist positions (vector or pnum*3)
     ... % pnum, ... % number of points
     max_s_rho, ... % estimated rho 0.9 quantile
     DResidual, ... % Last iteration Distance Residuals - for calculating weights, vector pnumx1
-    DResidualNew, ... % New iteration Distance Residuals - new residuals, vector pnumx1
-    
+    ... % DResidualNew, ... % New iteration Distance Residuals - new residuals, vector pnumx1
+    zf, principal_point, ...
+    distance_field, KLidx_field    
 )
   % returns energy based on dot product of distance residuals
   pnum = size(KLpos,1);
   score = 0;
   JtJ = zeros(6,6);
   JtF = zeros(6,1);
+  DResidualNew = DResidual * 0;
+  
+  % rotations
+  R0 = RotationMatrix(VelRot([4:6]));
+  RM = RotationMatrix([0 0 VelRot(3)]); % rotation about z-axis
+  RM = RM(1:2, 1:2);
+  
+  mnum = 0; %match counter
   
   %{
     linear transpose coodinates vectors (LTCV) are arranged as follows:
@@ -97,13 +116,22 @@ function [...
   
   Ptm = zeros(pnum, 3); %LTCV of transformed 3d coordinates
   PtIm = zeros(pnum, 3); %LTCV of transformed image coordinates
-  fi=0;
+  
+  fm = zeros(pnum, 1); %weighted residuals
+  df_dPi = zeros(pnum, 2); %weighted img derivative of residual
+  
+  Ptm = (R0 * P0m')';
+  for iter=1:3
+    Ptm(:, iter) += VelRot(iter);
+  end
+  PtIm(:,3) = 1 ./ Ptm(:,3);
+  Pz_zf = zf * PtIm(:,3);
+  PtIm(:,2) = Ptm(:,2) .* Pz_zf;
+  PtIm(:,1) = Ptm(:,1) .* Pz_zf;
   
   for iter = 1:pnum
     % todo: resetuj forward matching
     
-    fm = zeros(pnum, 1); %weighted residuals
-    df_dPi = zeros(pnum, 2); %weighted img derivative of residual
     if (KLrho(iter,2) > max_s_rho % lub jesli ten keyline nie jest na wystarczajacej ilosci klatek
       
       fm(iter) = 0;
@@ -112,10 +140,13 @@ function [...
       
     end
     
+    p_pji_y = PtIm(iter, 1) + principal_point(1); 
+    p_pji_x = PtIm(iter, 2) + principal_point(2); 
+    
     % todo: convert to img coordinates
     %       te punkty zaokragl do integerow
-    x = KLpos(iter, 2);
-    y = KLpos(iter, 1);
+    x = round(p_pji_x);
+    y = round(p_pji_y);
     
     weight = 1;
     if( ReWeight & abs(DResidual(iter) > REWEIGHT_DISTANCE )
@@ -133,17 +164,54 @@ function [...
       continue;
     end
     
-    % todo : jakies cos z obracaniem, nie czaje tego, wyjasnienie
+    kl_m_m_copy = KLgrad(iter, :);
     
-    % todo: funkcja Calc_f_J :D //residuals and gradients
-    %fm(iter) = Calc_f_J_XD
+    KLgrad(iter,1) = RM(2,1) * kl_m_m_copy(2) + RM(2,2) * kl_m_m_copy(1); % todo: possibly fucked up matrix coordinates
+    KLgrad(iter,2) = RM(1,1) * kl_m_m_copy(2) + RM(1,2) * kl_m_m_copy(1);
+    
+    % Calc_f_J was here
+    
+    kl_iter = KLidx_field(KLpos(iter, 1), KLpos(iter, 2));
+    if kl_iter < 0
+      df_dPi(iter, :) = 0;
+      fm(iter) = max_r ./ KLrho(2);
+      fi = 0;
+    else
+      % quick test for KL match
+      %KL1 - from field
+      %KL2 - iter
+      KL2_grad_sq_norm = dot( KLgrad(iter,:), KLgrad(iter,:) );
+      pablo_escobar = dot( KLgrad(iter,:), KLgrad(kl_iter,:) );
+      
+      if abs(pablo_escobar - KL2_grad_sq_norm) > MATCH_THRESH * KL2_grad_sq_norm
+        df_dPi(iter, :) = 0;
+        fm(iter) = max_r ./ KLrho(2);
+        fi = 0;
+      else
+        dx = p_pji_x - KLposSubpix(iter,2);
+        dy = p_pji_y - KLposSubpix(iter,1);
+        u_m = KLgrad(iter, :);
+        u_m ./ sqrt(dot(u_m,u_m)); % normalized gradient
+        
+        fi = dx * u_m(2) + dy * u_m(1);
+        
+        df_dPi(iter, :) = u_m ./ KLrho(iter,2);
+        
+        mnum += 1;
+        KLforward(iter) = kl_iter;
+        fm(iter) = fi ./ KLgrad(iter, 2);
+        
+      end  
+    end
+    
+    KLgrad(iter,:) = kl_m_m_copy;
     
     if(ReWeight)
       fm(iter) *= weight;
       df_dPi(iter, :) *= weight;
     end
     
-    DResidualNew(iter) = fi %zwracane z Calc_f_J, chyba, bo inaczej 0
+    DResidualNew(iter) = fi;
     
   end
   
@@ -228,6 +296,158 @@ end
     return
   end
 
+  JtJ = zeros(6,6); % jacobian
+  ApI = zeros(6,6);
+  JtJnew = zeros(6,6);
+  
+  JtF = zeros(6,1); % estimated residuals 
+  JtFnew = zeros(6,1);
+  
+  h = zeros(6,1); %sth with JtJ, SVD and multiplying by JtF
+  X = zeros(6,1);
+  Xnew = zeros(6,1);
+  Xt = zeros(6,1);
+  
+  pnum = size(KLidx, 1);
+  
+  P0Im = zeros(pnum, 3); %image/3d coordinates
+  P0m = zeros(pnum, 3);
+  
+  Residual = zeros(pnum, 1); %Res0;distance residuals
+  ResidualNew = zeros(pnum, 1);  %Res1;
+  Rest = zeros(pnum, 1);
+  
+  %todo: converto to ltcv
+  
+  %todo: proyect
+  
+  F = 0; %energy scores
+  Fnew = 0;
+  F0 = 0;
+  
+  v = 2; %lm params
+  tau = 1e-3;
+  
+  u = 0;
+  gain = 0;
+  
+  eff_steps = 0; %count how many times we gained
+  
+  %zero init
+  [F, JtJ, JtF, KLm_id_forward, P0m, ResidualNew] = TryVelRot(
+    0,1,X,Vel,RVel, W0, RW0, 
+    KLpos, KLrho, KLgrad, P0m,
+    max_s_rho,Residual,zf, principal_point,distance_field, KLidx_field);
+  F0 = F; 
+  u = tau * max(max(JtJ));
+  
+  for iter = 1:INIT_ITER
+    ApI = JtJ + eye(6) * u;
+    [U, D, Vt] = cv.SVD.Compute(ApI); 
+    h = cv.SVD.BackSubst(U, D, Vt, -JtF); % back substitution
+   
+    Xnew = X+h;
+    
+    if iter == INIT_ITER
+      [Fnew, JtJ, JtF, KLm_id_forward, P0m, ResidualNew] = TryVelRot(
+        0,0,X,Vel,RVel, W0, RW0, 
+        KLpos, KLrho, KLgrad, P0m,
+        max_s_rho,Residual,zf, principal_point,distance_field, KLidx_field);
+      gain = F - Fnew;
+    else
+      [Fnew, JtJ, JtF, KLm_id_forward, P0m, ResidualNew] = TryVelRot(
+        0,1,X,Vel,RVel, W0, RW0, 
+        KLpos, KLrho, KLgrad, P0m,
+        max_s_rho,Residual,zf, principal_point,distance_field, KLidx_field);
+      gain = (F-Fnew)/(0.5 * h * (u*h-JtF));
+    end
+    
+    if gain > 0
+      F=Fnew;
+      X=Xnew;
+      JtJ = JtJnew;
+      JtF = JtFnew;
+      u *= max( 0.33, 1-((2*gain-1)^3));
+      v = 2;
+      eff_steps++;
+    else
+      u *= v;
+      v *= 2;
+    end
+  end
+  
+  Xt = X;
+  Ft = F;
+  F0t = F0;
+  ut = u;
+  vt = v;
+  eff_steps_t = eff_steps;
+  
+  eff_steps = 0;
+  
+  
+  X = [Vel W0]; %usePriors
+  [F, JtJ, JtF, KLm_id_forward, P0m, ResidualNew] = TryVelRot(
+    0,1,X,Vel,RVel, W0, RW0, 
+    KLpos, KLrho, KLgrad, P0m,
+    max_s_rho,Residual,zf, principal_point,distance_field, KLidx_field);
+  F0 = F; 
+  u = tau * max(max(JtJ));
+  v = 2;
+  
+  for iter = 1:INIT_ITER
+    ApI = JtJ + eye(6) * u;
+    [U, D, Vt] = cv.SVD.Compute(ApI); 
+    h = cv.SVD.BackSubst(U, D, Vt, -JtF); % back substitution
+   
+    Xnew = X+h;
+    
+    if iter == INIT_ITER
+      [Fnew, JtJ, JtF, KLm_id_forward, P0m, ResidualNew] = TryVelRot(
+        0,0,X,Vel,RVel, W0, RW0, 
+        KLpos, KLrho, KLgrad, P0m,
+        max_s_rho,Residual,zf, principal_point,distance_field, KLidx_field);
+      gain = F - Fnew;
+    else
+      [Fnew, JtJ, JtF, KLm_id_forward, P0m, ResidualNew] = TryVelRot(
+        0,1,X,Vel,RVel, W0, RW0, 
+        KLpos, KLrho, KLgrad, P0m,
+        max_s_rho,Residual,zf, principal_point,distance_field, KLidx_field);
+      gain = (F-Fnew)/(0.5 * h * (u*h-JtF));
+    end
+    
+    if gain > 0
+      F=Fnew;
+      X=Xnew;
+      JtJ = JtJnew;
+      JtF = JtFnew;
+      u *= max( 0.33, 1-((2*gain-1)^3));
+      v = 2;
+      eff_steps++;
+    else
+      u *= v;
+      v *= 2;
+    end
+  end
+  
+  if F>Ft
+    X = Xt;
+    F = Ft;
+    F0 = F0t;
+    u = ut;
+    v = vt;
+    eff_steps = eff_steps_t;
+    ResidualNew = Rest;
+  end
+  
+  tRes = Residual;
+  Residual = ResidualNew;
+  ResidualNew = tRes;
+  
+  %reweight
+
+
+ 
   
 
 end

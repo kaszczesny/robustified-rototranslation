@@ -28,6 +28,7 @@ KLposSubpix = []; % subpixel position
 KLidx = []; % index of previous/next keyline
 KLgrad = []; % local third derivative vector
 KLrho = []; % estimated inverse depth and inverse depth uncertainty
+KLforward = []; % id of forward match
 
 
 %% TESTS INIT %%
@@ -115,6 +116,7 @@ for yter = 1+win_s:size(dog, 1)-win_s
     KLidx = [KLidx; 0, 0];
     KLgrad = [KLgrad; theta([2 1])'];
     KLrho = [KLrho, RHO_INIT, RHO_MAX];
+    KLforward = [KLforward; -1];
   end
 end
 
