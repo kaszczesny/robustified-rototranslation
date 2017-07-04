@@ -1,19 +1,19 @@
-function [distance_field, KLidx_field] = AuxiliaryImage (imsize, KLctr, KLpos, KLposSubpix, KLidx, KLgrad)
+function [distance_field, KLidx_field] = AuxiliaryImage (KL)
 
 conf = Config();
 
-distance_field = zeros(imsize);
-KLidx_field = zeros(imsize) - 1;
+distance_field = zeros(conf.imgsize);
+KLidx_field = zeros(conf.imgsize) - 1;
 
-for idx = 1:KLctr
+for idx = 1:KL.ctr
   for t=-conf.MAX_R:conf.MAX_R
-    x = KLgrad(idx, 2) * t + KLposSubpix(idx, 2);
-    y = KLgrad(idx, 1) * t + KLposSubpix(idx, 1);
+    x = KL.grad(idx, 2) * t + KL.posSubpix(idx, 2);
+    y = KL.grad(idx, 1) * t + KL.posSubpix(idx, 1);
     
     x = round(x);
     y = round(y);
     
-    if x < 1 || y < 1 || x > imsize(2) || y > imsize(1)
+    if x < 1 || y < 1 || x > conf.imgsize(2) || y > conf.imgsize(1)
       continue; % out of border
     end
   
@@ -26,4 +26,8 @@ for idx = 1:KLctr
     KLidx_field(y,x) = idx;  
     
   end
+end
+
+if conf.visualize
+  figure; imagesc(distance_field);axis equal
 end

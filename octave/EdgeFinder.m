@@ -1,16 +1,11 @@
-%% SETUP %%
-clear
-pkg load image
-setup_opencv
-graphics_toolkit('fltk')
-
+function [KL] = EdgeFinder(im_name)
 
 %% CONFIG %%
 conf = Config();
 win_s = conf.win_s;
 
 %% DOG %%
-im = imresize(imread(conf.im_name), conf.scale);
+im = imresize(imread(im_name), conf.scale);
 im_blurred1 = double(cv.GaussianBlur(
               im, "KSize", [conf.ksize,conf.ksize], 
               "SigmaX", conf.sigma1, "SigmaY", conf.sigma1));
@@ -181,6 +176,18 @@ if conf.visualize
   figure;imagesc(img);axis equal;
 end
 
+%% MOVE TO STRUCT %%
+KL = struct();
+KL.ctr = KLctr;
+KL.pos = KLpos;
+KL.posSubpix = KLposSubpix;
+KL.idx = KLidx;
+KL.grad = KLgrad;
+KL.rho = KLrho;
+KL.rhoPredict = KLrhoPredict;
+KL.forward = KLforward;
+KL.frames = KLframes;
+
 
 %% VISUALS %%
 [y x] = meshgrid(1:size(dog,2), 1:size(dog,1));
@@ -203,27 +210,9 @@ for idx = 1:KLctr
     next = KLidx(next,2);
   end  
 end
-figure; imshow(keylines);
-hold on; quiver(ys_im+y, xs_im+x, vec_y, vec_x);
 
+if conf.visualize
+  figure; imshow(keylines);
+  hold on; quiver(ys_im+y, xs_im+x, vec_y, vec_x);
+end
 
-%% AUXILIARY IMAGE %%
-[distance_field, KLidx_field] = AuxiliaryImage(size(im), KLctr, KLpos, KLposSubpix, KLidx, KLgrad);
-figure; imagesc(distance_field);axis equal
-
-[ ...
-  F, ...
-  Vel, W0, RVel, RW0, ...
-  rel_error, rel_error_score, MatchNumThresh, ...
-  FrameCount ...
-] = GlobalTracker (...
-    zeros(3,1), ... % Vel; initial translation estimation (3 vector; init with zeros)
-    zeros(3,1) , ... %W0; initial rotation estimation (3 vector; init with zeros)
-    eye(3)*1e50, %RVel; uncertainty Model if the initial Vel estimate will be used as prior (3x3 matrix; init with eye*1e50)
-    eye(3)*1e-10,  %RW0; uncertainty Model if the initial W0  estimate will be used as prior (3x3 matrix; init with eye*1e-10)
-    KLpos, KLposSubpix, KLidx, KLrho, KLgrad, KLforward, ...
-    0, ... %rel_error;  Estimated relative error on the state (init with zero)
-    0, ... %rel_error_score;  Estimated relative error on the score (init with 0)
-    distance_field, KLidx_field, ... % Auxilary image results
-    0 ... %FrameCount; number of processed frames
-);    
