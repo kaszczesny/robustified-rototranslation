@@ -5,8 +5,11 @@ function conf = Config()
 conf=struct();
 
 conf.im_name = '../data/000012_10.png';
-%conf.im_name = '../data/IMG_20170402_145917_1.jpg';
 conf.scale = 1/3;
+conf.imgsize = [124, 409];
+conf.principal_point =  [62.000   204.500]; %half
+conf.zf = 1;
+%conf.im_name = '../data/IMG_20170402_145917_1.jpg';
 
   % DoG:
 conf.ksize = 13;
