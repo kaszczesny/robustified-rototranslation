@@ -132,7 +132,7 @@ function [...
   for iter = 1:pnum
     % todo: resetuj forward matching
     
-    if (KLrho(iter,2) > max_s_rho % lub jesli ten keyline nie jest na wystarczajacej ilosci klatek
+    if (KLrho(iter,2) > max_s_rho %todo: lub jesli ten keyline nie jest na wystarczajacej ilosci klatek
       
       fm(iter) = 0;
       df_dPi(iter, :) = 0;
@@ -143,8 +143,6 @@ function [...
     p_pji_y = PtIm(iter, 1) + principal_point(1); 
     p_pji_x = PtIm(iter, 2) + principal_point(2); 
     
-    % todo: convert to img coordinates
-    %       te punkty zaokragl do integerow
     x = round(p_pji_x);
     y = round(p_pji_y);
     
@@ -445,9 +443,60 @@ end
   ResidualNew = tRes;
   
   %reweight
-
-
- 
+  [F, JtJ, JtF, KLm_id_forward, P0m, ResidualNew] = TryVelRot(
+    1,1,X,Vel,RVel, W0, RW0, 
+    KLpos, KLrho, KLgrad, P0m,
+    max_s_rho,Residual,zf, principal_point,distance_field, KLidx_field);
+  F0 = F; 
+  u = tau * max(max(JtJ));
+  v = 2;
   
-
+  for iter = 1:ITER_MAX
+    ApI = JtJ + eye(6) * u;
+    
+    %todo: Cholesky
+    %todo: backsub
+    
+    Xnew = X+h;
+    [Fnew, JtJnew, JtFnew, KLm_id_forward, P0m, ResidualNew] = TryVelRot(
+      1,1,Xnew,Vel,RVel, W0, RW0, 
+      KLpos, KLrho, KLgrad, P0m,
+    max_s_rho,Residual,zf, principal_point,distance_field, KLidx_field);
+    
+    gain = (F-Fnew)/(0.5*h*(u*h-JtF));
+    if gain > 0
+      F=Fnew;
+      X=Xnew;
+      JtJ = JtJnew;
+      JtF = JtFnew;
+      u *= max( 0.33, 1-((2*gain-1)^3));
+      v = 2;
+      eff_steps++;
+      
+      tRes = Residual;
+      Residual = ResidualNew;
+      ResidualNew = tRes;
+    else
+      u *= v;
+      v *= 2;
+    end
+  end
+  
+  %todo: Cholesky
+  %todo: RRV
+  
+  %todo: template slice :S
+  
+  if eff_steps>0
+    norm_h = h/sqrt(dot(h));
+    norm_X = X/sqrt(dot(X));
+    rel_error = norm_h/(norm_X + 1e-30);
+    rel_error_score = F/F0;
+  else
+    rel_error = 1e20;
+    rel_error_score = 1e20;
+  end
+  
+  %todo: Framecount
+  
 end
