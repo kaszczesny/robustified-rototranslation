@@ -1,5 +1,5 @@
 function [ ...
-  ret,
+  F,
   Vel, W0, RVel, RW0, ...
   rel_error, rel_error_score, MatchNumThresh
 ] = GlobalTracker (...
@@ -21,22 +21,16 @@ function [s_rho] = EstimateQuantile(KLrho)
   % based on edge_tracker EstimateQuantile
   % tells which s_rho (uncertainty) is such that S_RHO_MIN-s_rho == quantile
   
-  % todo: Config.m
-  S_RHO_MIN = 1e-3; % starting uncertainty of histogram in EstimateQuantile
-  S_RHO_MAX = 20; % final uncertainty of histogram in EstimateQuantile
-  PERCENTILE = 0.9; % quantile threshold in EstimateQuantile
-  N_BINS = 100; %number of histogram bins in EstimateQuantile
   
-  
-  bins = zeros(N_BINS, 1);
+  bins = zeros(conf.N_BINS, 1);
 
   for iter = 1:size(KLrho, 1)
     %check in which bin s_rho is and increment its counter
-    idx = floor( N_BINS * (KLrho(iter,2)-S_RHO_MIN) / (S_RHO_MAX - S_RHO_MIN) ) + 1;
+    idx = floor( conf.N_BINS * (KLrho(iter,2)-conf.S_RHO_MIN) / (conf.S_RHO_MAX - conf.S_RHO_MIN) ) + 1;
     if idx < 1
       idx = 1;
-    elseif idx > N_BINS
-      idx = N_BINS;
+    elseif idx > conf.N_BINS
+      idx = conf.N_BINS;
     end  
     bins(idx) += 1;
   end
@@ -44,9 +38,9 @@ function [s_rho] = EstimateQuantile(KLrho)
   s_rho = 1e3; % todo why 1e3; move to Config.m
   a = 0; %accumulator
 
-  for iter = 1:N_BINS
-    if (a > PERCENTILE * size(KLrho, 1) )
-      s_rho = (iter - 1) * (S_RHO_MAX-S_RHO_MIN) / N_BINS + S_RHO_MIN;
+  for iter = 1:conf.N_BINS
+    if (a > conf.PERCENTILE * size(KLrho, 1) )
+      s_rho = (iter - 1) * (conf.S_RHO_MAX-conf.S_RHO_MIN) / conf.N_BINS + conf.S_RHO_MIN;
       return
     end
     a += bins(iter);
@@ -108,9 +102,7 @@ function [...
     Then they are projected into 3D by Equation 4
   %}
   
-  MATCH_THRESH = 1.; % Match Gradient Treshold
-  MATCH_NUM_THRESH = 2; % minimal number of frames KL has to be on to be considered stable (exluding very first MATCH_NUM_THRESH frames)
-  REWEIGHT_DISTANCE = 2.; % Distance cut-off for reweigthing (k_hubber/k_huber)
+  conf = Config();
   
   % todo: rozciagnij vel i rot do macierzy
   
@@ -124,6 +116,7 @@ function [...
   for iter=1:3
     Ptm(:, iter) += VelRot(iter);
   end
+  % equation 3: 3d -> image
   PtIm(:,3) = 1 ./ Ptm(:,3);
   Pz_zf = zf * PtIm(:,3);
   PtIm(:,2) = Ptm(:,2) .* Pz_zf;
@@ -147,8 +140,8 @@ function [...
     y = round(p_pji_y);
     
     weight = 1;
-    if( ReWeight & abs(DResidual(iter) > REWEIGHT_DISTANCE )
-      weight = REWEIGHT_DISTANCE ./ abs(DResidual(iter);
+    if( ReWeight & abs(DResidual(iter) > conf.REWEIGHT_DISTANCE )
+      weight = conf.REWEIGHT_DISTANCE ./ abs(DResidual(iter);
     end
     
     if ( x<2 | y<2 | x>=imgsize(2) | y>=imgsize(1) )
@@ -181,7 +174,7 @@ function [...
       KL2_grad_sq_norm = dot( KLgrad(iter,:), KLgrad(iter,:) );
       pablo_escobar = dot( KLgrad(iter,:), KLgrad(kl_iter,:) );
       
-      if abs(pablo_escobar - KL2_grad_sq_norm) > MATCH_THRESH * KL2_grad_sq_norm
+      if abs(pablo_escobar - KL2_grad_sq_norm) > conf.MATCH_THRESH * KL2_grad_sq_norm
         df_dPi(iter, :) = 0;
         fm(iter) = max_r ./ KLrho(2);
         fi = 0;
@@ -283,14 +276,14 @@ end
   
   % todo: gracefully move constants to Config.m
   % UsePriors is always false
-  ITER_MAX = 10; % iterations of Farquad probably Eq. (9)
+  conf = Config();
   % init_type is always 2
   max_s_rho = EstimateQuantile(KLrho);
   INIT_ITER = 2; % Actually controls ProcJF in TryVelRot (true or false depending on interation)
   
 
   if size(KLidx, 1) < 1
-    ret = 0;
+    F = 0;
     return
   end
 
@@ -308,23 +301,29 @@ end
   
   pnum = size(KLidx, 1);
   
-  P0Im = zeros(pnum, 3); %image/3d coordinates
-  P0m = zeros(pnum, 3);
+  P0Im = zeros(pnum, 3); %image coordinates
+  P0m = zeros(pnum, 3); %3d coordinates
   
   Residual = zeros(pnum, 1); %Res0;distance residuals
   ResidualNew = zeros(pnum, 1);  %Res1;
   Rest = zeros(pnum, 1);
   
-  %todo: converto to ltcv
+  %converto to ltcv
+  P0Im(:,1) = KLposSubpix(:,1) + principal_point(1); % y
+  P0Im(:,2) = KLposSubpix(:,2) + principal_point(2); % x
+  P0Im(:,3) = KLrho(:,1);
   
-  %todo: proyect
+  %proyect (eq 4.) imgage -> 3d
+  P0m(:,3) = 1./ P0Im(:,3); % depth from inverse depth
+  Pz_zf = 1./zf * P0m(:,3);
+  P0m(:,1) = P0Im(:,1) .* Pz_zf; %y
+  P0m(:,2) = P0Im(:,2) .* Pz_zf; %x
   
   F = 0; %energy scores
   Fnew = 0;
   F0 = 0;
   
-  v = 2; %lm params
-  tau = 1e-3;
+  v = conf.LM_INIT_V;
   
   u = 0;
   gain = 0;
@@ -337,7 +336,7 @@ end
     KLpos, KLrho, KLgrad, P0m,
     max_s_rho,Residual,zf, principal_point,distance_field, KLidx_field);
   F0 = F; 
-  u = tau * max(max(JtJ));
+  u = conf.TAU * max(max(JtJ));
   
   for iter = 1:INIT_ITER
     ApI = JtJ + eye(6) * u;
@@ -390,7 +389,7 @@ end
     KLpos, KLrho, KLgrad, P0m,
     max_s_rho,Residual,zf, principal_point,distance_field, KLidx_field);
   F0 = F; 
-  u = tau * max(max(JtJ));
+  u = conf.TAU * max(max(JtJ));
   v = 2;
   
   for iter = 1:INIT_ITER
@@ -448,10 +447,10 @@ end
     KLpos, KLrho, KLgrad, P0m,
     max_s_rho,Residual,zf, principal_point,distance_field, KLidx_field);
   F0 = F; 
-  u = tau * max(max(JtJ));
+  u = conf.TAU * max(max(JtJ));
   v = 2;
   
-  for iter = 1:ITER_MAX
+  for iter = 1:confITER_MAX
     ApI = JtJ + eye(6) * u;
     
     %todo: Cholesky

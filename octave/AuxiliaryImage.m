@@ -1,10 +1,12 @@
-function [distance_field, KLidx_field] = AuxiliaryImage (imsize, max_r, KLctr, KLpos, KLposSubpix, KLidx, KLgrad)
+function [distance_field, KLidx_field] = AuxiliaryImage (imsize, KLctr, KLpos, KLposSubpix, KLidx, KLgrad)
+
+conf = Config();
 
 distance_field = zeros(imsize);
 KLidx_field = zeros(imsize) - 1;
 
 for idx = 1:KLctr
-  for t=-max_r:max_r
+  for t=-conf.MAX_R:conf.MAX_R
     x = KLgrad(idx, 2) * t + KLposSubpix(idx, 2);
     y = KLgrad(idx, 1) * t + KLposSubpix(idx, 1);
     

@@ -6,29 +6,72 @@ graphics_toolkit('fltk')
 
 
 %% CONFIG %%
-Config
-
+conf = Config();
+win_s = conf.win_s;
 
 %% DOG %%
-im = imresize(imread(im_name), scale);
+im = imresize(imread(conf.im_name), conf.scale);
 im_blurred1 = double(cv.GaussianBlur(
-              im, "KSize", [ksize,ksize], 
-              "SigmaX", sigma1, "SigmaY", sigma1));
+              im, "KSize", [conf.ksize,conf.ksize], 
+              "SigmaX", conf.sigma1, "SigmaY", conf.sigma1));
 im_blurred2 = double(cv.GaussianBlur(
-              im, "KSize", [ksize,ksize],
-              "SigmaX", sigma2, "SigmaY", sigma2));
+              im, "KSize", [conf.ksize,conf.ksize],
+              "SigmaX", conf.sigma2, "SigmaY", conf.sigma2));
               %% ratio of kernels should be 4:1 or 5:1
 dog = double(im_blurred2) - double(im_blurred1);
 
 
 %% KEYLINE INIT %%
+%{
+m_m     KLgrad (2d f)
+u_m     normalized KLgrad (2d f)
+n_m     norm of KLgrad (f)
+
+c_p     KLposSubpix (2d f)
+round(c_p)  KLpos
+
+rho     Estimated Inverse Depth (f)
+s_rho   Estimated Inverse Depth Uncertainty (f)
+        KLrho
+
+rho0    Predicted Inverse Depth in EKF (use only if rescaling) (f)
+s_rho0  Predicted Inverse Depth Uncertainty (f)
+        KLrhoPredict
+
+p_m     Subpixel position in homo coordinates (plane on focal length zf) (2d f)
+        KLposSubpix + principal_point
+p_m_0   matched KL (subpixel) position in homo coordinates (2d f)
+        #######
+
+m_id    Id of the matching KL
+        #######
+m_id_f  Id of the matching KL by forward matching
+        KLforward
+
+m_num   Number of consecutive matches (int)
+        KLframes
+
+m_m0    Gradient of matched KL (2d f)
+        ######
+n_m0    Norm of m_m0 (f)
+
+p_id    ID of previous KL (int)
+n_id    ID of next KL (int)
+        KLidx
+        
+net_id  Network ID of Keyline
+        ####### 
+
+%}
 KLctr = 0;
 KLpos = []; % pixel position
 KLposSubpix = []; % subpixel position
 KLidx = []; % index of previous/next keyline
 KLgrad = []; % local third derivative vector
 KLrho = []; % estimated inverse depth and inverse depth uncertainty
+KLrhoPredict = []; % predicted inverse depth and inverse depth uncertainty
 KLforward = []; % id of forward match
+KLframes = []; % number of consecutive matches
 
 
 %% TESTS INIT %%
@@ -60,7 +103,7 @@ PInv = pinv( Phi );
 for yter = 1+win_s:size(dog, 1)-win_s
   for xter = 1+win_s:size(dog, 2)-win_s
     % Test 1: local gradient must be sufficiently stronk
-    if ~test_1(n2gI(yter,xter))
+    if ~conf.test_1(n2gI(yter,xter))
       edge_probability(yter,xter) = 1;
       continue
     end
@@ -68,7 +111,7 @@ for yter = 1+win_s:size(dog, 1)-win_s
     % Test 2: current point is (more or less) in the middle of a keyline
     Y = dog(yter+[-win_s:win_s], xter+[-win_s:win_s]);
     pn = sum(sign(Y));
-    if abs(pn) > PosNegThresh * (win_s*2+1).^2
+    if abs(pn) > conf.PosNegThresh * (win_s*2+1).^2
       edge_probability(yter,xter) = 2;
       continue
     end  
@@ -90,7 +133,7 @@ for yter = 1+win_s:size(dog, 1)-win_s
     ys_im(yter,xter) = ys;
     
     
-    if visualize
+    if conf.visualize
       disp([yter xter])
       VisualizeZeroCrossing(Y, theta, im_blurred2(yter+[-win_s:win_s], xter+[-win_s:win_s]))
       input('...');
@@ -115,8 +158,10 @@ for yter = 1+win_s:size(dog, 1)-win_s
     KLposSubpix = [KLposSubpix; ys+yter, xs+xter];
     KLidx = [KLidx; 0, 0];
     KLgrad = [KLgrad; theta([2 1])'];
-    KLrho = [KLrho, RHO_INIT, RHO_MAX];
+    KLrho = [KLrho; conf.RHO_INIT, conf.RHO_MAX];
+    KLrhoPredict = [KLrhoPredict; 0, 0];
     KLforward = [KLforward; -1];
+    KLframes = [KLframes; 0];
   end
 end
 
@@ -124,7 +169,7 @@ end
 %% KEYLINE JOINING %%
 [KLidx, KLref] = KeylineJoiner((edge_probability == 5), KLpos, KLgrad, KLidx);
 
-if visualize
+if conf.visualize
   img = im*0;
   for i=1:length(KLidx)
     if KLref(i)
@@ -163,5 +208,5 @@ hold on; quiver(ys_im+y, xs_im+x, vec_y, vec_x);
 
 
 %% AUXILIARY IMAGE %%
-[distance_field, KLidx_field] = AuxiliaryImage(size(im), max_r, KLctr, KLpos, KLposSubpix, KLidx, KLgrad);
+[distance_field, KLidx_field] = AuxiliaryImage(size(im), KLctr, KLpos, KLposSubpix, KLidx, KLgrad);
 figure; imagesc(distance_field);axis equal
