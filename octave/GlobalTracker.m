@@ -455,7 +455,9 @@ end
     ApI = JtJ + eye(6) * u;
     
     %todo: Cholesky
+    %[R, P, Q] = chol(ApI);
     %todo: backsub
+    %h = cv.SVD.BackSubst(R, P, Q, -JtF);
     
     Xnew = X+h;
     [Fnew, JtJnew, JtFnew, KLm_id_forward, P0m, ResidualNew] = TryVelRot(
@@ -483,7 +485,9 @@ end
   end
   
   %todo: Cholesky
+  %[R, P, Q] = chol(JtJ);
   %todo: RRV
+  %RRV = inv();
   
   %todo: template slice :S
   
