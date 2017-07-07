@@ -1,0 +1,5 @@
+Images are part of the KITTI dataset (http://www.cvlibs.net/datasets/kitti/eval_odometry.php), 
+published under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 License.
+
+Copyright Andreas Geiger (MPI Tübingen) | Philip Lenz (KIT) | Christoph Stiller (KIT) | Raquel Urtasun (University of Toronto)
+

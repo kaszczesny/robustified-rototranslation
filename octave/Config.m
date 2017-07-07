@@ -4,11 +4,22 @@ function conf = Config()
 
 conf=struct();
 
-conf.im_name = '../data/000012_10.png';
+conf.im_name = {
+  '../data/KITTI/000050.png'
+  '../data/KITTI/000051.png'
+  '../data/KITTI/000052.png'
+  '../data/KITTI/000053.png'
+  '../data/KITTI/000054.png'
+  '../data/KITTI/000055.png'
+  '../data/KITTI/000056.png'
+  '../data/KITTI/000057.png'
+  '../data/KITTI/000058.png'
+  '../data/KITTI/000059.png'
+}  ;
 conf.scale = 1/3;
-conf.imgsize = [124, 409];
-conf.principal_point =  [62.000   204.500]; %half
-conf.zf = 1;
+conf.imgsize = [124, 409]; %todo: don't hardcode
+conf.principal_point =  [185.2157 607.1928] * conf.scale; %sort of half
+conf.zf = 718.856; %todo: zf_x and zf_y?
 %conf.im_name = '../data/IMG_20170402_145917_1.jpg';
 
   % DoG:
