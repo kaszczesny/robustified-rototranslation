@@ -1,28 +1,33 @@
 %% SETUP %%
 clear
-pkg load image
-setup_opencv
-graphics_toolkit('fltk')
+if ~exist('OPENCV')
+  pkg load image
+  setup_opencv
+  graphics_toolkit('fltk')
+  OPENCV = 1;
+end  
 
 
-KL1 = EdgeFinder(Config().im_name);
+KL1 = EdgeFinder(Config().im_name{1});
+KL2 = EdgeFinder(Config().im_name{2});
 
-%% AUXILIARY IMAGE %%
-[distance_field, KLidx_field] = AuxiliaryImage(KL1);
+F = 0; %energy based on dot product of distance residuals
+Vel = zeros(3,1); %initial translation estimation (3 vector; init with zeros)
+W0 = zeros(3,1); %initial rotation estimation (3 vector; init with zeros)
+RVel = eye(3)*1e50; %uncertainty Model if the initial Vel estimate will be used as prior (3x3 matrix; init with eye*1e50)
+RW0 = eye(3)*1e-10; %uncertainty Model if the initial W0  estimate will be used as prior (3x3 matrix; init with eye*1e-10)
+rel_error = 0; %Estimated relative error on the state (init with zero)
+rel_error_score = 0; %Estimated relative error on the score (init with 0)
+FrameCount = 0; %number of processed frames
+
 
 [ ...
   F, ...
   Vel, W0, RVel, RW0, ...
-  rel_error, rel_error_score, ...
-  FrameCount ...
+  KL2, ...
+  rel_error, rel_error_score, FrameCount ...
 ] = GlobalTracker (...
-    zeros(3,1), ... % Vel; initial translation estimation (3 vector; init with zeros)
-    zeros(3,1) , ... %W0; initial rotation estimation (3 vector; init with zeros)
-    eye(3)*1e50, %RVel; uncertainty Model if the initial Vel estimate will be used as prior (3x3 matrix; init with eye*1e50)
-    eye(3)*1e-10,  %RW0; uncertainty Model if the initial W0  estimate will be used as prior (3x3 matrix; init with eye*1e-10)
-    KL1, ...
-    0, ... %rel_error;  Estimated relative error on the state (init with zero)
-    0, ... %rel_error_score;  Estimated relative error on the score (init with 0)
-    distance_field, KLidx_field, ... % Auxilary image results
-    0 ... %FrameCount; number of processed frames
+    Vel, W0, RVel, RW0, ...
+    KL1, KL2, ...
+    rel_error, rel_error_score, FrameCount ...
 );    

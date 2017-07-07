@@ -1,6 +1,7 @@
 function [ ...
   F, ...
   Vel, W0, RVel, RW0, ...
+  KL, ...
   rel_error, rel_error_score, ...
   FrameCount ...
 ] = GlobalTracker (...
@@ -8,10 +9,10 @@ function [ ...
     W0, ... %initial rotation estimation (3 vector; init with zeros)
     RVel, %uncertainty Model if the initial Vel estimate will be used as prior (3x3 matrix; init with eye*1e50)
     RW0,  %uncertainty Model if the initial W0  estimate will be used as prior (3x3 matrix; init with eye*1e-10)
+    KL_prev, ...
     KL, ...
     rel_error, ... % Estimated relative error on the state (init with zero)
     rel_error_score, ... % Estimated relative error on the score (init with 0)
-    distance_field, KLidx_field, ... % Auxilary image results
     FrameCount ... % number of processed frames
 )
   % based on Minimizer_RV
@@ -37,7 +38,7 @@ function [s_rho] = EstimateQuantile(KL)
     bins(idx) += 1;
   end
 
-  s_rho = 1e3; % todo why 1e3; move to Config.m
+  s_rho = conf.S_RHO_INIT;
   a = 0; %accumulator
 
   for iter = 1:conf.N_BINS
@@ -61,7 +62,7 @@ end
 
 function [...
     score, ...
-    JtJ, JtF, KL, ...
+    JtJ, JtF, KL_prev, ...
     P0m, DResidualNew ...
 ] = TryVelRot( ...
     ReWeight, ... % Rewighting switch
@@ -74,7 +75,7 @@ function [...
     PV0, ... % Model uncertainty 3x3
     W0p, ... % Rotation Model 3x1
     PW0, ... % Model uncertainty 3x3
-    KL, ... % keylines
+    KL_prev, KL, ... % keylines
     P0m, ... % linear transpose coodinates vector of 3D klist positions (vector or pnum*3)
     ... % pnum, ... % number of points
     max_s_rho, ... % estimated rho 0.9 quantile
@@ -83,7 +84,8 @@ function [...
     distance_field, KLidx_field ...
 )
   % returns energy based on dot product of distance residuals
-  pnum = size(KL.pos,1);
+  
+  pnum = size(KL_prev.pos,1);
   score = 0;
   JtJ = zeros(6,6);
   JtF = zeros(6,1);
@@ -106,7 +108,7 @@ function [...
   
   conf = Config();
   
-  % todo: rozciagnij vel i rot do macierzy
+  % Rt is just flattened R0, Vt is Velocity (1:3) component of VelRot
   
   Ptm = zeros(pnum, 3); %LTCV of transformed 3d coordinates
   PtIm = zeros(pnum, 3); %LTCV of transformed image coordinates
@@ -114,40 +116,52 @@ function [...
   fm = zeros(pnum, 1); %weighted residuals
   df_dPi = zeros(pnum, 2); %weighted img derivative of residual
   
+  % perform SE3: Pos = Rot*Pos0 + Vel
   Ptm = (R0 * P0m')';
   for iter=1:3
     Ptm(:, iter) += VelRot(iter);
   end
+  
   % equation 3: 3d -> image
   PtIm(:,3) = 1 ./ Ptm(:,3);
   Pz_zf = conf.zf * PtIm(:,3);
   PtIm(:,2) = Ptm(:,2) .* Pz_zf;
   PtIm(:,1) = Ptm(:,1) .* Pz_zf;
   
+  % klist in C in actually old keymap,
+  % while auxiliary field holds indexes for current keymap
+  
   for iter = 1:pnum
-    % todo: resetuj forward matching
+    KL_prev.forward = -1;
     
-    if KL.rho(iter,2) > max_s_rho %todo: lub jesli ten keyline nie jest na wystarczajacej ilosci klatek
-      
+    % don't use this keyline if uncertainty is too high
+    % or if  keyline hasn't appeared in at least 2 consecutive frames
+    % (exluding init)
+    if KL_prev.rho(iter,2) > max_s_rho || ...
+       KL_prev.frames < min(conf.MATCH_NUM_THRESH, FrameCount)
+
       fm(iter) = 0;
       df_dPi(iter, :) = 0;
       continue;
       
     end
     
+    % convert to image coordinates (just add p.p.)
     p_pji_y = PtIm(iter, 1) + conf.principal_point(1); 
     p_pji_x = PtIm(iter, 2) + conf.principal_point(2); 
     
     x = round(p_pji_x);
     y = round(p_pji_y);
     
+    %estimate reweighting
     weight = 1;
     if ReWeight && abs(DResidual(iter)) > conf.REWEIGHT_DISTANCE
       weight = conf.REWEIGHT_DISTANCE ./ abs(DResidual(iter));
     end
     
+    %if outside border, consider it a mismatch
     if ( x<2 || y<2 || x>=conf.imgsize(2) || y>=conf.imgsize(1) )
-      fm(iter) = conf.MAX_R/KL.rho(iter, 2);
+      fm(iter) = conf.MAX_R/KL_prev.rho(iter, 2);
       
       if(ReWeight)
         fm(iter) *= weight;
@@ -157,47 +171,53 @@ function [...
       continue;
     end
     
-    kl_m_m_copy = KL.grad(iter, :);
+    %temporairly rotate gradient on z axis for improved matching (?)
+    kl_m_m_copy = KL_prev.grad(iter, :);
     
-    KL.grad(iter,1) = RM(2,1) * kl_m_m_copy(2) + RM(2,2) * kl_m_m_copy(1); % todo: possibly fucked up matrix coordinates
-    KL.grad(iter,2) = RM(1,1) * kl_m_m_copy(2) + RM(1,2) * kl_m_m_copy(1);
+    KL_prev.grad(iter,1) = RM(2,1) * kl_m_m_copy(2) + RM(2,2) * kl_m_m_copy(1); % todo: possibly fucked up matrix coordinates
+    KL_prev.grad(iter,2) = RM(1,1) * kl_m_m_copy(2) + RM(1,2) * kl_m_m_copy(1);
     
     % Calc_f_J was here
     
-    kl_iter = KLidx_field(KL.pos(iter, 1), KL.pos(iter, 2)); % should be from previous frame
+    % f_inx corresponds to (y,x)
+    
+    kl_iter = KLidx_field(y,x); % index from current frame
     if kl_iter < 0
       df_dPi(iter, :) = 0;
       fm(iter) = max_r ./ KL.rho(2);
       fi = 0;
     else
-      % quick test for KL match
-      %KL1 - from field
-      %KL2 - iter
-      KL2_grad_sq_norm = dot( KL.grad(iter,:), KL.grad(iter,:) );
-      pablo_escobar = dot( KL.grad(iter,:), KL.grad(kl_iter,:) );
+      % Test_f_k was here - a quick test for KL match
+      % f_m - gradient from current frame (extraced from aux)
+      % kl - keyline from previous frame
+      m1 = KL.grad(kl_iter, :);
+      m2 = KL_prev.grad(iter, :);
       
-      if abs(pablo_escobar - KL2_grad_sq_norm) > conf.MATCH_THRESH * KL2_grad_sq_norm
+      m2_norm_sq = dot(m2, m2);
+      pablo_escobar = dot(m1, m2); 
+      
+      if abs(pablo_escobar - m2_norm_sq) > conf.MATCH_THRESH * m2_norm_sq
         df_dPi(iter, :) = 0;
         fm(iter) = max_r ./ KL.rho(2);
         fi = 0;
       else
-        dx = p_pji_x - KL.posSubpix(iter,2);
-        dy = p_pji_y - KL.posSubpix(iter,1);
-        u_m = KL.grad(iter, :);
+        d = [p_pji_y p_pji_x] - KL.posSubpix(kl_iter,:);
+        
+        u_m = KL.grad(kl_iter, :);
         u_m ./ sqrt(dot(u_m,u_m)); % normalized gradient
         
-        fi = dx * u_m(2) + dy * u_m(1);
+        fi = dot(d, u_m); %residual in direction of the gradient
         
         df_dPi(iter, :) = u_m ./ KL.rho(iter,2);
         
         mnum += 1;
-        KLforward(iter) = kl_iter;
-        fm(iter) = fi ./ KL.grad(iter, 2);
+        KL_prev.forward(iter) = kl_iter;
+        fm(iter) = fi ./ KL_prev.grad(iter, 2);
         
       end  
     end
     
-    KL.grad(iter,:) = kl_m_m_copy;
+    KL_prev.grad(iter,:) = kl_m_m_copy;
     
     if(ReWeight)
       fm(iter) *= weight;
@@ -271,20 +291,24 @@ function [...
   score = dot(fm, fm); %dot product
  
   %if(UsePriors)
-    % todo: uzyj sobie, zawsze false
+    % doesn't matter, aways false
   %end
                                 
-end                                 
+end
+
+%%%%%%%%%%%%%% Minimizer_RV starts here %%%%%%%%%%%%%%
+                            
+  %% AUXILIARY IMAGE %%
+  [distance_field, KLidx_field] = AuxiliaryImage(KL);
   
-  % todo: gracefully move constants to Config.m
   % UsePriors is always false
   conf = Config();
   % init_type is always 2
-  max_s_rho = EstimateQuantile(KL);
+  max_s_rho = EstimateQuantile(KL_prev);
   INIT_ITER = 2; % Actually controls ProcJF in TryVelRot (true or false depending on interation)
   
 
-  if size(KL.idx , 1) < 1
+  if size(KL_prev.idx , 1) < 1
     F = 0;
     return
   end
@@ -301,7 +325,7 @@ end
   Xnew = zeros(6,1);
   Xt = zeros(6,1);
   
-  pnum = size(KL.idx , 1);
+  pnum = size(KL_prev.idx , 1);
   
   P0Im = zeros(pnum, 3); %image coordinates
   P0m = zeros(pnum, 3); %3d coordinates
@@ -311,9 +335,9 @@ end
   Rest = zeros(pnum, 1);
   
   %converto to ltcv
-  P0Im(:,1) = KL.posSubpix(:,1) + conf.principal_point(1); % y
-  P0Im(:,2) = KL.posSubpix(:,2) + conf.principal_point(2); % x
-  P0Im(:,3) = KL.rho(:,1);
+  P0Im(:,1) = KL_prev.posSubpix(:,1) + conf.principal_point(1); % y
+  P0Im(:,2) = KL_prev.posSubpix(:,2) + conf.principal_point(2); % x
+  P0Im(:,3) = KL_prev.rho(:,1);
   
   %proyect (eq 4.) imgage -> 3d
   P0m(:,3) = 1./ P0Im(:,3); % depth from inverse depth
@@ -333,9 +357,9 @@ end
   eff_steps = 0; %count how many times we gained
   
   %zero init
-  [F, JtJ, JtF, KL, P0m, ResidualNew] = TryVelRot(
+  [F, JtJ, JtF, KL_prev, P0m, ResidualNew] = TryVelRot(
     0,1,X,Vel,RVel, W0, RW0, 
-    KL, P0m,
+    KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field);
   F0 = F; 
   u = conf.TAU * max(max(JtJ));
@@ -348,18 +372,21 @@ end
     Xnew = X+h;
     
     if iter == INIT_ITER
-      [Fnew, JtJ, JtF, KL, P0m, ResidualNew] = TryVelRot(
-        0,0,X,Vel,RVel, W0, RW0, 
-        KL, P0m,
-        max_s_rho,Residual, distance_field, KLidx_field);
+      ProcJF = 0;
+    else
+      ProcJF = 1;
+    end    
+    
+    [Fnew, JtJ, JtF, KL_prev, P0m, ResidualNew] = TryVelRot(
+      0,ProcJF,X,Vel,RVel, W0, RW0, 
+      KL_prev, KL, P0m,
+      max_s_rho,Residual, distance_field, KLidx_field);
+      
+    if iter == INIT_ITER
       gain = F - Fnew;
     else
-      [Fnew, JtJ, JtF, KL, P0m, ResidualNew] = TryVelRot(
-        0,1,X,Vel,RVel, W0, RW0, 
-        KL, P0m,
-        max_s_rho,Residual, distance_field, KLidx_field);
       gain = (F-Fnew)/(0.5 * h' * (u*h-JtF));
-    end
+    end     
     
     if gain > 0
       F=Fnew;
@@ -386,9 +413,9 @@ end
   
   
   X = [Vel; W0]; %usePriors
-  [F, JtJ, JtF, KL, P0m, ResidualNew] = TryVelRot(
+  [F, JtJ, JtF, KL_prev, P0m, ResidualNew] = TryVelRot(
     0,1,X,Vel,RVel, W0, RW0, 
-    KL, P0m,
+    KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field);
   F0 = F; 
   u = conf.TAU * max(max(JtJ));
@@ -402,18 +429,21 @@ end
     Xnew = X+h;
     
     if iter == INIT_ITER
-      [Fnew, JtJ, JtF, KL, P0m, ResidualNew] = TryVelRot(
-        0,0,X,Vel,RVel, W0, RW0, 
-        KL, P0m,
-        max_s_rho,Residual, distance_field, KLidx_field);
+      ProcJF = 0;
+    else
+      ProcJF = 1;
+    end   
+    
+    [Fnew, JtJ, JtF, KL_prev, P0m, ResidualNew] = TryVelRot(
+      0,ProcJF,X,Vel,RVel, W0, RW0, 
+      KL_prev, KL, P0m,
+      max_s_rho,Residual, distance_field, KLidx_field);
+      
+    if iter == INIT_ITER
       gain = F - Fnew;
     else
-      [Fnew, JtJ, JtF, KL, P0m, ResidualNew] = TryVelRot(
-        0,1,X,Vel,RVel, W0, RW0, 
-        KL, P0m,
-        max_s_rho,Residual, distance_field, KLidx_field);
       gain = (F-Fnew)/(0.5 * h' * (u*h-JtF));
-    end
+    end  
     
     if gain > 0
       F=Fnew;
@@ -444,9 +474,9 @@ end
   ResidualNew = tRes;
   
   %reweight
-  [F, JtJ, JtF, KL, P0m, ResidualNew] = TryVelRot(
+  [F, JtJ, JtF, KL_prev, P0m, ResidualNew] = TryVelRot(
     1,1,X,Vel,RVel, W0, RW0, 
-    KL, P0m,
+    KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field);
   F0 = F; 
   u = conf.TAU * max(max(JtJ));
@@ -461,9 +491,9 @@ end
     h = cv.SVD.BackSubst(U, D, Vt, -JtF); % back substitution
     
     Xnew = X+h;
-    [Fnew, JtJnew, JtFnew, KL, P0m, ResidualNew] = TryVelRot(
+    [Fnew, JtJnew, JtFnew, KL_prev, P0m, ResidualNew] = TryVelRot(
       1,1,Xnew,Vel,RVel, W0, RW0, 
-      KL, P0m,
+      KL_prev, KL, P0m,
       max_s_rho,Residual, distance_field, KLidx_field);
     
     gain = (F-Fnew)/(0.5*h'*(u*h-JtF));

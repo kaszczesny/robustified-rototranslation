@@ -48,6 +48,7 @@ conf.S_RHO_MIN = 1e-3; % starting uncertainty of histogram in EstimateQuantile
 conf.S_RHO_MAX = 20; % final uncertainty of histogram in EstimateQuantile
 conf.PERCENTILE = 0.9; % quantile threshold in EstimateQuantile
 conf.N_BINS = 100; %number of histogram bins in EstimateQuantile
+conf.S_RHO_INIT = 1e3; %todo: why 1e3
 
 % TryVelRot
 conf.MATCH_THRESH = 1.; % Match Gradient Treshold
