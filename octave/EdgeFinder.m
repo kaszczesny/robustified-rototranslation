@@ -1,5 +1,8 @@
 function [KL] = EdgeFinder(im_name)
 
+persistent frame_id = 0;
+frame_id++;
+
 %% CONFIG %%
 conf = Config();
 win_s = conf.win_s;
@@ -34,7 +37,7 @@ s_rho0  Predicted Inverse Depth Uncertainty (f)
         KLrhoPredict
 
 p_m     Subpixel position in homo coordinates (plane on focal length zf) (2d f)
-        KLposSubpix + principal_point
+        KLposSubpix - principal_point
 p_m_0   matched KL (subpixel) position in homo coordinates (2d f)
         #######
 
@@ -128,7 +131,7 @@ for yter = 1+win_s:size(dog, 1)-win_s
     ys_im(yter,xter) = ys;
     
     
-    if conf.visualize
+    if conf.visualize && 0
       disp([yter xter])
       VisualizeZeroCrossing(Y, theta, im_blurred2(yter+[-win_s:win_s], xter+[-win_s:win_s]))
       input('...');
@@ -176,23 +179,15 @@ if conf.visualize
   figure;imagesc(img);axis equal;
 end
 
-%% MOVE TO STRUCT %%
-KL = struct();
-KL.ctr = KLctr;
-KL.pos = KLpos;
-KL.posSubpix = KLposSubpix;
-KL.idx = KLidx;
-KL.grad = KLgrad;
-KL.rho = KLrho;
-KL.rhoPredict = KLrhoPredict;
-KL.forward = KLforward;
-KL.frames = KLframes;
-
-
 %% VISUALS %%
-[y x] = meshgrid(1:size(dog,2), 1:size(dog,1));
-figure; imagesc(edge_probability); axis equal; colormap jet; colorbar;
-hold on; quiver(ys_im+y, xs_im+x, vec_y, vec_x);
+if conf.visualize
+  [y x] = meshgrid(1:size(dog,2), 1:size(dog,1));
+  figure;
+  imagesc(edge_probability);
+  axis equal; colormap jet; colorbar;
+  hold on;
+  quiver(ys_im+y, xs_im+x, vec_y, vec_x);
+end
 
 keylines = zeros([size(im),3], 'uint8');
 for idx = 1:KLctr
@@ -210,6 +205,19 @@ for idx = 1:KLctr
     next = KLidx(next,2);
   end  
 end
+
+%% MOVE TO STRUCT %%
+KL = struct();
+KL.frame_id = frame_id;
+KL.ctr = KLctr;
+KL.pos = KLpos;
+KL.posSubpix = KLposSubpix;
+KL.idx = KLidx;
+KL.grad = KLgrad;
+KL.rho = KLrho;
+KL.rhoPredict = KLrhoPredict;
+KL.forward = KLforward;
+KL.frames = KLframes;
 
 if conf.visualize
   figure; imshow(keylines);

@@ -1,7 +1,7 @@
 function [ ...
   F, ...
   Vel, W0, RVel, RW0, ...
-  KL, ...
+  KL_prev, ...
   rel_error, rel_error_score, ...
   FrameCount ...
 ] = GlobalTracker (...
@@ -63,7 +63,7 @@ end
 function [...
     score, ...
     JtJ, JtF, KL_prev, ...
-    P0m, DResidualNew ...
+    DResidualNew ...
 ] = TryVelRot( ...
     ReWeight, ... % Rewighting switch
     ProcJF, ... % Calculate Jacobians or just energy score?
@@ -138,15 +138,25 @@ function [...
     % or if  keyline hasn't appeared in at least 2 consecutive frames
     % (exluding init)
     if KL_prev.rho(iter,2) > max_s_rho || ...
-       KL_prev.frames < min(conf.MATCH_NUM_THRESH, FrameCount)
+       KL_prev.frames(iter) < min(conf.MATCH_NUM_THRESH, FrameCount)
+
+      if conf.debug
+        if KL_prev.rho(iter,2) > max_s_rho
+          printf('KL #%d @frame #%d: rho uncertainty too high: %f', ...
+            iter, KL_prev.frame_id, KL_prev.rho(iter,2))
+        else
+          printf('KL #%d @frame #%d: has not appreared(%d, %d)', ...
+            iter, KL_prev.frame_id, KL_prev.frames(iter), FrameCount)
+        end
+      end
 
       fm(iter) = 0;
       df_dPi(iter, :) = 0;
       continue;
-      
+
     end
     
-    % convert to image coordinates (just add p.p.)
+    % convert to image coordinates (just re-add p.p.)
     p_pji_y = PtIm(iter, 1) + conf.principal_point(1); 
     p_pji_x = PtIm(iter, 2) + conf.principal_point(2); 
     
@@ -162,6 +172,11 @@ function [...
     %if outside border, consider it a mismatch
     if ( x<2 || y<2 || x>=conf.imgsize(2) || y>=conf.imgsize(1) )
       fm(iter) = conf.MAX_R/KL_prev.rho(iter, 2);
+      
+      if conf.debug
+        printf("KL #%d @ frame #%d: outside border after reprojection; y: %f, x: %f", ...
+          iter, KL_prev.frame_id, p_pji_y, p_pji_x);
+      end
       
       if(ReWeight)
         fm(iter) *= weight;
@@ -180,11 +195,10 @@ function [...
     % Calc_f_J was here
     
     % f_inx corresponds to (y,x)
-    
     kl_iter = KLidx_field(y,x); % index from current frame
     if kl_iter < 0
       df_dPi(iter, :) = 0;
-      fm(iter) = max_r ./ KL.rho(2);
+      fm(iter) = conf.MAX_R ./ KL_prev.rho(iter,2);
       fi = 0;
     else
       % Test_f_k was here - a quick test for KL match
@@ -198,7 +212,7 @@ function [...
       
       if abs(pablo_escobar - m2_norm_sq) > conf.MATCH_THRESH * m2_norm_sq
         df_dPi(iter, :) = 0;
-        fm(iter) = max_r ./ KL.rho(2);
+        fm(iter) = conf.MAX_R ./ KL_prev.rho(iter,2);
         fi = 0;
       else
         d = [p_pji_y p_pji_x] - KL.posSubpix(kl_iter,:);
@@ -212,7 +226,7 @@ function [...
         
         mnum += 1;
         KL_prev.forward(iter) = kl_iter;
-        fm(iter) = fi ./ KL_prev.grad(iter, 2);
+        fm(iter) = fi ./ KL_prev.rho(iter, 2);
         
       end  
     end
@@ -305,10 +319,11 @@ end
   conf = Config();
   % init_type is always 2
   max_s_rho = EstimateQuantile(KL_prev);
-  INIT_ITER = 2; % Actually controls ProcJF in TryVelRot (true or false depending on interation)
+  INIT_ITER = 2; % Actually controls ProcJF in TryVelRot (true or false depending on iteration)
   
 
   if size(KL_prev.idx , 1) < 1
+    'No keylines!'
     F = 0;
     return
   end
@@ -335,8 +350,8 @@ end
   Rest = zeros(pnum, 1);
   
   %converto to ltcv
-  P0Im(:,1) = KL_prev.posSubpix(:,1) + conf.principal_point(1); % y
-  P0Im(:,2) = KL_prev.posSubpix(:,2) + conf.principal_point(2); % x
+  P0Im(:,1) = KL_prev.posSubpix(:,1) - conf.principal_point(1); % y
+  P0Im(:,2) = KL_prev.posSubpix(:,2) - conf.principal_point(2); % x
   P0Im(:,3) = KL_prev.rho(:,1);
   
   %proyect (eq 4.) imgage -> 3d
@@ -357,10 +372,11 @@ end
   eff_steps = 0; %count how many times we gained
   
   %zero init
-  [F, JtJ, JtF, KL_prev, P0m, ResidualNew] = TryVelRot(
+  [F, JtJ, JtF, KL_prev, Rest] = TryVelRot(
     0,1,X,Vel,RVel, W0, RW0, 
     KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field);
+  
   F0 = F; 
   u = conf.TAU * max(max(JtJ));
   
@@ -375,9 +391,9 @@ end
       ProcJF = 0;
     else
       ProcJF = 1;
-    end    
+    end
     
-    [Fnew, JtJ, JtF, KL_prev, P0m, ResidualNew] = TryVelRot(
+    [Fnew, JtJnew, JtFnew, KL_prev, Rest] = TryVelRot(
       0,ProcJF,X,Vel,RVel, W0, RW0, 
       KL_prev, KL, P0m,
       max_s_rho,Residual, distance_field, KLidx_field);
@@ -413,7 +429,7 @@ end
   
   
   X = [Vel; W0]; %usePriors
-  [F, JtJ, JtF, KL_prev, P0m, ResidualNew] = TryVelRot(
+  [F, JtJ, JtF, KL_prev, ResidualNew] = TryVelRot(
     0,1,X,Vel,RVel, W0, RW0, 
     KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field);
@@ -434,8 +450,8 @@ end
       ProcJF = 1;
     end   
     
-    [Fnew, JtJ, JtF, KL_prev, P0m, ResidualNew] = TryVelRot(
-      0,ProcJF,X,Vel,RVel, W0, RW0, 
+    [Fnew, JtJnew, JtFnew, KL_prev, ResidualNew] = TryVelRot(
+      0,ProcJF,Xnew,Vel,RVel, W0, RW0, 
       KL_prev, KL, P0m,
       max_s_rho,Residual, distance_field, KLidx_field);
       
@@ -474,7 +490,7 @@ end
   ResidualNew = tRes;
   
   %reweight
-  [F, JtJ, JtF, KL_prev, P0m, ResidualNew] = TryVelRot(
+  [F0, JtJ, JtF, KL_prev, ResidualNew] = TryVelRot(
     1,1,X,Vel,RVel, W0, RW0, 
     KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field);
@@ -491,7 +507,7 @@ end
     h = cv.SVD.BackSubst(U, D, Vt, -JtF); % back substitution
     
     Xnew = X+h;
-    [Fnew, JtJnew, JtFnew, KL_prev, P0m, ResidualNew] = TryVelRot(
+    [Fnew, JtJnew, JtFnew, KL_prev, ResidualNew] = TryVelRot(
       1,1,Xnew,Vel,RVel, W0, RW0, 
       KL_prev, KL, P0m,
       max_s_rho,Residual, distance_field, KLidx_field);
@@ -527,8 +543,8 @@ end
   RW0 = RRV(4:6,4:6);
   
   if eff_steps>0
-    norm_h = h/sqrt(dot(h));
-    norm_X = X/sqrt(dot(X));
+    norm_h = h./sqrt(dot(h,h));
+    norm_X = X./sqrt(dot(X,X));
     rel_error = norm_h/(norm_X + 1e-30);
     rel_error_score = F/F0;
   else

@@ -39,6 +39,7 @@ conf.win_s = 2;
 conf.PosNegThresh = 0.2;
 
 conf.visualize = 0;
+conf.debug = 1;
 
 % auxiliary image
 conf.MAX_R = 5;

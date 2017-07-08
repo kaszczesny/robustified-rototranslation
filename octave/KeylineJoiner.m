@@ -65,7 +65,6 @@ for kl1 = 1:size(KLpos,1)
   
 end
 
-size(KLpos)
 KLpos -= 1;
 KLref = zeros(1, length(KLidx));
 
