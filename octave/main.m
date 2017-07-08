@@ -17,7 +17,7 @@ F = 0; %energy based on dot product of distance residuals
 Vel = zeros(3,1); %initial translation estimation (3 vector; init with zeros)
 W0 = zeros(3,1); %initial rotation estimation (3 vector; init with zeros)
 RVel = eye(3)*1e50; %uncertainty Model if the initial Vel estimate will be used as prior (3x3 matrix; init with eye*1e50)
-RW0 = eye(3)*1e-10; %uncertainty Model if the initial W0  estimate will be used as prior (3x3 matrix; init with eye*1e-10)
+RW0 = eye(3)*1e50;  %uncertainty Model if the initial W0  estimate will be used as prior (3x3 matrix; init with eye*1e50)
 rel_error = 0; %Estimated relative error on the state (init with zero)
 error_score = 0; %Estimated relative error on the score (init with 0)
 % aka rel_error_score
@@ -49,7 +49,7 @@ for frame=1:1
     KL1, ...
     rel_error, error_score, FrameCount ...
   ] = GlobalTracker (...
-      Vel, W0, RVel, RW0, ...
+      Vel, W0, ...
       KL1, KL2, ...
       rel_error, error_score, FrameCount ...
   );
@@ -73,7 +73,7 @@ for frame=1:1
       %todo: forward rotate old KL points
       %todo: forward match from old edge map to new, using minimization result
       %todo: Match from the new EdgeMap to the old one searching on the stereo line
-      if klm_num < conf.GLOBAL_MATCH_THRESHOLD
+      if klm_num < conf.GLOBAL_MATCH_THRESHOLD && 0 %todo: remove 0
         RVel = eye(3)*1e50;
         Vel = zeros(3,1);
         
@@ -102,7 +102,7 @@ for frame=1:1
   Pose = Pose * R;
   Pos += -Pose * Vel * K;
   
-  RVel = RVel ./ (dt_frame.^2);
+  % RVel = RVel ./ (dt_frame.^2); % quite no point in doing that
   
   if conf.debug
     if ~EstimationOk

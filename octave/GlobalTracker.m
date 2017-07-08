@@ -7,8 +7,8 @@ function [ ...
 ] = GlobalTracker (...
     Vel, ... %initial translation estimation (3 vector; init with zeros)
     W0, ... %initial rotation estimation (3 vector; init with zeros)
-    RVel, %uncertainty Model if the initial Vel estimate will be used as prior (3x3 matrix; init with eye*1e50)
-    RW0,  %uncertainty Model if the initial W0  estimate will be used as prior (3x3 matrix; init with eye*1e-10)
+    ... % RVel, %uncertainty Model if the initial Vel estimate will be used as prior (3x3 matrix; init with eye*1e50) - actually only returned
+    ... % RW0,  %uncertainty Model if the initial W0  estimate will be used as prior (3x3 matrix; init with eye*1e-10) - actually only returned (and actually 1e50)
     KL_prev, ...
     KL, ...
     rel_error, ... % Estimated relative error on the state (init with zero)
@@ -61,9 +61,9 @@ function [...
     ... % JtF, ... % Estimated Residual Matrix 6x1 - only returned
     VelRot, ... % Proposed state vector 6x1 [Translation Rotation]
     V0p, ... % Translation Model 3x1
-    PV0, ... % Model uncertainty 3x3
+    ... % PV0, ... % Model uncertainty 3x3 - actually not used
     W0p, ... % Rotation Model 3x1
-    PW0, ... % Model uncertainty 3x3
+    ... % PW0, ... % Model uncertainty 3x3 - actually not used
     KL_prev, KL, ... % keylines
     P0m, ... % linear transpose coodinates vector of 3D klist positions (vector or pnum*3)
     ... % pnum, ... % number of points
@@ -303,7 +303,7 @@ function [...
 end
 
 %%%%%%%%%%%%%% Minimizer_RV starts here %%%%%%%%%%%%%%
-                            
+
   %% AUXILIARY IMAGE %%
   [distance_field, KLidx_field] = AuxiliaryImage(KL);
   
@@ -319,6 +319,8 @@ end
       printf('No keylines @frame #%d!\n', KL_prev.frame_id)
     end  
     F = 0;
+    RVel = eye(3)*1e50;
+    RW0 = eye(3)*1e50;
     return
   end
 
@@ -367,7 +369,7 @@ end
   
   %zero init
   [F, JtJ, JtF, KL_prev, Rest] = TryVelRot(
-    0,1,X,Vel,RVel, W0, RW0, 
+    0,1,X,Vel, W0, 
     KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field);
   
@@ -388,7 +390,7 @@ end
     end
     
     [Fnew, JtJnew, JtFnew, KL_prev, Rest] = TryVelRot(
-      0,ProcJF,X,Vel,RVel, W0, RW0, 
+      0,ProcJF,X,Vel,W0, 
       KL_prev, KL, P0m,
       max_s_rho,Residual, distance_field, KLidx_field);
       
@@ -424,7 +426,7 @@ end
   
   X = [Vel; W0]; %usePriors
   [F, JtJ, JtF, KL_prev, ResidualNew] = TryVelRot(
-    0,1,X,Vel,RVel, W0, RW0, 
+    0,1,X,Vel,W0,
     KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field);
   F0 = F; 
@@ -445,7 +447,7 @@ end
     end   
     
     [Fnew, JtJnew, JtFnew, KL_prev, ResidualNew] = TryVelRot(
-      0,ProcJF,Xnew,Vel,RVel, W0, RW0, 
+      0,ProcJF,Xnew,Vel,W0,
       KL_prev, KL, P0m,
       max_s_rho,Residual, distance_field, KLidx_field);
       
@@ -485,7 +487,7 @@ end
   
   %reweight
   [F0, JtJ, JtF, KL_prev, ResidualNew] = TryVelRot(
-    1,1,X,Vel,RVel, W0, RW0, 
+    1,1,X,Vel,W0,
     KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field);
   F0 = F; 
@@ -502,7 +504,7 @@ end
     
     Xnew = X+h;
     [Fnew, JtJnew, JtFnew, KL_prev, ResidualNew] = TryVelRot(
-      1,1,Xnew,Vel,RVel, W0, RW0, 
+      1,1,Xnew,Vel,W0,
       KL_prev, KL, P0m,
       max_s_rho,Residual, distance_field, KLidx_field);
     
@@ -533,6 +535,7 @@ end
   Vel = X(1:3);
   W0 = X(4:6);
   
+  % Setting the uncertainties
   RVel = RRV(1:3, 1:3);
   RW0 = RRV(4:6,4:6);
   
