@@ -18,7 +18,6 @@ function [ ...
   % based on Minimizer_RV
   % performs Equation (8) minimization
   % returns total energy (?)
-  % todo: Check for minimization errors
   
 function [s_rho] = EstimateQuantile(KL)
   % based on edge_tracker EstimateQuantile
@@ -142,10 +141,10 @@ function [...
 
       if conf.debug
         if KL_prev.rho(iter,2) > max_s_rho
-          printf('KL #%d @frame #%d: rho uncertainty too high: %f', ...
+          printf('KL #%4d @frame #%d: rho uncertainty too high: %f\n', ...
             iter, KL_prev.frame_id, KL_prev.rho(iter,2))
         else
-          printf('KL #%d @frame #%d: has not appreared(%d, %d)', ...
+          printf('KL #%4d @frame #%d: has not appreared(%d, %d)\n', ...
             iter, KL_prev.frame_id, KL_prev.frames(iter), FrameCount)
         end
       end
@@ -174,7 +173,7 @@ function [...
       fm(iter) = conf.MAX_R/KL_prev.rho(iter, 2);
       
       if conf.debug
-        printf("KL #%d @ frame #%d: outside border after reprojection; y: %f, x: %f", ...
+        printf("KL #%4d @ frame #%d: outside border after reprojection; y: %f, x: %f\n", ...
           iter, KL_prev.frame_id, p_pji_y, p_pji_x);
       end
       
@@ -222,7 +221,7 @@ function [...
         
         fi = dot(d, u_m); %residual in direction of the gradient
         
-        df_dPi(iter, :) = u_m ./ KL.rho(iter,2);
+        df_dPi(iter, :) = u_m ./ KL_prev.rho(iter,2);
         
         mnum += 1;
         KL_prev.forward(iter) = kl_iter;
@@ -323,7 +322,7 @@ end
   
 
   if size(KL_prev.idx , 1) < 1
-    'No keylines!'
+    printf('No keylines @frame #%d!\n', KL_prev.frame_id)
     F = 0;
     return
   end
