@@ -49,16 +49,6 @@ function [s_rho] = EstimateQuantile(KL)
   end
 end
 
-function R = RotationMatrix(w)
-  % https://pixhawk.org/_media/dev/know-how/jlblanco2010geometry3d_techrep.pdf
-  % https://github.com/edrosten/TooN/blob/master/so3.h#L254
-  % w is a vector that defines rotation axis; it's length is the rotation angle
-  
-  skewSymmetric = [0 -w(3) w(2); w(3) 0 -w(1); -w(2) w(1) 0];
-  R = expm(skewSymmetric);
-  return 
-end
-
 function [...
     score, ...
     JtJ, JtF, KL_prev, ...
@@ -304,7 +294,10 @@ function [...
   score = dot(fm, fm); %dot product
  
   %if(UsePriors)
-    % doesn't matter, aways false
+    % doesn't matter, always false
+    % and wouldn't make sense otherwise (something seems to be missing)
+    % because uncertainties are read here, and they are set to meaningful
+    % values only after all TryVelRot calls
   %end
                                 
 end
@@ -322,7 +315,9 @@ end
   
 
   if size(KL_prev.idx , 1) < 1
-    printf('No keylines @frame #%d!\n', KL_prev.frame_id)
+    if conf.debug
+      printf('No keylines @frame #%d!\n', KL_prev.frame_id)
+    end  
     F = 0;
     return
   end

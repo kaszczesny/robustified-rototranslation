@@ -20,6 +20,7 @@ conf.scale = 1/3;
 conf.imgsize = [124, 409]; %todo: don't hardcode
 conf.principal_point =  [185.2157 607.1928] * conf.scale; %sort of half
 conf.zf = 718.856; %todo: zf_x and zf_y?
+conf.FPS = 60; % todo: get actual value from dataset
 %conf.im_name = '../data/IMG_20170402_145917_1.jpg';
 
   % DoG:
@@ -64,5 +65,8 @@ conf.RHO_INIT = 1; % init inverse depth
 conf.ITER_MAX = 10; % iterations of Farquad probably Eq. (9)
 conf.LM_INIT_V = 2; %lm params
 conf.TAU = 1e-3; %lm params
+
+%matching
+conf.GLOBAL_MATCH_THRESHOLD = 500; %if number of matched KL is below, estimation will be restarted
 
 end

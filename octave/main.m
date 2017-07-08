@@ -7,10 +7,12 @@ if ~exist('OPENCV')
   OPENCV = 1;
 end  
 
+conf = Config();
 
-KL1 = EdgeFinder(Config().im_name{1});
-KL2 = EdgeFinder(Config().im_name{2});
+KL1 = EdgeFinder(conf.im_name{1});
+KL2 = EdgeFinder(conf.im_name{2});
 
+% arguments/returns for GlobalTracker
 F = 0; %energy based on dot product of distance residuals
 Vel = zeros(3,1); %initial translation estimation (3 vector; init with zeros)
 W0 = zeros(3,1); %initial rotation estimation (3 vector; init with zeros)
@@ -27,21 +29,86 @@ Kp = 1;
 K = 1;
 P_Kp = 5e-6;
 
-[ ...
-  F, ...
-  Vel, W0, RVel, RW0, ...
-  KL1, ...
-  rel_error, error_score, FrameCount ...
-] = GlobalTracker (...
-    Vel, W0, RVel, RW0, ...
-    KL1, KL2, ...
-    rel_error, error_score, FrameCount ...
-);
+%other fluff
+Pos = zeros(3,1) %estimated position
+R = eye(3); % rotation matrix
+Pose = eye(3); % global rotation
+klm_num = 0;
+EstimationOk = 1;
 
-% check for minimization erros
-if any(isnan([Vel; W0]))
+for frame=1:1
+  % reset before new frame
   RVel = eye(3)*1e50;
-  Vel = zeros(3,1);
+  RW0 = eye(3)*1e50; %yup, 1e-10 is never used
+  R = eye(3);
+  EstimationOk = 1;
+
+  [ ...
+    F, ...
+    Vel, W0, RVel, RW0, ...
+    KL1, ...
+    rel_error, error_score, FrameCount ...
+  ] = GlobalTracker (...
+      Vel, W0, RVel, RW0, ...
+      KL1, KL2, ...
+      rel_error, error_score, FrameCount ...
+  );
+
+  % check for minimization erros
+  if any(isnan([Vel; W0]))
+    RVel = eye(3)*1e50;
+    Vel = zeros(3,1);
+    
+    Kp = 1;
+    P_Kp = 1e50;
+    
+    EstimationOk = 0;
+    if conf.debug
+      printf("Error in estimation\n");
+    end
+    
+  else
+      R0 = RotationMatrix(W0); %forward rotation
+      R = R0'; %backward rotation; todo: check
+      %todo: forward rotate old KL points
+      %todo: forward match from old edge map to new, using minimization result
+      %todo: Match from the new EdgeMap to the old one searching on the stereo line
+      if klm_num < conf.GLOBAL_MATCH_THRESHOLD
+        RVel = eye(3)*1e50;
+        Vel = zeros(3,1);
+        
+        Kp = 1;
+        P_Kp = 10;
+        
+        EstimationOk = 0;
+        if conf.debug
+          printf("KL match number too low: %4d, keylines: %4d\n", ...
+            klm_num, KL2.ctr);
+        end
+      else
+        %todo: regularize edgemap
+        %todo: improve depth using kalman
+        %todo: rescale depth
+      end
+  end
+  
+  if 1
+    dt_frame = 1./ conf.FPS;
+  else
+    % todo: dt_frame = current frame time - previous frame time
+  end
+
+  %estimate position and pose
+  Pose = Pose * R;
+  Pos += -Pose * Vel * K;
+  
+  RVel = RVel ./ (dt_frame.^2);
+  
+  if conf.debug
+    if ~EstimationOk
+      printf("Frame #4%d NOK\n", frame);
+    else
+      printf("Frame #4%d OK\n", frame);
+    end
+  end
 end
-  
-  
