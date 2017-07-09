@@ -2,11 +2,12 @@ function [distance_field, KLidx_field] = AuxiliaryImage (KL)
 
 conf = Config();
 
-distance_field = zeros(conf.imgsize);
+distance_field = zeros(conf.imgsize) - 1; % init with -1 for better visualization
 KLidx_field = zeros(conf.imgsize) - 1;
 
 for idx = 1:KL.ctr
-  for t=-conf.MAX_R:conf.MAX_R
+  for t=-conf.MAX_R:0.5:conf.MAX_R % floating increment will be slower, but looks so much better
+    % todo: check if floating increment gives better results
     x = KL.grad(idx, 2) * t + KL.posSubpix(idx, 2);
     y = KL.grad(idx, 1) * t + KL.posSubpix(idx, 1);
     
@@ -29,5 +30,7 @@ for idx = 1:KL.ctr
 end
 
 if conf.visualize
-  figure; imagesc(distance_field);axis equal
+  viz = -distance_field;
+  viz(viz == 1) = -conf.MAX_R - 2;
+  figure; imagesc(viz);axis equal
 end

@@ -106,26 +106,28 @@ function [...
   fm = zeros(pnum, 1); %weighted residuals
   df_dPi = zeros(pnum, 2); %weighted img derivative of residual
   
-  % perform SE3: Pos = Rot*Pos0 + Vel
+  % perform SE3: Pos = Rot*Pos0 + Vel     (eq. 5 an 2)
   Ptm = (R0 * P0m')';
   for iter=1:3
     Ptm(:, iter) += VelRot(iter);
   end
   
   % equation 3: 3d -> image
+  % from the paper: "Points from the previous edge-map (q_0, rho_0) are projected
+  %                  into the points (q_t, rho_t) by using the warping function tau.
   PtIm(:,3) = 1 ./ Ptm(:,3);
   Pz_zf = conf.zf * PtIm(:,3);
   PtIm(:,2) = Ptm(:,2) .* Pz_zf;
   PtIm(:,1) = Ptm(:,1) .* Pz_zf;
   
-  % klist in C in actually old keymap,
-  % while auxiliary field holds indexes for current keymap
+  % the klist argument in C is actually OLD keymap,
+  % while this->auxiliary field holds indexes for CURRENT keymap
   
   for iter = 1:pnum
     KL_prev.forward = -1; % reset forward match
     
     % don't use this keyline if uncertainty is too high
-    % or if  keyline hasn't appeared in at least 2 consecutive frames
+    % or if  keyline hasn't appeared in at least 2 consecutive frames (todo: investigate how that works)
     % (exluding init)
     if KL_prev.rho(iter,2) > max_s_rho || ...
        KL_prev.frames(iter) < min(conf.MATCH_NUM_THRESH, FrameCount)
@@ -146,7 +148,7 @@ function [...
 
     end
     
-    % convert to image coordinates (just re-add p.p.)
+    % convert to image coordinates (just re-add p.p.): q_t
     p_pji_y = PtIm(iter, 1) + conf.principal_point(1); 
     p_pji_x = PtIm(iter, 2) + conf.principal_point(2); 
     
@@ -156,14 +158,15 @@ function [...
     %estimate reweighting
     weight = 1;
     if ReWeight && abs(DResidual(iter)) > conf.REWEIGHT_DISTANCE
-      weight = conf.REWEIGHT_DISTANCE ./ abs(DResidual(iter));
+      weight = conf.REWEIGHT_DISTANCE ./ abs(DResidual(iter)); % Hubber norm
+      % it isn't squared, because fm is squared with a dot product at the end of the function
     end
     
     %if outside border, consider it a mismatch
     if ( x<2 || y<2 || x>=conf.imgsize(2) || y>=conf.imgsize(1) )
       fm(iter) = conf.MAX_R/KL_prev.rho(iter, 2);
       
-      if conf.debug
+      if conf.debug && 0
         printf("KL #%4d @ frame #%4d: outside border after reprojection; y: %f, x: %f\n", ...
           iter, KL_prev.frame_id, p_pji_y, p_pji_x);
       end
@@ -177,6 +180,9 @@ function [...
     end
     
     %temporairly rotate gradient on z axis for improved matching (?)
+    %todo: could this be the direction m_n? Seeing eq. 6 and `fi = dot(d, u_m);`, I'm almost certain
+    % from the paper: "A search for the closest edge in the new image is then performed
+    %                  in the perpendicular direction m_n, up to a distance of max_d pixels"
     kl_m_m_copy = KL_prev.grad(iter, :);
     
     KL_prev.grad(iter,1) = RM(2,1) * kl_m_m_copy(2) + RM(2,2) * kl_m_m_copy(1); % todo: possibly fucked up matrix coordinates
@@ -186,37 +192,44 @@ function [...
     
     % f_inx corresponds to (y,x)
     kl_iter = KLidx_field(y,x); % index from current frame
+    % if not -1, this is the closest (in image) KL to our KL_prev(iter) after it has been warped
     if kl_iter < 0
       df_dPi(iter, :) = 0;
       fm(iter) = conf.MAX_R ./ KL_prev.rho(iter,2);
       fi = 0;
     else
       % Test_f_k was here - a quick test for KL match
-      % f_m - gradient from current frame (extraced from aux)
+      % f_m - gradient from current frame (extraced from aux) - apparently the gradient is not normalized
       % kl - keyline from previous frame
-      m1 = KL.grad(kl_iter, :);
-      m2 = KL_prev.grad(iter, :);
+      m1 = KL.grad(kl_iter, :); % current frame non-normalized gradient
       
-      m2_norm_sq = dot(m2, m2);
+      m2 = KL_prev.grad(iter, :); %old frame normalized gradient
+      m2 = m2 ./ sqrt(dot(m2,m2)); %normalizing
+      
+      m2_norm_sq = dot(m2, m2); %pretty sure that will be always 1; todo: something is fishy here
       pablo_escobar = dot(m1, m2); 
       
+      % from the paper: "For the closest edge found, weak matching is performed by comparing
+      %                  the two gradients m_0 and m_n. If the difference is above a certain
+      %                  threshold then no match is found (...)
+      % | m1.m2 - m2.m2|/m2.m2 > theshold?
       if abs(pablo_escobar - m2_norm_sq) > conf.MATCH_THRESH * m2_norm_sq
         df_dPi(iter, :) = 0;
         fm(iter) = conf.MAX_R ./ KL_prev.rho(iter,2);
         fi = 0;
       else
-        d = [p_pji_y p_pji_x] - KL.posSubpix(kl_iter,:);
+        d = [p_pji_y p_pji_x] - KL.posSubpix(kl_iter,:); % the distance vector: q_t - q_n
         
         u_m = KL.grad(kl_iter, :);
-        u_m ./ sqrt(dot(u_m,u_m)); % normalized gradient
+        u_m = u_m ./ sqrt(dot(u_m,u_m)); % normalized gradient: m_n
         
-        fi = dot(d, u_m); %residual in direction of the gradient
+        fi = dot(d, u_m); %residual projected in direction of the gradient
         
-        df_dPi(iter, :) = u_m ./ KL_prev.rho(iter,2);
+        df_dPi(iter, :) = u_m ./ KL_prev.rho(iter,2); % todo: why?
         
         mnum += 1;
         KL_prev.forward(iter) = kl_iter;
-        fm(iter) = fi ./ KL_prev.rho(iter, 2);
+        fm(iter) = fi ./ KL_prev.rho(iter, 2); % d_m_i / sigma_rho_i
         
       end  
     end
@@ -232,33 +245,35 @@ function [...
     
   end
   
-  KL_prev_forward = KL_prev.forward;
+  KL_prev_forward = KL_prev.forward; % set the return parameter
   
   if(ProcJF)
-    
-    Jm = zeros(pnum, 6);
+    %contrary to comments in C, rho_t is used, not rho_p
+    %todo: why why WHY
+    Jm = zeros(pnum, 6); % LTCV Jacobian
     RhoTmp0 = zeros(pnum, 1);
     
     RhoTmp0 = conf.zf * PtIm(:, 3); %z coordinate constant mul
     
-    %x
+    %Jx = df_Pix * zf * rho_t
     Jm(:,2) = RhoTmp0 .* df_dPi(:,2);
-    %y
+    %Jy = df_Piy * zf * rho_t
     Jm(:,1) = RhoTmp0 .* df_dPi(:,1);
-    %z-x
+    %Jz = rho_t * qx_t * df_dPix + rho_t * qy_t * df_dPiy
+    %zx
     RhoTmp0 = PtIm(:,3) .* PtIm(:,2);
     Jm(:,3) = RhoTmp0 .* df_dPi(:,2);
-    %z-y
+    %zy
     RhoTmp0 = PtIm(:,3) .* PtIm(:,1);
     Jm(:,3) += RhoTmp0 .* df_dPi(:,1);
     
-    %x
+    %Jwy = Jy * pz_t
     Jm(:,5) = Jm(:,1) .* Ptm(:,3);
     Jm(:,5) += Jm(:,3) .* Ptm(:,1);
-    %y
+    %Jwx = Jx * pz_t
     Jm(:,4) = Jm(:,2) .* Ptm(:,3);
     Jm(:,4) += Jm(:,3) .* Ptm(:,2);
-    %z
+    %Jwz = -Jx * py_t + Jy * px_t
     RhoTmp0 = Jm(:,2) .*Ptm(:,1);
     Jm(:,6) = -1 * RhoTmp0;
     Jm(:,6) += Jm(:, 1) .* Ptm(:,2);
@@ -266,6 +281,8 @@ function [...
     %there should be a fragment to 0 the non-4-divisible knum, but due to no need for it in octave we'll omit this part
     
     %dot product on half of the JtJ
+    % JtJ = Jm' * Jm
+    % JtF = Jm' * fm
     for iter=1:6
       for jter=iter:6
         JtJ(iter, jter) = dot(Jm(:,iter), Jm(:,jter));
