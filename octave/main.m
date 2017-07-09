@@ -9,8 +9,10 @@ end
 
 conf = Config();
 
-KL1 = EdgeFinder(conf.im_name{1});
-KL2 = EdgeFinder(conf.im_name{2});
+KL = cell(10,1);
+for iter = 1:2
+  KL{iter} = EdgeFinder(conf.im_name{iter});
+end
 
 % arguments/returns for GlobalTracker
 F = 0; %energy based on dot product of distance residuals
@@ -30,13 +32,13 @@ K = 1;
 P_Kp = 5e-6;
 
 %other fluff
-Pos = zeros(3,1) %estimated position
+Pos = zeros(3,1); %estimated position
 R = eye(3); % rotation matrix
 Pose = eye(3); % global rotation
 klm_num = 0;
 EstimationOk = 1;
 
-for frame=1:1
+for frame=2:2
   % reset before new frame
   RVel = eye(3)*1e50;
   RW0 = eye(3)*1e50; %yup, 1e-10 is never used
@@ -46,11 +48,11 @@ for frame=1:1
   [ ...
     F, ...
     Vel, W0, RVel, RW0, ...
-    KL1, ...
+    KL{frame-1}, ...
     rel_error, error_score, FrameCount ...
   ] = GlobalTracker (...
       Vel, W0, ...
-      KL1, KL2, ...
+      KL{frame-1}, KL{frame}, ...
       rel_error, error_score, FrameCount ...
   );
 
@@ -83,7 +85,7 @@ for frame=1:1
         EstimationOk = 0;
         if conf.debug
           printf("KL match number too low: %4d, keylines: %4d\n", ...
-            klm_num, KL2.ctr);
+            klm_num, KL{frame}.ctr);
         end
       else
         %todo: regularize edgemap
@@ -106,9 +108,9 @@ for frame=1:1
   
   if conf.debug
     if ~EstimationOk
-      printf("Frame #4%d NOK\n", frame);
+      printf("Frame #%4d NOK\n", frame);
     else
-      printf("Frame #4%d OK\n", frame);
+      printf("Frame #%4d OK\n", frame);
     end
   end
 end

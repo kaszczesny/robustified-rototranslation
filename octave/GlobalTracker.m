@@ -51,7 +51,8 @@ end
 
 function [...
     score, ...
-    JtJ, JtF, KL_prev, ...
+    JtJ, JtF, ...
+    KL_prev_forward, ... % only forward field is updated
     DResidualNew ...
 ] = TryVelRot( ...
     ReWeight, ... % Rewighting switch
@@ -121,7 +122,7 @@ function [...
   % while auxiliary field holds indexes for current keymap
   
   for iter = 1:pnum
-    KL_prev.forward = -1;
+    KL_prev.forward = -1; % reset forward match
     
     % don't use this keyline if uncertainty is too high
     % or if  keyline hasn't appeared in at least 2 consecutive frames
@@ -131,10 +132,10 @@ function [...
 
       if conf.debug
         if KL_prev.rho(iter,2) > max_s_rho
-          printf('KL #%4d @frame #%d: rho uncertainty too high: %f\n', ...
+          printf('KL #%4d @frame #%4d: rho uncertainty too high: %f\n', ...
             iter, KL_prev.frame_id, KL_prev.rho(iter,2))
         else
-          printf('KL #%4d @frame #%d: has not appreared(%d, %d)\n', ...
+          printf('KL #%4d @frame #%4d: has not appreared(%d, %d)\n', ...
             iter, KL_prev.frame_id, KL_prev.frames(iter), FrameCount)
         end
       end
@@ -163,7 +164,7 @@ function [...
       fm(iter) = conf.MAX_R/KL_prev.rho(iter, 2);
       
       if conf.debug
-        printf("KL #%4d @ frame #%d: outside border after reprojection; y: %f, x: %f\n", ...
+        printf("KL #%4d @ frame #%4d: outside border after reprojection; y: %f, x: %f\n", ...
           iter, KL_prev.frame_id, p_pji_y, p_pji_x);
       end
       
@@ -230,6 +231,8 @@ function [...
     DResidualNew(iter) = fi;
     
   end
+  
+  KL_prev_forward = KL_prev.forward;
   
   if(ProcJF)
     
@@ -316,7 +319,7 @@ end
 
   if size(KL_prev.idx , 1) < 1
     if conf.debug
-      printf('No keylines @frame #%d!\n', KL_prev.frame_id)
+      printf('No keylines @frame #%4d!\n', KL_prev.frame_id)
     end  
     F = 0;
     RVel = eye(3)*1e50;
@@ -324,14 +327,14 @@ end
     return
   end
 
-  JtJ = zeros(6,6); % jacobian
-  ApI = zeros(6,6);
+  JtJ = zeros(6,6); % jacobian: J' * J       see Wikipedia
+  ApI = zeros(6,6); % [J' * J] + u * I       see Wikipedia
   JtJnew = zeros(6,6);
   
-  JtF = zeros(6,1); % estimated residuals 
+  JtF = zeros(6,1); % estimated residuals: (J' * [y - f(beta)])       see Wikipedia
   JtFnew = zeros(6,1);
   
-  h = zeros(6,1); %sth with JtJ, SVD and multiplying by JtF
+  h = zeros(6,1); % increment to the estimated parameter vector X
   X = zeros(6,1);
   Xnew = zeros(6,1);
   Xt = zeros(6,1);
@@ -360,24 +363,37 @@ end
   Fnew = 0;
   F0 = 0;
   
-  v = conf.LM_INIT_V;
+  v = conf.LM_INIT_V; % u is multiplied by v if there is no gain (step towards gradient descent)
+  % in case of consecutive lack of gain, v gets even larger (v *= 2); any successful update sets it back to 2
   
-  u = 0;
+  u = 0; % u seems to be the damping parameter (lambda in Wikipedia notation)
   gain = 0;
   
   eff_steps = 0; %count how many times we gained
   
-  %zero init
-  [F, JtJ, JtF, KL_prev, Rest] = TryVelRot(
+  %zero init (X is zeros)
+  %no reweighting, calculate jacobians
+  % input Residual doesn't really matter, because there is no reweighting
+  [F, JtJ, JtF, KL_prev.forward, Rest] = TryVelRot(
     0,1,X,Vel, W0, 
     KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field);
   
   F0 = F; 
-  u = conf.TAU * max(max(JtJ));
+  u = conf.TAU * max(max(JtJ)); % see:
+  % Madsen, K., Nielsen, N., and Tingleff, O.: 2004, Methods for nonlinear least squares problems.
+  % eq. 3.14
   
+  % two iterations, first with calculating Jacobians, then without
+  %   (because they won't be used - ultimate we need Xnew and Fnew)
+  % sill no reweighting
+  % if there is any gain, save: score, VelRot, Jacobians, JtF;
+  %   and reduce damping parameter (usualy by factor 0.33)
+  % final residuals are in Rest
   for iter = 1:INIT_ITER
-    ApI = JtJ + eye(6) * u;
+    % solve [JtJ + u*I]*h=-JtF
+    % todo: afaik ApI is positive definite for u > 0, which means that Cholesky could be always used
+    ApI = JtJ + eye(6) * u; % todo: use Marquadt refinement: ApI = JtJ + diag(JtJ) * u
     [U, D, Vt] = cv.SVD.Compute(ApI); 
     h = cv.SVD.BackSubst(U, D, Vt, -JtF); % back substitution
    
@@ -389,7 +405,7 @@ end
       ProcJF = 1;
     end
     
-    [Fnew, JtJnew, JtFnew, KL_prev, Rest] = TryVelRot(
+    [Fnew, JtJnew, JtFnew, KL_prev.forward, Rest] = TryVelRot(
       0,ProcJF,X,Vel,W0, 
       KL_prev, KL, P0m,
       max_s_rho,Residual, distance_field, KLidx_field);
@@ -397,7 +413,9 @@ end
     if iter == INIT_ITER
       gain = F - Fnew;
     else
-      gain = (F-Fnew)/(0.5 * h' * (u*h-JtF));
+      gain = (F-Fnew)/(0.5 * h' * (u*h-JtF)); % see:
+      % Madsen, K., Nielsen, N., and Tingleff, O.: 2004, Methods for nonlinear least squares problems.
+      % "gain ratio" just below eq. 3.14
     end     
     
     if gain > 0
@@ -405,7 +423,8 @@ end
       X=Xnew;
       JtJ = JtJnew;
       JtF = JtFnew;
-      u *= max( 0.33, 1-((2*gain-1)^3));
+      u *= max( 0.33, 1-((2*gain-1)^3)); % todo: this seems dumb (but maybe it's a feature)
+      % gain will usually be large, so second expression will be a large negative, so 0.33 will be always selected
       v = 2;
       eff_steps++;
     else
@@ -414,18 +433,20 @@ end
     end
   end
   
+  % save zero-init results into temp variables
   Xt = X;
-  Ft = F;
-  F0t = F0;
+  Ft = F; %score after three iterations
+  F0t = F0; %score after first iteration
   ut = u;
   vt = v;
   eff_steps_t = eff_steps;
   
   eff_steps = 0;
   
-  
+  %initialization with prior velocity and rotation
+  %exactly the same as above, with different X (duh!) and ResidualNew instead of Rest
   X = [Vel; W0]; %usePriors
-  [F, JtJ, JtF, KL_prev, ResidualNew] = TryVelRot(
+  [F, JtJ, JtF, KL_prev.forward, ResidualNew] = TryVelRot(
     0,1,X,Vel,W0,
     KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field);
@@ -446,7 +467,7 @@ end
       ProcJF = 1;
     end   
     
-    [Fnew, JtJnew, JtFnew, KL_prev, ResidualNew] = TryVelRot(
+    [Fnew, JtJnew, JtFnew, KL_prev.forward, ResidualNew] = TryVelRot(
       0,ProcJF,Xnew,Vel,W0,
       KL_prev, KL, P0m,
       max_s_rho,Residual, distance_field, KLidx_field);
@@ -471,22 +492,24 @@ end
     end
   end
   
+  % restore that state that was best
   if F>Ft
     X = Xt;
     F = Ft;
     F0 = F0t;
-    u = ut;
+    u = ut; %u and v will be overwritten in a moment :-(
     v = vt;
     eff_steps = eff_steps_t;
     ResidualNew = Rest;
   end
   
-  tRes = Residual;
+  %swap Residual with ResidualNew
+  %Residual contains only zeros at this point
   Residual = ResidualNew;
-  ResidualNew = tRes;
+  ResidualNew = Residual*0;
   
   %reweight
-  [F0, JtJ, JtF, KL_prev, ResidualNew] = TryVelRot(
+  [F0, JtJ, JtF, KL_prev.forward, ResidualNew] = TryVelRot(
     1,1,X,Vel,W0,
     KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field);
@@ -494,16 +517,20 @@ end
   u = conf.TAU * max(max(JtJ));
   v = 2;
   
+  %todo: why don't we check gain here?
+  
   for iter = 1:conf.ITER_MAX
     ApI = JtJ + eye(6) * u;
     
     %todo: Cholesky
+    %todo: check out +cv/solve.m
+    % Cholesky is faster than SVD, but unstable
     %[R, P, Q] = chol(ApI);
     [U, D, Vt] = cv.SVD.Compute(ApI); 
     h = cv.SVD.BackSubst(U, D, Vt, -JtF); % back substitution
     
     Xnew = X+h;
-    [Fnew, JtJnew, JtFnew, KL_prev, ResidualNew] = TryVelRot(
+    [Fnew, JtJnew, JtFnew, KL_prev.forward, ResidualNew] = TryVelRot(
       1,1,Xnew,Vel,W0,
       KL_prev, KL, P0m,
       max_s_rho,Residual, distance_field, KLidx_field);
@@ -518,6 +545,7 @@ end
       v = 2;
       eff_steps++;
       
+      % now they really have to be swapped
       tRes = Residual;
       Residual = ResidualNew;
       ResidualNew = tRes;
@@ -528,9 +556,13 @@ end
   end
   
   %todo: Cholesky
+  %todo: check out +cv/invert.m
   %[R, P, Q] = chol(JtJ);
   %todo: RRV
-  RRV = inv(JtJ);
+  RRV = inv(JtJ); % todo: some sources multiply this matrix by MSE, others not
+  % http://www.mathworks.com/help/stats/nlinfit.html#output_argument_d0e530105
+  % https://stats.stackexchange.com/questions/231868/relation-between-covariance-matrix-and-jacobian-in-nonlinear-least-squares
+  % Numerical Recipes p. 802 eq. 15.5.15
   
   Vel = X(1:3);
   W0 = X(4:6);
