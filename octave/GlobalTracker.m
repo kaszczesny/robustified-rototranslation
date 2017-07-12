@@ -366,8 +366,8 @@ end
   Rest = zeros(pnum, 1);
   
   %converto to ltcv
-  P0Im(:,1) = KL_prev.posSubpix(:,1) - conf.principal_point(1); % y
-  P0Im(:,2) = KL_prev.posSubpix(:,2) - conf.principal_point(2); % x
+  P0Im(:,1) = KL_prev.posImage(:,1); % y
+  P0Im(:,2) = KL_prev.posImage(:,2); % x
   P0Im(:,3) = KL_prev.rho(:,1);
   
   %proyect (eq 4.) imgage -> 3d

@@ -72,7 +72,10 @@ for frame=2:2
   else
       R0 = RotationMatrix(W0); %forward rotation
       R = R0'; %backward rotation; todo: check
-      %todo: forward rotate old KL points
+      
+      Matcher;
+      KL{frame-1} = ForwardRotate( KL{frame-1}, R );
+      
       %todo: forward match from old edge map to new, using minimization result
       %todo: Match from the new EdgeMap to the old one searching on the stereo line
       if klm_num < conf.GLOBAL_MATCH_THRESHOLD && 0 %todo: remove 0

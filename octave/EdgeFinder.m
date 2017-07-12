@@ -37,7 +37,7 @@ s_rho0  Predicted Inverse Depth Uncertainty (f)
         KLrhoPredict
 
 p_m     Subpixel position in homo coordinates (plane on focal length zf) (2d f)
-        KLposSubpix - principal_point
+        KLposImage
 p_m_0   matched KL (subpixel) position in homo coordinates (2d f)
         #######
 
@@ -64,6 +64,7 @@ net_id  Network ID of Keyline
 KLctr = 0;
 KLpos = []; % pixel position
 KLposSubpix = []; % subpixel position
+KLposImage = []; % subpixel position in image coordinates
 KLidx = []; % index of previous/next keyline
 KLgrad = []; % local third derivative vector
 KLrho = []; % estimated inverse depth and inverse depth uncertainty
@@ -154,6 +155,7 @@ for yter = 1+win_s:size(dog, 1)-win_s
     KLctr += 1;
     KLpos = [KLpos; yter, xter];
     KLposSubpix = [KLposSubpix; ys+yter, xs+xter];
+    KLposImage = [KLposImage; [ys+yter, xs+xter]-conf.principal_point];
     KLidx = [KLidx; 0, 0];
     KLgrad = [KLgrad; theta([2 1])'];
     KLrho = [KLrho; conf.RHO_INIT, conf.RHO_MAX];
@@ -212,6 +214,7 @@ KL.frame_id = frame_id;
 KL.ctr = KLctr;
 KL.pos = KLpos;
 KL.posSubpix = KLposSubpix;
+KL.posImage = KLposImage;
 KL.idx = KLidx;
 KL.grad = KLgrad;
 KL.rho = KLrho;
