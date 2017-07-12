@@ -1,4 +1,4 @@
-function [KL] = EdgeFinder(im_name)
+function [KL, img_mask] = EdgeFinder(im_name)
 
 persistent frame_id = 0;
 frame_id++;
@@ -39,10 +39,10 @@ s_rho0  Predicted Inverse Depth Uncertainty (f)
 p_m     Subpixel position in homo coordinates (plane on focal length zf) (2d f)
         KLposImage
 p_m_0   matched KL (subpixel) position in homo coordinates (2d f)
-        #######
+        KLposImageMatch
 
 m_id    Id of the matching KL
-        #######
+        KLmatching
 m_id_f  Id of the matching KL by forward matching
         KLforward
 
@@ -50,7 +50,7 @@ m_num   Number of consecutive matches (int)
         KLframes
 
 m_m0    Gradient of matched KL (2d f)
-        ######
+        KLmatchedGrad
 n_m0    Norm of m_m0 (f)
 
 p_id    ID of previous KL (int)
@@ -65,12 +65,17 @@ KLctr = 0;
 KLpos = []; % pixel position
 KLposSubpix = []; % subpixel position
 KLposImage = []; % subpixel position in image coordinates
+KLposImageMatch = []; % matched KL (subpixel) position in homo coordinates
 KLidx = []; % index of previous/next keyline
 KLgrad = []; % local third derivative vector
 KLrho = []; % estimated inverse depth and inverse depth uncertainty
 KLrhoPredict = []; % predicted inverse depth and inverse depth uncertainty
+KLmatching = []; % id of the matching keyline
 KLforward = []; % id of forward match
 KLframes = []; % number of consecutive matches
+KLmatchedGrad = []; % gradient of matched gradient
+
+img_mask = zeros(size(im));
 
 
 %% TESTS INIT %%
@@ -156,14 +161,20 @@ for yter = 1+win_s:size(dog, 1)-win_s
     KLpos = [KLpos; yter, xter];
     KLposSubpix = [KLposSubpix; ys+yter, xs+xter];
     KLposImage = [KLposImage; [ys+yter, xs+xter]-conf.principal_point];
+    % KLposImage is below
     KLidx = [KLidx; 0, 0];
     KLgrad = [KLgrad; theta([2 1])'];
     KLrho = [KLrho; conf.RHO_INIT, conf.RHO_MAX];
     KLrhoPredict = [KLrhoPredict; 0, 0];
+    KLmatching = [KLmatching; -1];
     KLforward = [KLforward; -1];
     KLframes = [KLframes; 0];
+    KLmatchedGrad = [KLmatchedGrad; 0, 0];
+    img_mask( yter, xter ) = KLctr;
   end
 end
+
+KLposImageMatch = KLposImage;
 
 
 %% KEYLINE JOINING %%
@@ -215,12 +226,15 @@ KL.ctr = KLctr;
 KL.pos = KLpos;
 KL.posSubpix = KLposSubpix;
 KL.posImage = KLposImage;
+KL.posImageMatch = KLposImageMatch;
 KL.idx = KLidx;
 KL.grad = KLgrad;
 KL.rho = KLrho;
 KL.rhoPredict = KLrhoPredict;
+KL.matching = KLmatching;
 KL.forward = KLforward;
 KL.frames = KLframes;
+KL.matchedGrad = KLmatchedGrad;
 
 if conf.visualize
   figure; imshow(keylines);

@@ -124,7 +124,7 @@ function [...
   % while this->auxiliary field holds indexes for CURRENT keymap
   
   for iter = 1:pnum
-    KL_prev.forward = -1; % reset forward match
+    KL_prev.forward(iter) = -1; % reset forward match
     
     % don't use this keyline if uncertainty is too high
     % or if  keyline hasn't appeared in at least 2 consecutive frames (todo: investigate how that works)

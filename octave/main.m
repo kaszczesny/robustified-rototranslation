@@ -8,10 +8,14 @@ if ~exist('OPENCV')
 end  
 
 conf = Config();
+Matcher; % load functions
 
-KL = cell(10,1);
+n_frames = 10;
+
+KL = cell(n_frames,1);
+img_mask = cell(n_frames,1);
 for iter = 1:2
-  KL{iter} = EdgeFinder(conf.im_name{iter});
+  [KL{iter}, img_mask{iter}] = EdgeFinder(conf.im_name{iter});
 end
 
 % arguments/returns for GlobalTracker
@@ -73,12 +77,12 @@ for frame=2:2
       R0 = RotationMatrix(W0); %forward rotation
       R = R0'; %backward rotation; todo: check
       
-      Matcher;
-      KL{frame-1} = ForwardRotate( KL{frame-1}, R );
+      KL{frame-1} = ForwardRotate( KL{frame-1}, R ); % forward match from old edge map to new, using minimization result
       
-      %todo: forward match from old edge map to new, using minimization result
-      %todo: Match from the new EdgeMap to the old one searching on the stereo line
-      if klm_num < conf.GLOBAL_MATCH_THRESHOLD && 0 %todo: remove 0
+      %Match from the new EdgeMap to the old one searching on the stereo line
+      [klm_num, KL{frame}] = DirectedMatching(...
+          Vel, RVel, R, KL{frame-1}, img_mask{frame-1}, KL{frame});
+      if klm_num < conf.GLOBAL_MATCH_THRESHOLD
         RVel = eye(3)*1e50;
         Vel = zeros(3,1);
         
@@ -93,7 +97,7 @@ for frame=2:2
       else
         %todo: regularize edgemap
         %todo: improve depth using kalman
-        %todo: rescale depth
+        [KL{frame}, Kp, P_Kp] = EstimateReScaling(KL{frame}); % optionally rescale depth
       end
   end
   
