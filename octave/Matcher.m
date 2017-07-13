@@ -42,7 +42,7 @@ function [nmatch, KL] = DirectedMatching(...
     
     % clone data from previous keylines
     KL.rho(iter,:) = KL_prev.rho(i_mch,:);
-    KL.matching = i_mch;
+    KL.matching(iter) = i_mch;
     KL.frames(iter) = KL_prev.frames(i_mch) + 1;
     KL.posImageMatch(iter,:) = KL_prev.posImage(i_mch,:);
     KL.matchedGrad(iter,:) = KL_prev.grad(i_mch,:);
@@ -187,8 +187,19 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
 end
 
 function [r_num, KL] = Regularize1Iter(KL)
+  % performs regularization of depth and depth uncertainty
   
-  %thresh = conf.????
+
+  % from paper: "The underlying idea in this regularization step is
+  %              that close points in an image are likely to be close
+  %              in space. (...) In order to add some resilience to
+  %              this systematic error, neighbouring keylines are
+  %              double tested before performing regularization."
+  
+  thresh = Config().REGULARIZE_THRESH; % angular threshold
+  % estimated uncertainty is the cut-off
+  
+  % todo: thresh is cos(beta). Beta should be 45, not 60
   
   r_num = 0;
   
@@ -202,33 +213,47 @@ function [r_num, KL] = Regularize1Iter(KL)
       continue %no neighbors
     end
     
-    kn = KL.idx(iter,1);
-    pn = KL.idx(iter,2);
+    kn = KL.idx(iter,1); % next KL
+    pn = KL.idx(iter,2); % previous KL
     
-    if (KL.rho(kn,1) - KL.rho(kp,1)) > dot(KL.rho(kn,2), KL.rho(kp,2))
-      continue %uncertainty test
+    rho = KL.rho(iter,1)^2;
+    rho_p = KL.rho(pn,1)^2;
+    rho_n = KL.rho(kn,1)^2;
+    
+    % sigma is generally s_rho.^2
+    sigma = KL.rho(iter,2)^2;
+    sigma_p = KL.rho(pn,2)^2;
+    sigma_n = KL.rho(kn,2)^2;
+    
+    if (rho_n - rho_p).^2 > sigma_n + sigma_p
+      % todo: in article it's a bit different (eq 15):
+      %  abs(rho_n - rho_p) > sigma_n + sigma_p
+      %  ^ this was squared    ^ this wasn't 
+      continue %uncertainty test (probabilistic)
     end
     
-    alpha = ( KL.grad(kn,1)*KL.grad(kp,1) + KL.grad(kn,2)*KL.grad(kp,2) ) / ...
-    (dot(KL.grad(kn,:)) * dot(KL.grad(kp,:)));
+    kn_grad = KL.grad(kn,:);
+    kp_grad = KL.grad(pn,:);
+    
+    alpha = dot(kn_grad, kp_grad) ./ ...
+      (sqrt(dot(kn_grad, kn_grad)) * sqrt(dot(kp_grad, kp_grad)));
     
     if alpha - thresh < 0
+      % regularization is only performed if final alpha is > 0
       continue
     end
     
-    alpha = (alpha-thresh)/(1-thresh);
-    wr = 1/(KL.rho(iter,2)^2);
-    wrn = alpha/(KL.rho(kn,2)^2);
-    wrp = alpha/(KL.rho(kp,2)^2);
+    alpha = (alpha-thresh)/(1-thresh); % weighting factor: [0, 1]
     
-    r(iter) = ( KL.rho(iter,1) * wr + ...
-                KL.rho(kn,1) * wrn + ...
-                KL.rho(kp,1) * wrp ) / ...
-                (wr + wrn + wrp);
-    s(iter) = ( KL.rho(iter,2) * wr + ...
-                KL.rho(kn,2) * wrn + ...
-                KL.rho(kp,2) * wrp ) / ...
-                (wr + wrn + wrp);  
+    wr = 1/sigma;
+    wrn = alpha/sigma_n;
+    wrp = alpha/sigma_p;
+    
+    r(iter) = dot([wrn wr wrp], [rho_n rho rho_p]) / ...
+      sum([wrn wr wrp]);
+    % todo: have used s_rho squared
+    s(iter) = dot([wrn wr wrp], [sigma_n sigma sigma_p]) / ...
+      sum([wrn wr wrp]);
       
     mask(iter) = 1;
     r_num++;    
@@ -240,52 +265,59 @@ function [r_num, KL] = Regularize1Iter(KL)
     end
   end
   
-  return r_num;
+  return
 end
 
 function [KL] = UpdateInverseDepthKalman(...
  Vel, RVel, RW0, KL) % 1e-5
  
+  % todo: use openCV kalman
+  
+  conf = Config();
+  zf = conf.zf;
+ 
   for (iter = 1:KL.ctr)
-    if KL.matching(iter) >=0
+    if KL.matching(iter) < 0
+      continue
+    end  
     
-    zf = conf.zf;
-    
-    %debug cout, pomijam
+    %debug cout panic
     KL.rhoPredict(iter,2) = KL.rho(iter,2);
     
-    qx = KL.posImage(iter,2);
-    qy = KL.posImage(iter,1);
+    q = KL.posImage(iter,:);
     
-    q0x = KL.posImageMatch(iter,2);
-    q0y = KL.posImageMatch(iter,1);
+    q0 = KL.posImageMatch(iter,:);
     
     v_rho = KL.rho(iter,2)^2;
     
-    u_x = KL.matchedGrad(iter,2) / ...
-          dot(KL.matchedGrad(iter,:), KL.matchedGrad(iter,:));
-    u_y = KL.matchedGrad(iter,1) / ...
-          dot(KL.matchedGrad(iter,:), KL.matchedGrad(iter,:));
+    u = KL.matchedGrad(iter,:);
+    u /= sqrt(dot(u,u));
     
-    Y = u_x * (qx-q0x) + u_y*(qy-q0y);
-    H = u_x * (Vel(2)*zf - Vel(3)*q0x) + ...
-        u_y * (Vel(1)*zf - Vel(3)*q0y);
+    %pixel displacement projected on u
+    Y = dot(u, (q-q0));
+    H = Vel(1:2)'*zf - q0*Vel(3);
+    H = dot(u, H);
         
-    rho_p = 1 / ( 1/KL.rh(iter,1) + Vel(3) ); %inv depth
+    rho_p = 1 / ( 1/KL.rho(iter,1) + Vel(3) ); %predicted inv depth
     KL.rhoPredict(iter,1) = rho_p;
     
-    F = 1 / (1+ KL.rho(iter,1) * Vel(3)); %jacobian
+    F = 1 / (1+ KL.rho(iter,1) * Vel(3)); %jacobian strikes back
     F *= F;
-    p_p = F*v_rho*F + (KL.rho(iter,1)*conf.RESHAPE_Q_RELATIVE)^2 + ...
-          rho_p^2*RVel(3,3)*rho_p^2 + conf.RESHAPE_Q_ABSOLUTE^2;
+    
+    p_p = F*v_rho*F + ... % uncertainty propagation
+          (KL.rho(iter,1)*conf.RESHAPE_Q_RELATIVE)^2 + ... % relative uncertainty model
+          rho_p^2 * RVel(3,3) * rho_p^2 + ... % uncertainty on the Z velocity
+          conf.RESHAPE_Q_ABSOLUTE^2; % absolute uncertainty model
           
-    e = Y-H*rho_p
+    e = Y-H*rho_p; % error correction
+    
+    %partial derivative of the correction equation with respect to uncertainty sources
     Mk = [ -1 ,
-          u_x*rho_p*zf ,
-          u_y*rho_p*zf ,
-          -rho_p*(u_x*q0x + u_y*q0y) ,
-          u_x*(rho_p*Vel(3) ,
-          u_y*rho_p*Vel(3) ];
+          u(1)*rho_p*zf,
+          u(2)*rho_p*zf,
+          -rho_p * dot(u, q0),
+          u(1)*rho_p*Vel(3),
+          u(2)*rho_p*Vel(3) ]';
     
     R = zeros(6,6);
     loc_unc_sq = conf.LOCATION_UNCERTAINTY^2;
@@ -294,27 +326,28 @@ function [KL] = UpdateInverseDepthKalman(...
     R(5,5) = loc_unc_sq;
     R(6,6) = loc_unc_sq;
     
+    %Kalman update equations
     S = H*p_p*H + (Mk*R*Mk');
     K = p_p*H*(1/S);
     KL.rho(iter,1) = rho_p + K*e;
     v_rho = (1-K*H) * p_p;
     KL.rho(iter,2) = sqrt(v_rho);
     
+    % is inverse depth goes beyond limit, apply correction
     if(KL.rho(iter,1) < conf.S_RHO_MIN)
       KL.rho(iter,2) += conf.S_RHO_MIN - KL.rho(iter,1);
       KL.rho(iter,1) = conf.S_RHO_MIN;
-    else if KL.rho(iter,1) > conf.S_RHO_MAX
+    elseif KL.rho(iter,1) > conf.S_RHO_MAX
       KL.rho(iter,1) = conf.S_RHO_MAX;
-    else if sum(isnan(KL.rho(iter,:))) | ...
-            sum(isinf(KL.rho(iter,:)))
+    elseif sum(isnan(KL.rho(iter,:))) > 0 || ...
+            sum(isinf(KL.rho(iter,:))) > 0
       KL.rho(iter,1) = conf.RHO_INIT;
       KL.rho(iter,2) = conf.S_RHO_MAX;
-    else if KL.rho(iter,2) < 0
+    elseif KL.rho(iter,2) < 0
       KL.rho(iter,1) = conf.RHO_INIT;
       KL.rho(iter,2) = conf.S_RHO_MAX;
     end
   
-    end
   end
  
 end

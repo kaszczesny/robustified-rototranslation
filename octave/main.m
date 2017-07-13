@@ -82,7 +82,7 @@ for frame=2:2
       %Match from the new EdgeMap to the old one searching on the stereo line
       [klm_num, KL{frame}] = DirectedMatching(...
           Vel, RVel, R, KL{frame-1}, img_mask{frame-1}, KL{frame});
-      if klm_num < conf.GLOBAL_MATCH_THRESHOLD
+      if klm_num < conf.GLOBAL_MATCH_THRESHOLD && 0 % todo: remove 0
         RVel = eye(3)*1e50;
         Vel = zeros(3,1);
         
@@ -95,9 +95,17 @@ for frame=2:2
             klm_num, KL{frame}.ctr);
         end
       else
-        %todo: regularize edgemap
-        %todo: improve depth using kalman
-        [KL{frame}, Kp, P_Kp] = EstimateReScaling(KL{frame}); % optionally rescale depth
+      
+        %regularize edgemap
+        for i=1:2 % regularize twice
+          [r_num, KL{frame}] = Regularize1Iter(KL{frame});
+        end
+        
+        %improve depth using kalman
+        [KL{frame}] = UpdateInverseDepthKalman(Vel, RVel, RW0, KL{frame});
+        
+        % optionally rescale depth
+        [KL{frame}, Kp, P_Kp] = EstimateReScaling(KL{frame}); 
       end
   end
   
@@ -121,3 +129,6 @@ for frame=2:2
     end
   end
 end
+
+% general todo: check sqrts in norms and squares in variances
+% todo: more debug messages

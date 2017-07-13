@@ -59,7 +59,7 @@ conf.REWEIGHT_DISTANCE = 2.; % Distance cut-off for reweigthing (k_hubber/k_hube
   
 
 %global tracker
-conf.RHO_MAX = 20; % init inverse depth uncertainty
+conf.RHO_MAX = 20; % init inverse depth uncertainty; todo: merge with S_RHO_MAX?
 conf.RHO_INIT = 1; % init inverse depth
 
 conf.ITER_MAX = 10; % iterations of Farquad probably Eq. (9)
@@ -71,12 +71,20 @@ conf.GLOBAL_MATCH_THRESHOLD = 500; %if number of matched KL is below, estimation
 
 % DirectedMatching
 conf.MATCH_THRESH_MODULE = 1;
-
-%estimate rescaling
-conf.MATCH_NUM_MIN = 1; % Gradient matching threshold on the module
 conf.MATCH_THRESH_ANGLE_COS = cos(pi/4); % Gradient matching threshold on the angle
 conf.SEARCH_RANGE = 20; % Max Pixel Distance to search for
 conf.LOCATION_UNCERTAINTY_MATCH = 2; % Modelled Pixel uncertainty on the matching step
+
+%regularization
+conf.REGULARIZE_THRESH = 0.5; % threshold on gradient
+
+%Kalman
+conf.RESHAPE_Q_ABSOLUTE = 1e-4; % Constant uncertainty added to depth error
+conf.RESHAPE_Q_RELATIVE = 1e-2; % Relative uncertainty added to depth error
+conf.LOCATION_UNCERTAINTY = 1; % Location error [px]
+
+%estimate rescaling
+conf.MATCH_NUM_MIN = 1; % Gradient matching threshold on the module
 
 
 end
