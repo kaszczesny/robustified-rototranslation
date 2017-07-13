@@ -186,12 +186,136 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
   
 end
 
-function [KL] = Regularize1Iter(KL)
-
+function [r_num, KL] = Regularize1Iter(KL)
+  
+  %thresh = conf.????
+  
+  r_num = 0;
+  
+  r = zeros(KL.ctr,1);
+  s = zeros(KL.ctr,1);
+  
+  mask = zeros(KL.ctr,1);
+  
+  for iter=1:KL.ctr
+    if (KL.idx(iter,1) == 0 || KL.idx(iter,2) == 0)
+      continue %no neighbors
+    end
+    
+    kn = KL.idx(iter,1);
+    pn = KL.idx(iter,2);
+    
+    if (KL.rho(kn,1) - KL.rho(kp,1)) > dot(KL.rho(kn,2), KL.rho(kp,2))
+      continue %uncertainty test
+    end
+    
+    alpha = ( KL.grad(kn,1)*KL.grad(kp,1) + KL.grad(kn,2)*KL.grad(kp,2) ) / ...
+    (dot(KL.grad(kn,:)) * dot(KL.grad(kp,:)));
+    
+    if alpha - thresh < 0
+      continue
+    end
+    
+    alpha = (alpha-thresh)/(1-thresh);
+    wr = 1/(KL.rho(iter,2)^2);
+    wrn = alpha/(KL.rho(kn,2)^2);
+    wrp = alpha/(KL.rho(kp,2)^2);
+    
+    r(iter) = ( KL.rho(iter,1) * wr + ...
+                KL.rho(kn,1) * wrn + ...
+                KL.rho(kp,1) * wrp ) / ...
+                (wr + wrn + wrp);
+    s(iter) = ( KL.rho(iter,2) * wr + ...
+                KL.rho(kn,2) * wrn + ...
+                KL.rho(kp,2) * wrp ) / ...
+                (wr + wrn + wrp);  
+      
+    mask(iter) = 1;
+    r_num++;    
+  end
+  for (iter=1:KL.ctr)
+    if(mask(iter))
+      KL.rho(iter,1) = r(iter);
+      KL.rho(iter,2) = s(iter);
+    end
+  end
+  
+  return r_num;
 end
 
 function [KL] = UpdateInverseDepthKalman(...
  Vel, RVel, RW0, KL) % 1e-5
+ 
+  for (iter = 1:KL.ctr)
+    if KL.matching(iter) >=0
+    
+    zf = conf.zf;
+    
+    %debug cout, pomijam
+    KL.rhoPredict(iter,2) = KL.rho(iter,2);
+    
+    qx = KL.posImage(iter,2);
+    qy = KL.posImage(iter,1);
+    
+    q0x = KL.posImageMatch(iter,2);
+    q0y = KL.posImageMatch(iter,1);
+    
+    v_rho = KL.rho(iter,2)^2;
+    
+    u_x = KL.matchedGrad(iter,2) / ...
+          dot(KL.matchedGrad(iter,:), KL.matchedGrad(iter,:));
+    u_y = KL.matchedGrad(iter,1) / ...
+          dot(KL.matchedGrad(iter,:), KL.matchedGrad(iter,:));
+    
+    Y = u_x * (qx-q0x) + u_y*(qy-q0y);
+    H = u_x * (Vel(2)*zf - Vel(3)*q0x) + ...
+        u_y * (Vel(1)*zf - Vel(3)*q0y);
+        
+    rho_p = 1 / ( 1/KL.rh(iter,1) + Vel(3) ); %inv depth
+    KL.rhoPredict(iter,1) = rho_p;
+    
+    F = 1 / (1+ KL.rho(iter,1) * Vel(3)); %jacobian
+    F *= F;
+    p_p = F*v_rho*F + (KL.rho(iter,1)*conf.RESHAPE_Q_RELATIVE)^2 + ...
+          rho_p^2*RVel(3,3)*rho_p^2 + conf.RESHAPE_Q_ABSOLUTE^2;
+          
+    e = Y-H*rho_p
+    Mk = [ -1 ,
+          u_x*rho_p*zf ,
+          u_y*rho_p*zf ,
+          -rho_p*(u_x*q0x + u_y*q0y) ,
+          u_x*(rho_p*Vel(3) ,
+          u_y*rho_p*Vel(3) ];
+    
+    R = zeros(6,6);
+    loc_unc_sq = conf.LOCATION_UNCERTAINTY^2;
+    R(1,1) = loc_unc_sq;
+    R(2:4,2:4) = RVel;
+    R(5,5) = loc_unc_sq;
+    R(6,6) = loc_unc_sq;
+    
+    S = H*p_p*H + (Mk*R*Mk');
+    K = p_p*H*(1/S);
+    KL.rho(iter,1) = rho_p + K*e;
+    v_rho = (1-K*H) * p_p;
+    KL.rho(iter,2) = sqrt(v_rho);
+    
+    if(KL.rho(iter,1) < conf.S_RHO_MIN)
+      KL.rho(iter,2) += conf.S_RHO_MIN - KL.rho(iter,1);
+      KL.rho(iter,1) = conf.S_RHO_MIN;
+    else if KL.rho(iter,1) > conf.S_RHO_MAX
+      KL.rho(iter,1) = conf.S_RHO_MAX;
+    else if sum(isnan(KL.rho(iter,:))) | ...
+            sum(isinf(KL.rho(iter,:)))
+      KL.rho(iter,1) = conf.RHO_INIT;
+      KL.rho(iter,2) = conf.S_RHO_MAX;
+    else if KL.rho(iter,2) < 0
+      KL.rho(iter,1) = conf.RHO_INIT;
+      KL.rho(iter,2) = conf.S_RHO_MAX;
+    end
+  
+    end
+  end
  
 end
 
