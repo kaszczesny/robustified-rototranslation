@@ -77,7 +77,7 @@ for frame=2:2
       R0 = RotationMatrix(W0); %forward rotation
       R = R0'; %backward rotation; todo: check
       
-      KL{frame-1} = ForwardRotate( KL{frame-1}, R ); % forward match from old edge map to new, using minimization result
+      KL{frame-1} = ForwardRotate( KL{frame-1}, R' ); % forward match from old edge map to new, using minimization result
       
       %Match from the new EdgeMap to the old one searching on the stereo line
       [klm_num, KL{frame}] = DirectedMatching(...
