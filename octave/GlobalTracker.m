@@ -123,6 +123,8 @@ function [...
   % the klist argument in C is actually OLD keymap,
   % while this->auxiliary field holds indexes for CURRENT keymap
   
+  n_match_tryvelrot = 0;
+  
   for iter = 1:pnum
     KL_prev.forward(iter) = -1; % reset forward match
     
@@ -134,8 +136,8 @@ function [...
 
       if conf.debug
         if KL_prev.rho(iter,2) > max_s_rho
-          printf('KL #%4d @frame #%4d: rho uncertainty too high: %f\n', ...
-            iter, KL_prev.frame_id, KL_prev.rho(iter,2))
+          printf('KL #%4d @frame #%4d: rho uncertainty too high: %f (%f)\n', ...
+            iter, KL_prev.frame_id, KL_prev.rho(iter,2), max_s_rho)
         else
           printf('KL #%4d @frame #%4d: has not appreared(%d, %d)\n', ...
             iter, KL_prev.frame_id, KL_prev.frames(iter), FrameCount)
@@ -229,6 +231,7 @@ function [...
         KL_prev.forward(iter) = kl_iter;
         fm(iter) = fi ./ KL_prev.rho(iter, 2); % d_m_i / sigma_rho_i
         
+        n_match_tryvelrot++;
       end  
     end
     
@@ -242,6 +245,8 @@ function [...
     DResidualNew(iter) = fi;
     
   end
+  
+  n_match_tryvelrot
   
   KL_prev_forward = KL_prev.forward; % set the return parameter
   

@@ -397,7 +397,12 @@ function [KL, ...
     Kp = 1;
   end
 
-  P_Kp = 1./rTr;
+  % this value isn't really used anywhere, so we simply avoid div0 warning
+  %if rTr == 0
+    P_Kp = inf;
+  %else  
+  %  P_Kp = 1./rTr;
+  %end  
 
   % re_escale is always true
   KL.rho /= Kp;

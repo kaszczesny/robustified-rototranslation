@@ -38,12 +38,14 @@ Pose = eye(3); % global rotation
 klm_num = 0;
 EstimationOk = 1;
 
+KL_save = {};
 Vel_save = [];
 W0_save = [];
 RVel_save = [];
 RW0_save = [];
 
-for frame=2:9
+for frame=2:3
+  KL_save{end+1} = KL;
   KL_prev = KL;
   img_mask_prev = img_mask;
   
@@ -86,7 +88,7 @@ for frame=2:9
     
   else
       R0 = RotationMatrix(W0); %forward rotation
-      R = R0'; %backward rotation; todo: check
+      R = R0'; %backward rotation;
       
       KL_prev = ForwardRotate( KL_prev, R' );
       
@@ -96,7 +98,7 @@ for frame=2:9
       %Match from the new EdgeMap to the old one searching on the stereo line
       [klm_num, KL] = DirectedMatching(...
           Vel, RVel, R, KL_prev, img_mask_prev, KL);
-      if klm_num < conf.GLOBAL_MATCH_THRESHOLD && 0 % todo: remove 0
+      if klm_num < conf.GLOBAL_MATCH_THRESHOLD
         RVel = eye(3)*1e50;
         Vel = zeros(3,1);
         
