@@ -8,8 +8,10 @@ KLidx_field = zeros(conf.imgsize) - 1;
 for idx = 1:KL.ctr
   for t=-conf.MAX_R:0.5:conf.MAX_R % floating increment will be slower, but looks so much better
     % todo: check if floating increment gives better results
-    x = KL.grad(idx, 2) * t + KL.posSubpix(idx, 2);
-    y = KL.grad(idx, 1) * t + KL.posSubpix(idx, 1);
+    
+    u_m = KL.vers(idx,:);
+    x = u_m(2) * t + KL.posSubpix(idx, 2);
+    y = u_m(1) * t + KL.posSubpix(idx, 1);
     
     x = round(x);
     y = round(y);

@@ -203,10 +203,9 @@ function [...
       % kl - keyline from previous frame
       m1 = KL.grad(kl_iter, :); % current frame non-normalized gradient
       
-      m2 = KL_prev.grad(iter, :); %old frame normalized gradient
-      m2 = m2 ./ sqrt(dot(m2,m2)); %normalizing
+      m2 = KL_prev.grad(iter, :); %old frame gradient
       
-      m2_norm_sq = dot(m2, m2); %pretty sure that will be always 1; todo: something is fishy here
+      m2_norm_sq = KL_prev.norm(iter).^2;
       pablo_escobar = dot(m1, m2); 
       
       % from the paper: "For the closest edge found, weak matching is performed by comparing
@@ -220,8 +219,7 @@ function [...
       else
         d = [p_pji_y p_pji_x] - KL.posSubpix(kl_iter,:); % the distance vector: q_t - q_n
         
-        u_m = KL.grad(kl_iter, :);
-        u_m = u_m ./ sqrt(dot(u_m,u_m)); % normalized gradient: m_n
+        u_m = KL.vers(kl_iter, :);
         
         fi = dot(d, u_m); %residual projected in direction of the gradient
         
@@ -581,12 +579,14 @@ end
   % https://stats.stackexchange.com/questions/231868/relation-between-covariance-matrix-and-jacobian-in-nonlinear-least-squares
   % Numerical Recipes p. 802 eq. 15.5.15
   
+  MSE = 1;%(Residual' * Residual) / (KL_prev.ctr - 6);
+  
   Vel = X(1:3);
   W0 = X(4:6);
   
   % Setting the uncertainties
-  RVel = RRV(1:3, 1:3);
-  RW0 = RRV(4:6,4:6);
+  RVel = RRV(1:3, 1:3) * MSE;
+  RW0 = RRV(4:6,4:6) * MSE;
   
   if eff_steps>0
     norm_h = h./sqrt(dot(h,h));

@@ -18,6 +18,26 @@ function [KL] = ForwardRotate( KL, R )
   KL.grad(iter,:) = q(1:2);
 end
 
+function [nmatch, KL] = ForwardMatch(KL, KL_prev)
+  nmatch = 0;
+  for iter = 1:KL_prev.ctr
+    ikl_f = KL_prev.forward(iter);
+    if ikl_f < 0 || ikl_f < KL.ctr
+      continue
+    end
+  
+    % clone to new
+    KL.rho(ikl_f,:) = KL_prev.rho(iter);
+    KL.frames(ikl_f) = KL_prev.frames(iter) + 1;
+    KL.matching(ikl_f) = iter;
+    KL.posImageMatch(ikl_f,:) = KL_prev.posImage(iter,:);
+    KL.matchedGrad(ikl_f,:) = KL.grad(iter,:);
+    KL.matchedNorm(ikl_f) = KL.norm(iter);
+    
+    nmatch++;
+  end
+end
+
 function [nmatch, KL] = DirectedMatching(...
   Vel, RVel, R, KL_prev, KL_prev_img_mask, KL) %and constants
   
@@ -42,6 +62,7 @@ function [nmatch, KL] = DirectedMatching(...
     KL.frames(iter) = KL_prev.frames(i_mch) + 1;
     KL.posImageMatch(iter,:) = KL_prev.posImage(i_mch,:);
     KL.matchedGrad(iter,:) = KL_prev.grad(i_mch,:);
+    KL.matchedNorm(iter) = KL_prev.norm(i_mch);
     
     nmatch++;
     
@@ -104,8 +125,8 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
     end
   else
       % If no displacemt (not common) search in perpendicular direction of the edge
-      t = KL.grad(iter,:);
-      norm_t = sqrt(dot(t,t));
+      t = KL.grad(k,:);
+      norm_t = KL.norm(k,:);
       t /= norm_t;
       norm_t = 1;
       
@@ -116,8 +137,7 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
       t_steps = dq_max;
   end
   
-  norm_m = KL.grad(k,:);
-  norm_m = sqrt(dot(norm_m, norm_m));
+  norm_m = KL.norm(k,:);
   
   %displacement counters
   tn = dq_rho;
@@ -147,10 +167,9 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
         continue
       end
     
-      m_m = KL_prev.grad(j,:);;
-      norm_m0 = sqrt(dot(m_m, m_m));
+      norm_m0 = KL_prev.norm(j);
       
-      cang = dot(m_m, KL.grad(k,:)) / (norm_m0*norm_m);
+      cang = dot(KL_prev.grad(j,:), KL.grad(k,:)) / (norm_m0*norm_m);
       
       if cang < conf.MATCH_THRESH_ANGLE_COS || ...
          abs(norm_m0/norm_m - 1) > conf.MATCH_NUM_MIN
@@ -228,11 +247,8 @@ function [r_num, KL] = Regularize1Iter(KL)
       continue %uncertainty test (probabilistic)
     end
     
-    kn_grad = KL.grad(kn,:);
-    kp_grad = KL.grad(pn,:);
-    
-    alpha = dot(kn_grad, kp_grad) ./ ...
-      (sqrt(dot(kn_grad, kn_grad)) * sqrt(dot(kp_grad, kp_grad)));
+    alpha = dot(KL.grad(kn,:), KL.grad(pn,:)) ./ ...
+      (KL.norm(kn,:) * KL.norm(pn,:));
     
     if alpha - thresh < 0
       % regularization is only performed if final alpha is > 0
@@ -286,8 +302,7 @@ function [KL] = UpdateInverseDepthKalman(...
     
     v_rho = KL.rho(iter,2)^2;
     
-    u = KL.matchedGrad(iter,:);
-    u /= sqrt(dot(u,u));
+    u = KL.matchedGrad(iter,:) ./ KL.matchedNorm(iter);
     
     %pixel displacement projected on u
     Y = dot(u, (q-q0));

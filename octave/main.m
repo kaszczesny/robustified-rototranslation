@@ -12,12 +12,6 @@ Matcher; % load functions
 
 n_frames = 10;
 
-KL = cell(n_frames,1);
-img_mask = cell(n_frames,1);
-for iter = 1:2
-  [KL{iter}, img_mask{iter}] = EdgeFinder(conf.im_name{iter});
-end
-
 % arguments/returns for GlobalTracker
 F = 0; %energy based on dot product of distance residuals
 Vel = zeros(3,1); %initial translation estimation (3 vector; init with zeros)
@@ -35,6 +29,8 @@ Kp = 1;
 K = 1;
 P_Kp = 5e-6;
 
+[KL, img_mask] = EdgeFinder(conf.im_name(1));
+
 %other fluff
 Pos = zeros(3,1); %estimated position
 R = eye(3); % rotation matrix
@@ -42,7 +38,17 @@ Pose = eye(3); % global rotation
 klm_num = 0;
 EstimationOk = 1;
 
-for frame=2:2
+Vel_save = [];
+W0_save = [];
+RVel_save = [];
+RW0_save = [];
+
+for frame=2:9
+  KL_prev = KL;
+  img_mask_prev = img_mask;
+  
+  [KL, img_mask] = EdgeFinder(conf.im_name(frame));
+
   % reset before new frame
   RVel = eye(3)*1e50;
   RW0 = eye(3)*1e50; %yup, 1e-10 is never used
@@ -52,13 +58,18 @@ for frame=2:2
   [ ...
     F, ...
     Vel, W0, RVel, RW0, ...
-    KL{frame-1}, ...
+    KL_prev, ...
     rel_error, error_score, FrameCount ...
   ] = GlobalTracker (...
       Vel, W0, ...
-      KL{frame-1}, KL{frame}, ...
+      KL_prev, KL, ...
       rel_error, error_score, FrameCount ...
   );
+  
+  Vel_save = cat(2, Vel, Vel_save);
+  W0_save = cat(2, W0, W0_save);
+  RVel_save = cat(3, RVel, RVel_save);
+  RW0_save = cat(4, RW0, RW0_save);
 
   % check for minimization erros
   if any(isnan([Vel; W0]))
@@ -69,19 +80,22 @@ for frame=2:2
     P_Kp = 1e50;
     
     EstimationOk = 0;
-    if conf.debug
-      printf("Error in estimation\n");
+    if conf.debugMain
+      printf("frame #%4d: Error in estimation\n", frame);
     end
     
   else
       R0 = RotationMatrix(W0); %forward rotation
       R = R0'; %backward rotation; todo: check
       
-      KL{frame-1} = ForwardRotate( KL{frame-1}, R' ); % forward match from old edge map to new, using minimization result
+      KL_prev = ForwardRotate( KL_prev, R' );
+      
+      % forward match from old edge map to new, using minimization result
+      [~, KL] = ForwardMatch(KL, KL_prev);
       
       %Match from the new EdgeMap to the old one searching on the stereo line
-      [klm_num, KL{frame}] = DirectedMatching(...
-          Vel, RVel, R, KL{frame-1}, img_mask{frame-1}, KL{frame});
+      [klm_num, KL] = DirectedMatching(...
+          Vel, RVel, R, KL_prev, img_mask_prev, KL);
       if klm_num < conf.GLOBAL_MATCH_THRESHOLD && 0 % todo: remove 0
         RVel = eye(3)*1e50;
         Vel = zeros(3,1);
@@ -90,22 +104,22 @@ for frame=2:2
         P_Kp = 10;
         
         EstimationOk = 0;
-        if conf.debug
-          printf("KL match number too low: %4d, keylines: %4d\n", ...
-            klm_num, KL{frame}.ctr);
+        if conf.debugMain
+          printf("frame #%4d: KL match number too low: %4d, keylines: %4d\n", ...
+            frame, klm_num, KL.ctr);
         end
       else
       
         %regularize edgemap
         for i=1:2 % regularize twice
-          [r_num, KL{frame}] = Regularize1Iter(KL{frame});
+          [r_num, KL] = Regularize1Iter(KL);
         end
         
         %improve depth using kalman
-        [KL{frame}] = UpdateInverseDepthKalman(Vel, RVel, RW0, KL{frame});
+        [KL] = UpdateInverseDepthKalman(Vel, RVel, RW0, KL);
         
         % optionally rescale depth
-        [KL{frame}, Kp, P_Kp] = EstimateReScaling(KL{frame}); 
+        [KL, Kp, P_Kp] = EstimateReScaling(KL); 
       end
   end
   
@@ -121,7 +135,7 @@ for frame=2:2
   
   % RVel = RVel ./ (dt_frame.^2); % quite no point in doing that
   
-  if conf.debug
+  if conf.debugMain
     if ~EstimationOk
       printf("Frame #%4d NOK\n", frame);
     else

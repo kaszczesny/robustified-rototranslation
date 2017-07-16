@@ -4,18 +4,8 @@ function conf = Config()
 
 conf=struct();
 
-conf.im_name = {
-  '../data/KITTI/000050.png'
-  '../data/KITTI/000051.png'
-  '../data/KITTI/000052.png'
-  '../data/KITTI/000053.png'
-  '../data/KITTI/000054.png'
-  '../data/KITTI/000055.png'
-  '../data/KITTI/000056.png'
-  '../data/KITTI/000057.png'
-  '../data/KITTI/000058.png'
-  '../data/KITTI/000059.png'
-}  ;
+conf.im_name = @(x) sprintf("../data/KITTI/%.6d.png",x-1+50);
+
 conf.scale = 1/3;
 conf.imgsize = [124, 409]; %todo: don't hardcode
 conf.principal_point =  [185.2157 607.1928] * conf.scale; %sort of half
@@ -33,6 +23,7 @@ conf.sigma2 = 2.30029;
   % Test 1:
 conf.thresh_grad = 0.015;
 conf.max_img_value = 255;
+conf.detector_dog_thresh = 0.095259868922420; %Relation between DoG threshold and Gradient threshold ~1/Sigma0^4
 conf.test_1 = @(n2gI) n2gI > (conf.thresh_grad*conf.max_img_value).^2; % n2gI was squared, but didn't work
 
   % Test 2:
@@ -40,7 +31,8 @@ conf.win_s = 2;
 conf.PosNegThresh = 0.2;
 
 conf.visualize = 0;
-conf.debug = 1;
+conf.debugMain = 1;
+conf.debug = 0;
 
 % auxiliary image
 conf.MAX_R = 5;

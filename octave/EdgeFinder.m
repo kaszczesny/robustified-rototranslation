@@ -23,7 +23,9 @@ dog = double(im_blurred2) - double(im_blurred1);
 %{
 m_m     KLgrad (2d f)
 u_m     normalized KLgrad (2d f)
+        KLvers (like "versor")
 n_m     norm of KLgrad (f)
+        KLnorm
 
 c_p     KLposSubpix (2d f)
 round(c_p)  KLpos
@@ -51,7 +53,7 @@ m_num   Number of consecutive matches (int)
 
 m_m0    Gradient of matched KL (2d f)
         KLmatchedGrad
-n_m0    Norm of m_m0 (f)
+n_m0    KLmatchedNorm (f)
 
 p_id    ID of previous KL (int)
 n_id    ID of next KL (int)
@@ -68,12 +70,15 @@ KLposImage = []; % subpixel position in image coordinates
 KLposImageMatch = []; % matched KL (subpixel) position in homo coordinates
 KLidx = []; % index of previous/next keyline
 KLgrad = []; % local third derivative vector
+KLvers = []; % local third derivative versor
+KLnorm = []; % local third derivative vector norm
 KLrho = []; % estimated inverse depth and inverse depth uncertainty
 KLrhoPredict = []; % predicted inverse depth and inverse depth uncertainty
 KLmatching = []; % id of the matching keyline
 KLforward = []; % id of forward match
 KLframes = []; % number of consecutive matches
 KLmatchedGrad = []; % gradient of matched gradient
+KLmatchedNorm = []; % norm of matched gradient
 
 img_mask = zeros(size(im));
 
@@ -89,7 +94,8 @@ vec_y = dog*0;
   % todo switch x with y?
 img_dx = cv.filter2D(im_blurred2, [0 -1 0; 0 0 0; 0 1 0]');
 img_dy = cv.filter2D(im_blurred2, [0 -1 0; 0 0 0; 0 1 0] );
-n2gI = sqrt(img_dx.^2 + img_dy.^2);
+% there was concern whether this should be sqrt'ed or not, now seems better (at least for current dataset)
+n2gI = img_dx.^2 + img_dy.^2;
 
   %for test 2
 %Y = zeros((win_s*2+1).^2, 1);
@@ -102,6 +108,8 @@ for yter = -win_s:win_s
   end
 end
 PInv = pinv( Phi );
+
+% todo UpdateThresh conf.thresh_grad
 
 %% EDGE FINDER LOOP %%
 for yter = 1+win_s:size(dog, 1)-win_s
@@ -144,8 +152,16 @@ for yter = 1+win_s:size(dog, 1)-win_s
       close;
     end
     
+    % zero crossing inside or outside pixel area
     if max(abs([ys xs])) > 0.5;
       edge_probability(yter,xter) = 4;
+      continue
+    end
+    
+    % a test on dog was missing
+    n2_m = norm(theta(1:2)).^2;
+    if n2_m < conf.detector_dog_thresh * conf.thresh_grad * conf.max_img_value
+      edge_probability(yter,xter) = 5;
       continue
     end
     
@@ -155,7 +171,7 @@ for yter = 1+win_s:size(dog, 1)-win_s
     vec_x(yter,xter) = n(2); %weirdly, n(1) and n(2) are swapped
     vec_y(yter,xter) = n(1);
     
-    edge_probability(yter,xter) = 5;
+    edge_probability(yter,xter) = 6;
   
     KLctr += 1;
     KLpos = [KLpos; yter, xter];
@@ -164,12 +180,15 @@ for yter = 1+win_s:size(dog, 1)-win_s
     % KLposImage is below
     KLidx = [KLidx; 0, 0];
     KLgrad = [KLgrad; theta([2 1])'];
+    KLnorm = [KLnorm; sqrt(n2_m)];
+    KLvers = [KLvers; KLgrad(end,:) ./ n2_m];
     KLrho = [KLrho; conf.RHO_INIT, conf.RHO_MAX];
     KLrhoPredict = [KLrhoPredict; 0, 0];
     KLmatching = [KLmatching; -1];
     KLforward = [KLforward; -1];
     KLframes = [KLframes; 0];
     KLmatchedGrad = [KLmatchedGrad; 0, 0];
+    KLmatchedNorm = [KLmatchedNorm; 0];
     img_mask( yter, xter ) = KLctr;
   end
 end
@@ -178,7 +197,7 @@ KLposImageMatch = KLposImage;
 
 
 %% KEYLINE JOINING %%
-[KLidx, KLref] = KeylineJoiner((edge_probability == 5), KLpos, KLgrad, KLidx);
+[KLidx, KLref] = KeylineJoiner((edge_probability == 6), KLpos, KLgrad, KLidx);
 
 if conf.visualize
   img = im*0;
@@ -229,12 +248,15 @@ KL.posImage = KLposImage;
 KL.posImageMatch = KLposImageMatch;
 KL.idx = KLidx;
 KL.grad = KLgrad;
+KL.vers = KLvers;
+KL.norm = KLnorm;
 KL.rho = KLrho;
 KL.rhoPredict = KLrhoPredict;
 KL.matching = KLmatching;
 KL.forward = KLforward;
 KL.frames = KLframes;
 KL.matchedGrad = KLmatchedGrad;
+KL.matchedNorm = KLmatchedNorm;
 
 if conf.visualize
   figure; imshow(keylines);
