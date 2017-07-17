@@ -44,7 +44,7 @@ W0_save = [];
 RVel_save = [];
 RW0_save = [];
 
-for frame=2:3
+for frame=2:2
   KL_save{end+1} = KL;
   KL_prev = KL;
   img_mask_prev = img_mask;
@@ -143,6 +143,35 @@ for frame=2:3
     else
       printf("Frame #%4d OK\n", frame);
     end
+  end
+  
+  
+  if(conf.visualize)
+    figure()
+    pos1 =[];
+    pos2 =[];
+    im1 = imresize(imread(conf.im_name(frame-1)), conf.scale);
+    im2 = imresize(imread(conf.im_name(frame)), conf.scale);
+    imsize = size(im1);
+
+    for iter = 1:KL.ctr
+    if KL.matching(iter) != -1
+      pos1(end+1,:) = KL_prev.pos(KL.matching(iter),:);
+      pos2(end+1,:) = KL.pos(iter,:);
+      end
+    end
+
+    im_plot = [im1, im2; im2, zeros(imsize)];
+    imshow(im_plot);
+    hold on;
+
+    for iter = 1:length(pos1)
+      plot([pos1(iter,2), pos2(iter,2)+imsize(2)], ...
+            [pos1(iter,1), pos2(iter,1)], "-r");
+      plot([pos1(iter,2), pos2(iter,2)], ...
+            [pos1(iter,1), pos2(iter,1)+imsize(1)], "-r");
+    end
+    hold off;
   end
 end
 

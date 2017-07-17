@@ -410,6 +410,10 @@ end
   % if there is any gain, save: score, VelRot, Jacobians, JtF;
   %   and reduce damping parameter (usualy by factor 0.33)
   % final residuals are in Rest
+  
+  if conf.visualize_score
+    score_vec(1,:) = [F,0];
+  end
   for iter = 1:INIT_ITER
     % solve [JtJ + u*I]*h=-JtF
     % todo: afaik ApI is positive definite for u > 0, which means that Cholesky could be always used
@@ -447,6 +451,9 @@ end
       % gain will usually be large, so second expression will be a large negative, so 0.33 will be always selected
       v = 2;
       eff_steps++;
+      if conf.visualize_score
+        score_vec(end+1,:)  = [F,1];
+      end
     else
       u *= v;
       v *= 2;
@@ -473,6 +480,9 @@ end
   F0 = F; 
   u = conf.TAU * max(max(JtJ));
   v = 2;
+  if conf.visualize_score
+    score_vec(end+1,:)  = [F,2];
+  end
   
   for iter = 1:INIT_ITER
     ApI = JtJ + eye(6) * u;
@@ -506,6 +516,9 @@ end
       u *= max( 0.33, 1-((2*gain-1)^3));
       v = 2;
       eff_steps++;
+      if conf.visualize_score
+        score_vec(end+1,:)  = [F,3];
+      end
     else
       u *= v;
       v *= 2;
@@ -521,6 +534,9 @@ end
     v = vt;
     eff_steps = eff_steps_t;
     ResidualNew = Rest;
+    if conf.visualize_score
+      score_vec(end+1,:)  = [F,4];
+    end
   end
   
   %swap Residual with ResidualNew
@@ -529,13 +545,16 @@ end
   ResidualNew = Residual*0;
   
   %reweight
-  [F0, JtJ, JtF, KL_prev.forward, ResidualNew] = TryVelRot(
+  [F, JtJ, JtF, KL_prev.forward, ResidualNew] = TryVelRot(
     1,1,X,Vel,W0,
     KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field);
-  F0 = F; 
+  F0 = F;
   u = conf.TAU * max(max(JtJ));
   v = 2;
+  if conf.visualize_score
+    score_vec(end+1,:)  = [F,5];
+  end
   
   %todo: why don't we check gain here?
   
@@ -564,6 +583,9 @@ end
       u *= max( 0.33, 1-((2*gain-1)^3));
       v = 2;
       eff_steps++;
+      if conf.visualize_score
+        score_vec(end+1,:)  = [F,6];
+      end
       
       % now they really have to be swapped
       tRes = Residual;
@@ -601,6 +623,24 @@ end
   else
     rel_error = 1e20;
     rel_error_score = 1e20;
+  end
+  
+  if conf.visualize_score
+    figure()
+    colors = [0,0,0;
+              0,0,1;
+              0,1,0;
+              0,1,1;
+              1,0,0;
+              1,0,1;
+              1,1,0;
+              1,1,1];
+    plot(score_vec(:,1),"k")
+    hold on;
+    for iter = 1:size(score_vec,1)
+      plot(iter,score_vec(iter,1),"*o", 'MarkerSize', 20, 'Color', colors(score_vec(iter,2)+1,:));
+    end
+    hold off;
   end
   
   FrameCount++;

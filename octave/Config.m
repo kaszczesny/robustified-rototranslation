@@ -31,6 +31,7 @@ conf.win_s = 2;
 conf.PosNegThresh = 0.2;
 
 conf.visualize = 0;
+conf.visualize_score = 1;
 conf.debugMain = 1;
 conf.debug = 0;
 
