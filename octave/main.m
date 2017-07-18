@@ -166,10 +166,13 @@ for frame=2:2
     hold on;
 
     for iter = 1:length(pos1)
+      color = rand(1,3);
       plot([pos1(iter,2), pos2(iter,2)+imsize(2)], ...
-            [pos1(iter,1), pos2(iter,1)], "-r");
+            [pos1(iter,1), pos2(iter,1)], "-o", ...
+            'Color', color, 'markerfacecolor', color);
       plot([pos1(iter,2), pos2(iter,2)], ...
-            [pos1(iter,1), pos2(iter,1)+imsize(1)], "-r");
+            [pos1(iter,1), pos2(iter,1)+imsize(1)], "-o", ...
+            'Color', color, 'markerfacecolor', color);
     end
     hold off;
   end
