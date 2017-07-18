@@ -44,7 +44,7 @@ W0_save = [];
 RVel_save = [];
 RW0_save = [];
 
-for frame=2:2
+for frame=2:6
   KL_save{end+1} = KL;
   KL_prev = KL;
   img_mask_prev = img_mask;
@@ -146,7 +146,7 @@ for frame=2:2
   end
   
   
-  if(conf.visualize)
+  if conf.visualize_matches
     figure()
     pos1 =[];
     pos2 =[];
