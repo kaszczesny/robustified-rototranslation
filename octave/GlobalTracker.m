@@ -430,7 +430,7 @@ end
     end
     
     [Fnew, JtJnew, JtFnew, KL_prev.forward, Rest] = TryVelRot(
-      0,ProcJF,X,Vel,W0, 
+      0,ProcJF,Xnew,Vel,W0, 
       KL_prev, KL, P0m,
       max_s_rho,Residual, distance_field, KLidx_field);
       
@@ -442,6 +442,10 @@ end
       % "gain ratio" just below eq. 3.14
     end     
     
+    if conf.visualize_score
+      score_vec(end+1,:)  = [Fnew,1];
+    end
+    
     if gain > 0
       F=Fnew;
       X=Xnew;
@@ -451,9 +455,6 @@ end
       % gain will usually be large, so second expression will be a large negative, so 0.33 will be always selected
       v = 2;
       eff_steps++;
-      if conf.visualize_score
-        score_vec(end+1,:)  = [F,1];
-      end
     else
       u *= v;
       v *= 2;
@@ -480,6 +481,7 @@ end
   F0 = F; 
   u = conf.TAU * max(max(JtJ));
   v = 2;
+  
   if conf.visualize_score
     score_vec(end+1,:)  = [F,2];
   end
@@ -508,6 +510,10 @@ end
       gain = (F-Fnew)/(0.5 * h' * (u*h-JtF));
     end  
     
+    if conf.visualize_score
+      score_vec(end+1,:)  = [Fnew,3];
+    end
+    
     if gain > 0
       F=Fnew;
       X=Xnew;
@@ -516,9 +522,6 @@ end
       u *= max( 0.33, 1-((2*gain-1)^3));
       v = 2;
       eff_steps++;
-      if conf.visualize_score
-        score_vec(end+1,:)  = [F,3];
-      end
     else
       u *= v;
       v *= 2;
@@ -534,9 +537,10 @@ end
     v = vt;
     eff_steps = eff_steps_t;
     ResidualNew = Rest;
-    if conf.visualize_score
-      score_vec(end+1,:)  = [F,4];
-    end
+  end
+  
+  if conf.visualize_score
+    score_vec(end+1,:)  = [F,4];
   end
   
   %swap Residual with ResidualNew
@@ -552,6 +556,7 @@ end
   F0 = F;
   u = conf.TAU * max(max(JtJ));
   v = 2;
+  
   if conf.visualize_score
     score_vec(end+1,:)  = [F,5];
   end
