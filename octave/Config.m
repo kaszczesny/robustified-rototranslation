@@ -7,11 +7,11 @@ conf=struct();
 conf.im_name = @(x) sprintf("../data/KITTI/%.6d.png",x-1+50);
 
 conf.scale = 1/3;
-conf.imgsize = [124, 409]; %todo: don't hardcode
+persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale));
+conf.imgsize = imgsize;
 conf.principal_point =  [185.2157 607.1928] * conf.scale; %sort of half
 conf.zf = 718.856; %todo: zf_x and zf_y?
-conf.FPS = 60; % todo: get actual value from dataset
-%conf.im_name = '../data/IMG_20170402_145917_1.jpg';
+conf.FPS = 9.65; % todo: get actual value from dataset
 
   % DoG:
 conf.ksize = 13;

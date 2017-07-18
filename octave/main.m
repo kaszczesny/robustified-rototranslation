@@ -165,7 +165,7 @@ for frame=2:2
     imshow(im_plot);
     hold on;
 
-    for iter = 1:length(pos1)
+    for iter = 1:size(pos1,1)
       color = rand(1,3);
       plot([pos1(iter,2), pos2(iter,2)+imsize(2)], ...
             [pos1(iter,1), pos2(iter,1)], "-o", ...

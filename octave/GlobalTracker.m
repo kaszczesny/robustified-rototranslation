@@ -61,9 +61,9 @@ function [...
     ... % JtJ, ... % Estimated Jacobian Matrix 6x6 - only returned
     ... % JtF, ... % Estimated Residual Matrix 6x1 - only returned
     VelRot, ... % Proposed state vector 6x1 [Translation Rotation]
-    V0p, ... % Translation Model 3x1
+    ... % V0p, ... % Translation Model 3x1
     ... % PV0, ... % Model uncertainty 3x3 - actually not used
-    W0p, ... % Rotation Model 3x1
+    ... % W0p, ... % Rotation Model 3x1
     ... % PW0, ... % Model uncertainty 3x3 - actually not used
     KL_prev, KL, ... % keylines
     P0m, ... % linear transpose coodinates vector of 3D klist positions (vector or pnum*3)
@@ -74,7 +74,7 @@ function [...
     distance_field, KLidx_field ...
 )
   % returns energy based on dot product of distance residuals
-  
+
   pnum = size(KL_prev.pos,1);
   score = 0;
   JtJ = zeros(6,6);
@@ -395,7 +395,7 @@ end
   %no reweighting, calculate jacobians
   % input Residual doesn't really matter, because there is no reweighting
   [F, JtJ, JtF, KL_prev.forward, Rest] = TryVelRot(
-    0,1,X,Vel, W0, 
+    0,1,X, 
     KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field);
   
@@ -430,7 +430,7 @@ end
     end
     
     [Fnew, JtJnew, JtFnew, KL_prev.forward, Rest] = TryVelRot(
-      0,ProcJF,X,Vel,W0, 
+      0,ProcJF,Xnew,
       KL_prev, KL, P0m,
       max_s_rho,Residual, distance_field, KLidx_field);
       
@@ -474,7 +474,7 @@ end
   %exactly the same as above, with different X (duh!) and ResidualNew instead of Rest
   X = [Vel; W0]; %usePriors
   [F, JtJ, JtF, KL_prev.forward, ResidualNew] = TryVelRot(
-    0,1,X,Vel,W0,
+    0,1,X,
     KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field);
   F0 = F; 
@@ -498,7 +498,7 @@ end
     end   
     
     [Fnew, JtJnew, JtFnew, KL_prev.forward, ResidualNew] = TryVelRot(
-      0,ProcJF,Xnew,Vel,W0,
+      0,ProcJF,Xnew,
       KL_prev, KL, P0m,
       max_s_rho,Residual, distance_field, KLidx_field);
       
@@ -546,7 +546,7 @@ end
   
   %reweight
   [F, JtJ, JtF, KL_prev.forward, ResidualNew] = TryVelRot(
-    1,1,X,Vel,W0,
+    1,1,X,
     KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field);
   F0 = F;
@@ -570,7 +570,7 @@ end
     
     Xnew = X+h;
     [Fnew, JtJnew, JtFnew, KL_prev.forward, ResidualNew] = TryVelRot(
-      1,1,Xnew,Vel,W0,
+      1,1,Xnew,
       KL_prev, KL, P0m,
       max_s_rho,Residual, distance_field, KLidx_field);
     

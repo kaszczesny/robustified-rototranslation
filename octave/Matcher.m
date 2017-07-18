@@ -92,18 +92,20 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
   p_m = p_m3(1:2) * zf ./ p_m3(3);
   k_rho = KL.rho(k,1) * zf ./ p_m3(3);
   
-  pi0 = p_m + conf.principal_point;
+  pi0 = p_m + conf.principal_point';
   
   t = -(Vel(1:2) * zf - Vel(3) * p_m);
   
-  norm_t = sqrt(dot(t,t));
+  norm_t = norm(t);
   
   DrDv = [zf, zf, -p_m(2) - p_m(1)];
   sigma2_t = DrDv * RVel * DrDv'; % estimated uncertainty in the displacement
-  
+
   % defining direction and area of search
-  if norm_t > 1e-6
+  if norm_t > 1e-6 %|| norm_t == 0
+    if norm_t > 0
     t /= norm_t;
+    end
     
     % Prior for the translation distance, only useful if forward matching exist
     dq_rho = k_rho * norm_t;
