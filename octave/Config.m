@@ -34,7 +34,8 @@ conf.visualize_edges = 0;
 conf.visualize_crossing = 0;
 conf.visualize_score = 0;
 conf.visualize_matches = 0;
-conf.visualize_depth = 1;
+conf.visualize_depth = 0;
+conf.visualize_history = 1;
 conf.debug_main = 1;
 conf.debug_minimizer = 0;
 

@@ -192,6 +192,17 @@ for frame=2:6
     imagesc(im_plot);
     axis equal; colormap jet; colorbar;
   end
+  
+  if conf.visualize_history
+    im_plot = zeros(conf.imgsize);
+    
+    for iter = 1:KL_prev.ctr
+      im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = KL_prev.frames(iter);
+    end  
+    figure
+    imagesc(im_plot)
+    axis equal; colormap jet; colorbar
+  end
 end
 
 % general todo: check sqrts in norms and squares in variances
