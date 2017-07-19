@@ -176,6 +176,23 @@ for frame=2:6
     end
     hold off;
   end
+  
+  if conf.visualize_depth
+    im = imresize(imread(conf.im_name(frame-1)), conf.scale);
+    im_plot = zeros(size(im));
+    meann = mean(KL_prev.rho(:,1));
+    
+    for iter = 1:KL_prev.ctr
+      if KL.rho(iter,1) <= 10*meann
+        im_plot(KL.pos(iter,1), KL.pos(iter,2)) = KL.rho(iter,1);
+      else
+        im_plot(KL.pos(iter,1), KL.pos(iter,2)) = -1;
+      end
+    end
+    figure();
+    imagesc(im_plot);
+    axis equal; colormap jet; colorbar;
+  end
 end
 
 % general todo: check sqrts in norms and squares in variances
