@@ -82,7 +82,7 @@ for frame=2:6
     P_Kp = 1e50;
     
     EstimationOk = 0;
-    if conf.debugMain
+    if conf.debug_main
       printf("frame #%4d: Error in estimation\n", frame);
     end
     
@@ -106,7 +106,7 @@ for frame=2:6
         P_Kp = 10;
         
         EstimationOk = 0;
-        if conf.debugMain
+        if conf.debug_main
           printf("frame #%4d: KL match number too low: %4d, keylines: %4d\n", ...
             frame, klm_num, KL.ctr);
         end
@@ -137,7 +137,7 @@ for frame=2:6
   
   % RVel = RVel ./ (dt_frame.^2); % quite no point in doing that
   
-  if conf.debugMain
+  if conf.debug_main
     if ~EstimationOk
       printf("Frame #%4d NOK\n", frame);
     else
@@ -178,15 +178,14 @@ for frame=2:6
   end
   
   if conf.visualize_depth
-    im = imresize(imread(conf.im_name(frame-1)), conf.scale);
-    im_plot = zeros(size(im));
+    im_plot = zeros(conf.imgsize);
     meann = mean(KL_prev.rho(:,1));
     
     for iter = 1:KL_prev.ctr
-      if KL.rho(iter,1) <= 10*meann
-        im_plot(KL.pos(iter,1), KL.pos(iter,2)) = KL.rho(iter,1);
+      if KL_prev.rho(iter,1) <= 10*meann
+        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = KL_prev.rho(iter,1);
       else
-        im_plot(KL.pos(iter,1), KL.pos(iter,2)) = -1;
+        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = -1;
       end
     end
     figure();

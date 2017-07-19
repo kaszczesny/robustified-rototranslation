@@ -134,7 +134,7 @@ function [...
     if KL_prev.rho(iter,2) > max_s_rho || ...
        KL_prev.frames(iter) < min(conf.MATCH_NUM_THRESH, FrameCount)
 
-      if conf.debug
+      if conf.debug_minimizer
         if KL_prev.rho(iter,2) > max_s_rho
           printf('KL #%4d @frame #%4d: rho uncertainty too high: %f (%f)\n', ...
             iter, KL_prev.frame_id, KL_prev.rho(iter,2), max_s_rho)
@@ -168,7 +168,7 @@ function [...
     if ( x<2 || y<2 || x>=conf.imgsize(2) || y>=conf.imgsize(1) )
       fm(iter) = conf.MAX_R/KL_prev.rho(iter, 2);
       
-      if conf.debug && 0
+      if conf.debug_minimizer >= 2
         printf("KL #%4d @ frame #%4d: outside border after reprojection; y: %f, x: %f\n", ...
           iter, KL_prev.frame_id, p_pji_y, p_pji_x);
       end
@@ -338,7 +338,7 @@ end
   
 
   if size(KL_prev.idx , 1) < 1
-    if conf.debug
+    if conf.debug_minimizer
       printf('No keylines @frame #%4d!\n', KL_prev.frame_id)
     end  
     F = 0;

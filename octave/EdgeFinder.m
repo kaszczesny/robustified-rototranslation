@@ -145,7 +145,7 @@ for yter = 1+win_s:size(dog, 1)-win_s
     ys_im(yter,xter) = ys;
     
     
-    if conf.visualize && 0
+    if conf.visualize_crossing
       disp([yter xter])
       VisualizeZeroCrossing(Y, theta, im_blurred2(yter+[-win_s:win_s], xter+[-win_s:win_s]))
       input('...');
@@ -199,7 +199,7 @@ KLposImageMatch = KLposImage;
 %% KEYLINE JOINING %%
 [KLidx, KLref] = KeylineJoiner((edge_probability == 6), KLpos, KLgrad, KLidx);
 
-if conf.visualize
+if conf.visualize_edges
   img = im*0;
   for i=1:length(KLidx)
     if KLref(i)
@@ -212,7 +212,7 @@ if conf.visualize
 end
 
 %% VISUALS %%
-if conf.visualize
+if conf.visualize_edges
   [y x] = meshgrid(1:size(dog,2), 1:size(dog,1));
   figure;
   imagesc(edge_probability);
@@ -258,7 +258,7 @@ KL.frames = KLframes;
 KL.matchedGrad = KLmatchedGrad;
 KL.matchedNorm = KLmatchedNorm;
 
-if conf.visualize
+if conf.visualize_edges
   figure; imshow(keylines);
   hold on; quiver(ys_im+y, xs_im+x, vec_y, vec_x);
 end

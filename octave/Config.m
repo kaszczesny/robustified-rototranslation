@@ -30,12 +30,13 @@ conf.test_1 = @(n2gI) n2gI > (conf.thresh_grad*conf.max_img_value).^2; % n2gI wa
 conf.win_s = 2;
 conf.PosNegThresh = 0.2;
 
-conf.visualize = 0;
+conf.visualize_edges = 0;
+conf.visualize_crossing = 0;
 conf.visualize_score = 0;
 conf.visualize_matches = 0;
 conf.visualize_depth = 1;
-conf.debugMain = 1;
-conf.debug = 0;
+conf.debug_main = 1;
+conf.debug_minimizer = 0;
 
 % auxiliary image
 conf.MAX_R = 5;

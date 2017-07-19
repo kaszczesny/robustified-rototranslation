@@ -31,7 +31,7 @@ for idx = 1:KL.ctr
   end
 end
 
-if conf.visualize
+if conf.visualize_edges
   viz = -distance_field;
   viz(viz == 1) = -conf.MAX_R - 2;
   figure; imagesc(viz);axis equal
