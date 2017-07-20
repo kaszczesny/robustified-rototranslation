@@ -1,5 +1,6 @@
 %% SETUP %%
 clear -exclusive OPENCV
+close all
 if ~exist('OPENCV')
   pkg load image
   setup_opencv
@@ -31,7 +32,7 @@ Kp = 1;
 K = 1;
 P_Kp = 5e-6;
 
-[KL, img_mask] = EdgeFinder(conf.im_name(1));
+[KL, img_mask] = EdgeFinder(conf.im_name(11));
 
 %other fluff
 Pos = zeros(3,1); %estimated position
@@ -46,7 +47,7 @@ W0_save = [];
 RVel_save = [];
 RW0_save = [];
 
-for frame=2:6
+for frame=12:12
   KL_save{end+1} = KL;
   KL_prev = KL;
   img_mask_prev = img_mask;
@@ -155,10 +156,17 @@ for frame=2:6
     figure()
     pos1 =[];
     pos2 =[];
-    im1 = imresize(imread(conf.im_name(frame-1)), conf.scale);
-    im2 = imresize(imread(conf.im_name(frame)), conf.scale);
-    imsize = size(im1);
-
+    imsize = conf.imgsize;
+    
+    im1 = zeros(imsize);
+    im2 = zeros(imsize);
+    for iter = 1:KL_prev.ctr
+      im1(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 1;
+    end
+    for iter = 1:KL.ctr
+      im2(KL.pos(iter,1), KL.pos(iter,2)) = 1;
+    end
+    
     for iter = 1:KL.ctr
     if KL.matching(iter) != -1
       pos1(end+1,:) = KL_prev.pos(KL.matching(iter),:);
@@ -190,7 +198,7 @@ for frame=2:6
       if 1./KL_prev.rho(iter,1) < q
         im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 1./KL_prev.rho(iter,1);
       else
-        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = -1;
+        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 0;
       end
     end
     figure();
