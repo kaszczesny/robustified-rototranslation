@@ -21,10 +21,12 @@ conf.sigma1 = 1.7818;
 conf.sigma2 = 2.30029;
 
   % Test 1:
-conf.thresh_grad = 0.015;
+conf.THRESH_GRAD_MIN = 0.015;
+conf.THRESH_GRAD_MAX = 0.015;
+conf.THRESH_GRAD_GAIN = 1e-6;
+conf.KL_REFERENCE_NUMBER = 5000;
 conf.max_img_value = 255;
 conf.detector_dog_thresh = 0.095259868922420; %Relation between DoG threshold and Gradient threshold ~1/Sigma0^4
-conf.test_1 = @(n2gI) n2gI > (conf.thresh_grad*conf.max_img_value).^2; % n2gI was squared, but didn't work
 
   % Test 2:
 conf.win_s = 2;
@@ -33,11 +35,12 @@ conf.PosNegThresh = 0.2;
 conf.visualize_edges = 0;
 conf.visualize_crossing = 0;
 conf.visualize_score = 0;
-conf.visualize_matches = 0;
-conf.visualize_depth = 0;
-conf.visualize_history = 1;
+conf.visualize_matches = 1;
+conf.visualize_depth = 1;
+conf.visualize_history = 0;
 conf.debug_main = 1;
 conf.debug_minimizer = 0;
+conf.debug_matching = 0;
 
 % auxiliary image
 conf.MAX_R = 5;

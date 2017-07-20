@@ -29,7 +29,10 @@ function [s_rho] = EstimateQuantile(KL)
   for iter = 1:size(KL.rho, 1)
     %check in which bin s_rho is and increment its counter
     idx = floor( conf.N_BINS * (KL.rho(iter,2)-conf.S_RHO_MIN) / (conf.S_RHO_MAX - conf.S_RHO_MIN) ) + 1;
-    if idx < 1
+    if isnan(idx) %temporary test to avoid errors
+      %todo: why are there nans?
+      continue
+    elseif idx < 1
       idx = 1;
     elseif idx > conf.N_BINS
       idx = conf.N_BINS;
@@ -246,7 +249,7 @@ function [...
     
   end
   
-  n_match_tryvelrot
+  n_match_tryvelrot; % suppresing match number
   
   KL_prev_forward = KL_prev.forward; % set the return parameter
   
@@ -606,7 +609,13 @@ end
   %todo: check out +cv/invert.m
   %[R, P, Q] = chol(JtJ);
   %todo: RRV
-  RRV = inv(JtJ); % todo: some sources multiply this matrix by MSE, others not
+  if cond(JtJ) > 1e10
+    % avoid inverting singular matrices
+    RRV = zeros(6) + conf.S_RHO_INIT;
+  else  
+    RRV = inv(JtJ);
+  end  
+  % todo: some sources multiply this matrix by MSE, others not
   % http://www.mathworks.com/help/stats/nlinfit.html#output_argument_d0e530105
   % https://stats.stackexchange.com/questions/231868/relation-between-covariance-matrix-and-jacobian-in-nonlinear-least-squares
   % Numerical Recipes p. 802 eq. 15.5.15

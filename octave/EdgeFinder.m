@@ -3,9 +3,17 @@ function [KL, img_mask] = EdgeFinder(im_name)
 persistent frame_id = 0;
 frame_id++;
 
+persistent thresh_grad = Config().THRESH_GRAD_MIN;
+persistent l_kl_num = 0;
+
 %% CONFIG %%
 conf = Config();
 win_s = conf.win_s;
+
+% UpdateThresh %
+thresh_grad -= conf.THRESH_GRAD_GAIN * (conf.KL_REFERENCE_NUMBER - l_kl_num);
+thresh_grad = max(conf.THRESH_GRAD_MIN, thresh_grad);
+thresh_grad = min(conf.THRESH_GRAD_MAX, thresh_grad);
 
 %% DOG %%
 im = imresize(imread(im_name), conf.scale);
@@ -109,13 +117,11 @@ for yter = -win_s:win_s
 end
 PInv = pinv( Phi );
 
-% todo UpdateThresh conf.thresh_grad
-
 %% EDGE FINDER LOOP %%
 for yter = 1+win_s:size(dog, 1)-win_s
   for xter = 1+win_s:size(dog, 2)-win_s
     % Test 1: local gradient must be sufficiently stronk
-    if ~conf.test_1(n2gI(yter,xter))
+    if n2gI(yter,xter) < (thresh_grad*conf.max_img_value).^2;
       edge_probability(yter,xter) = 1;
       continue
     end
@@ -160,7 +166,7 @@ for yter = 1+win_s:size(dog, 1)-win_s
     
     % a test on dog was missing
     n2_m = norm(theta(1:2)).^2;
-    if n2_m < conf.detector_dog_thresh * conf.thresh_grad * conf.max_img_value
+    if n2_m < conf.detector_dog_thresh * thresh_grad * conf.max_img_value
       edge_probability(yter,xter) = 5;
       continue
     end
@@ -263,3 +269,4 @@ if conf.visualize_edges
   hold on; quiver(ys_im+y, xs_im+x, vec_y, vec_x);
 end
 
+l_kl_num = KL.ctr;

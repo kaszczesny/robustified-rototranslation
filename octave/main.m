@@ -15,6 +15,7 @@ n_frames = 10;
 % arguments/returns for GlobalTracker
 F = 0; %energy based on dot product of distance residuals
 Vel = zeros(3,1); %initial translation estimation (3 vector; init with zeros)
+Vel(3)=1;
 W0 = zeros(3,1); %initial rotation estimation (3 vector; init with zeros)
 RVel = eye(3)*1e50; %uncertainty Model if the initial Vel estimate will be used as prior (3x3 matrix; init with eye*1e50)
 RW0 = eye(3)*1e50;  %uncertainty Model if the initial W0  estimate will be used as prior (3x3 matrix; init with eye*1e50)
@@ -77,6 +78,7 @@ for frame=2:6
   if any(isnan([Vel; W0]))
     RVel = eye(3)*1e50;
     Vel = zeros(3,1);
+    Vel(3)=1;
     
     Kp = 1;
     P_Kp = 1e50;
@@ -98,9 +100,11 @@ for frame=2:6
       %Match from the new EdgeMap to the old one searching on the stereo line
       [klm_num, KL] = DirectedMatching(...
           Vel, RVel, R, KL_prev, img_mask_prev, KL);
+      klm_num
       if klm_num < conf.GLOBAL_MATCH_THRESHOLD
         RVel = eye(3)*1e50;
         Vel = zeros(3,1);
+        Vel(3)=1;
         
         Kp = 1;
         P_Kp = 10;
@@ -179,11 +183,11 @@ for frame=2:6
   
   if conf.visualize_depth
     im_plot = zeros(conf.imgsize);
-    meann = mean(KL_prev.rho(:,1));
+    q = quantile(1./KL_prev.rho(:,1), 0.975);
     
     for iter = 1:KL_prev.ctr
-      if KL_prev.rho(iter,1) <= 10*meann
-        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = KL_prev.rho(iter,1);
+      if 1./KL_prev.rho(iter,1) < q
+        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 1./KL_prev.rho(iter,1);
       else
         im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = -1;
       end

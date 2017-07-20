@@ -101,6 +101,13 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
   DrDv = [zf, zf, -p_m(2) - p_m(1)];
   sigma2_t = DrDv * RVel * DrDv'; % estimated uncertainty in the displacement
 
+  if conf.debug_matching
+    if norm_t == 0
+      printf('KL #%4d @frame #%4d: displacement is exactly zero\n', ...
+            iter, KL_prev.frame_id)
+    end
+  end
+  
   % defining direction and area of search
   if norm_t > 1e-6 %|| norm_t == 0
     if norm_t > 0
@@ -137,6 +144,11 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
       
       dq_rho = 0;
       t_steps = dq_max;
+      
+      if conf.debug_matching
+        printf('KL #%4d @frame #%4d: no displacement, halfline in gradient\n', ...
+              k, KL.frame_id)
+      end
   end
   
   norm_m = KL.norm(k,:);
@@ -176,6 +188,15 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
       if cang < conf.MATCH_THRESH_ANGLE_COS || ...
          abs(norm_m0/norm_m - 1) > conf.MATCH_NUM_MIN
          
+         if conf.debug_matching && 0
+          if cang < conf.MATCH_THRESH_ANGLE_COS
+            printf('KL #%4d @frame #%4d: angle threshold with %4d: %f\n', ...
+                  k, KL.frame_id, j, cang)
+          else
+            printf('KL #%4d @frame #%4d: modulus threshold with %4d: %f\n', ...
+                  k, KL.frame_id, j, abs(norm_m0/norm_m - 1))
+          end  
+        end
          continue
       end
       
@@ -187,6 +208,10 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
         sigma2_t * rho.^2;
         
       if (tt - norm_t *rho).^2 > v_rho_dr
+        if conf.debug_matching
+          printf('KL #%4d @frame #%4d: model inconsistent\n', ...
+                  iter, KL_prev.frame_id)
+        end
         continue
       end  
         
@@ -258,6 +283,11 @@ function [r_num, KL] = Regularize1Iter(KL)
     end
     
     alpha = (alpha-thresh)/(1-thresh); % weighting factor: [0, 1]
+    
+    if sigma == 0 || sigma_n == 0 || sigma_p == 0
+      % todo: not sure why this happens
+      continue
+    end
     
     wr = 1/sigma;
     wrn = alpha/sigma_n;
@@ -344,6 +374,11 @@ function [KL] = UpdateInverseDepthKalman(...
     K = p_p*H*(1/S);
     KL.rho(iter,1) = rho_p + K*e;
     v_rho = (1-K*H) * p_p;
+    if v_rho < 0 % equivalent to Nan, but Octave returns complex number
+      KL.rho(iter,1) = conf.RHO_INIT;
+      KL.rho(iter,2) = conf.S_RHO_MAX;
+      continue
+    end
     KL.rho(iter,2) = sqrt(v_rho);
     
     % is inverse depth goes beyond limit, apply correction
@@ -356,7 +391,8 @@ function [KL] = UpdateInverseDepthKalman(...
             sum(isinf(KL.rho(iter,:))) > 0
       KL.rho(iter,1) = conf.RHO_INIT;
       KL.rho(iter,2) = conf.S_RHO_MAX;
-    elseif KL.rho(iter,2) < 0
+    elseif KL.rho(iter,2) <= 0 % s_rho == 0 is no good either
+      %todo: why does it appear, then?
       KL.rho(iter,1) = conf.RHO_INIT;
       KL.rho(iter,2) = conf.S_RHO_MAX;
     end
@@ -384,7 +420,8 @@ function [KL, ...
   for iter=1:KL.ctr
     if KL.frames(iter) < MATCH_NUM_MIN || ...
       KL.rho(iter,2) <= 0 || ...
-      KL.rho(iter,2) > s_rho_min
+      KL.rho(iter,2) > s_rho_min || ...
+      KL.rhoPredict(iter,2) == 0 %todo: temporary test
         continue
     end
     
