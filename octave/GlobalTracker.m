@@ -1,29 +1,11 @@
-function [ ...
-  F, ...
-  Vel, W0, RVel, RW0, ...
-  KL_prev, ...
-  rel_error, rel_error_score, ...
-  FrameCount ...
-] = GlobalTracker (...
-    Vel, ... %initial translation estimation (3 vector; init with zeros)
-    W0, ... %initial rotation estimation (3 vector; init with zeros)
-    ... % RVel, %uncertainty Model if the initial Vel estimate will be used as prior (3x3 matrix; init with eye*1e50) - actually only returned
-    ... % RW0,  %uncertainty Model if the initial W0  estimate will be used as prior (3x3 matrix; init with eye*1e-10) - actually only returned (and actually 1e50)
-    KL_prev, ...
-    KL, ...
-    rel_error, ... % Estimated relative error on the state (init with zero)
-    rel_error_score, ... % Estimated relative error on the score (init with 0)
-    FrameCount ... % number of processed frames
-)
-  % based on Minimizer_RV
-  % performs Equation (8) minimization
-  % returns total energy (?)
+1;
   
 function [s_rho] = EstimateQuantile(KL)
   % based on edge_tracker EstimateQuantile
   % tells which s_rho (uncertainty) is such that S_RHO_MIN-s_rho == quantile
   
   
+  conf = Config();
   bins = zeros(conf.N_BINS, 1);
 
   for iter = 1:size(KL.rho, 1)
@@ -74,7 +56,9 @@ function [...
     max_s_rho, ... % estimated rho 0.9 quantile
     DResidual, ... % Last iteration Distance Residuals - for calculating weights, vector pnumx1
     ... % DResidualNew, ... % New iteration Distance Residuals - new residuals, vector pnumx1
-    distance_field, KLidx_field ...
+    distance_field, KLidx_field, ...
+    FrameCount, ...
+    FullScore ... % if 1, score will be a vector before being squared
 )
   % returns energy based on dot product of distance residuals
 
@@ -110,7 +94,7 @@ function [...
   df_dPi = zeros(pnum, 2); %weighted img derivative of residual
   
   % perform SE3: Pos = Rot*Pos0 + Vel     (eq. 5 an 2)
-  Ptm = (R0 * P0m')';
+  Ptm = (R0 * P0m')'; %todo: nan was here
   for iter=1:3
     Ptm(:, iter) += VelRot(iter);
   end
@@ -136,6 +120,7 @@ function [...
     % (exluding init)
     if KL_prev.rho(iter,2) > max_s_rho || ...
        KL_prev.frames(iter) < min(conf.MATCH_NUM_THRESH, FrameCount)
+       %todo: check if KL_prev.rho(iter,2) == 0
 
       if conf.debug_minimizer
         if KL_prev.rho(iter,2) > max_s_rho
@@ -318,6 +303,10 @@ function [...
   end
  
   score = dot(fm, fm); %dot product
+
+  if FullScore
+    score = fm;
+  end
  
   %if(UsePriors)
     % doesn't matter, always false
@@ -329,6 +318,26 @@ function [...
 end
 
 %%%%%%%%%%%%%% Minimizer_RV starts here %%%%%%%%%%%%%%
+function [ ...
+  F, ...
+  Vel, W0, RVel, RW0, ...
+  KL_prev, ...
+  rel_error, rel_error_score, ...
+  FrameCount ...
+] = MinimizeRV (...
+    Vel, ... %initial translation estimation (3 vector; init with zeros)
+    W0, ... %initial rotation estimation (3 vector; init with zeros)
+    ... % RVel, %uncertainty Model if the initial Vel estimate will be used as prior (3x3 matrix; init with eye*1e50) - actually only returned
+    ... % RW0,  %uncertainty Model if the initial W0  estimate will be used as prior (3x3 matrix; init with eye*1e-10) - actually only returned (and actually 1e50)
+    KL_prev, ...
+    KL, ...
+    rel_error, ... % Estimated relative error on the state (init with zero)
+    rel_error_score, ... % Estimated relative error on the score (init with 0)
+    FrameCount ... % number of processed frames
+)
+  % based on Minimizer_RV
+  % performs Equation (8) minimization
+  % returns total energy (?)
 
   %% AUXILIARY IMAGE %%
   [distance_field, KLidx_field] = AuxiliaryImage(KL);
@@ -400,7 +409,7 @@ end
   [F, JtJ, JtF, KL_prev.forward, Rest] = TryVelRot(
     0,1,X, 
     KL_prev, KL, P0m,
-    max_s_rho,Residual, distance_field, KLidx_field);
+    max_s_rho,Residual, distance_field, KLidx_field, FrameCount,0);
   
   F0 = F; 
   u = conf.TAU * max(max(JtJ)); % see:
@@ -435,11 +444,12 @@ end
     [Fnew, JtJnew, JtFnew, KL_prev.forward, Rest] = TryVelRot(
       0,ProcJF,Xnew,
       KL_prev, KL, P0m,
-      max_s_rho,Residual, distance_field, KLidx_field);
+      max_s_rho,Residual, distance_field, KLidx_field, FrameCount, 0);
       
     if iter == INIT_ITER
       gain = F - Fnew;
     else
+      %todo: division by zero was here
       gain = (F-Fnew)/(0.5 * h' * (u*h-JtF)); % see:
       % Madsen, K., Nielsen, N., and Tingleff, O.: 2004, Methods for nonlinear least squares problems.
       % "gain ratio" just below eq. 3.14
@@ -480,7 +490,7 @@ end
   [F, JtJ, JtF, KL_prev.forward, ResidualNew] = TryVelRot(
     0,1,X,
     KL_prev, KL, P0m,
-    max_s_rho,Residual, distance_field, KLidx_field);
+    max_s_rho,Residual, distance_field, KLidx_field, FrameCount, 0);
   F0 = F; 
   u = conf.TAU * max(max(JtJ));
   v = 2;
@@ -505,7 +515,7 @@ end
     [Fnew, JtJnew, JtFnew, KL_prev.forward, ResidualNew] = TryVelRot(
       0,ProcJF,Xnew,
       KL_prev, KL, P0m,
-      max_s_rho,Residual, distance_field, KLidx_field);
+      max_s_rho,Residual, distance_field, KLidx_field, FrameCount, 0);
       
     if iter == INIT_ITER
       gain = F - Fnew;
@@ -555,7 +565,7 @@ end
   [F, JtJ, JtF, KL_prev.forward, ResidualNew] = TryVelRot(
     1,1,X,
     KL_prev, KL, P0m,
-    max_s_rho,Residual, distance_field, KLidx_field);
+    max_s_rho,Residual, distance_field, KLidx_field, FrameCount, 0);
   F0 = F;
   u = conf.TAU * max(max(JtJ));
   v = 2;
@@ -580,7 +590,7 @@ end
     [Fnew, JtJnew, JtFnew, KL_prev.forward, ResidualNew] = TryVelRot(
       1,1,Xnew,
       KL_prev, KL, P0m,
-      max_s_rho,Residual, distance_field, KLidx_field);
+      max_s_rho,Residual, distance_field, KLidx_field, FrameCount, 0);
     
     gain = (F-Fnew)/(0.5*h'*(u*h-JtF));
     if gain > 0
