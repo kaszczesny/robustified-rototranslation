@@ -258,9 +258,9 @@ function [r_num, KL] = Regularize1Iter(KL)
     kn = KL.idx(iter,1); % next KL
     pn = KL.idx(iter,2); % previous KL
     
-    rho = KL.rho(iter,1)^2;
-    rho_p = KL.rho(pn,1)^2;
-    rho_n = KL.rho(kn,1)^2;
+    rho = KL.rho(iter,1);
+    rho_p = KL.rho(pn,1);
+    rho_n = KL.rho(kn,1);
     
     % sigma is generally s_rho.^2
     sigma = KL.rho(iter,2)^2;
@@ -284,10 +284,10 @@ function [r_num, KL] = Regularize1Iter(KL)
     
     alpha = (alpha-thresh)/(1-thresh); % weighting factor: [0, 1]
     
-    if sigma == 0 || sigma_n == 0 || sigma_p == 0
+    %if sigma == 0 || sigma_n == 0 || sigma_p == 0
       % todo: not sure why this happens
-      continue
-    end
+    %  continue
+    %end
     
     wr = 1/sigma;
     wrn = alpha/sigma_n;
@@ -296,7 +296,7 @@ function [r_num, KL] = Regularize1Iter(KL)
     r(iter) = dot([wrn wr wrp], [rho_n rho rho_p]) / ...
       sum([wrn wr wrp]);
     % todo: have used s_rho squared
-    s(iter) = dot([wrn wr wrp], [sigma_n sigma sigma_p]) / ...
+    s(iter) = dot([wrn wr wrp], sqrt([sigma_n sigma sigma_p])) / ...
       sum([wrn wr wrp]);
       
     mask(iter) = 1;
@@ -391,7 +391,7 @@ function [KL] = UpdateInverseDepthKalman(...
             sum(isinf(KL.rho(iter,:))) > 0
       KL.rho(iter,1) = conf.RHO_INIT;
       KL.rho(iter,2) = conf.S_RHO_MAX;
-    elseif KL.rho(iter,2) <= 0 % s_rho == 0 is no good either
+    elseif KL.rho(iter,2) < 0 % s_rho == 0 is no good either
       %todo: why does it appear, then?
       KL.rho(iter,1) = conf.RHO_INIT;
       KL.rho(iter,2) = conf.S_RHO_MAX;

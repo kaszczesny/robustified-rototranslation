@@ -11,10 +11,8 @@ function [s_rho] = EstimateQuantile(KL)
   for iter = 1:size(KL.rho, 1)
     %check in which bin s_rho is and increment its counter
     idx = floor( conf.N_BINS * (KL.rho(iter,2)-conf.S_RHO_MIN) / (conf.S_RHO_MAX - conf.S_RHO_MIN) ) + 1;
-    if isnan(idx) %temporary test to avoid errors
-      %todo: why are there nans?
-      continue
-    elseif idx < 1
+    %todo: idx is nan
+    if idx < 1
       idx = 1;
     elseif idx > conf.N_BINS
       idx = conf.N_BINS;
@@ -621,6 +619,7 @@ function [ ...
   %todo: RRV
   if cond(JtJ) > 1e10
     % avoid inverting singular matrices
+    printf("JtJ is singular\n");
     RRV = zeros(6) + conf.S_RHO_INIT;
   else  
     RRV = inv(JtJ);
