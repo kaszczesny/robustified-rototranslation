@@ -31,8 +31,8 @@ function [nmatch, KL] = ForwardMatch(KL, KL_prev)
     KL.frames(ikl_f) = KL_prev.frames(iter) + 1;
     KL.matching(ikl_f) = iter;
     KL.posImageMatch(ikl_f,:) = KL_prev.posImage(iter,:);
-    KL.matchedGrad(ikl_f,:) = KL.grad(iter,:);
-    KL.matchedNorm(ikl_f) = KL.norm(iter);
+    KL.matchedGrad(ikl_f,:) = KL_prev.grad(iter,:);
+    KL.matchedNorm(ikl_f) = KL_prev.norm(iter);
     
     nmatch++;
   end
