@@ -315,7 +315,27 @@ end
 function [KL] = UpdateInverseDepthKalman(...
  Vel, RVel, RW0, KL) % 1e-5
  
-  % todo: use openCV kalman
+  %{
+    Mapping between rebvo and OpenCV Kalman
+    
+    Correct <-- Y
+    Predict --> p_p
+    
+    controlMatrix --> 0
+    errorCovPost --> v_rho ((1-K*H) * p_p)?
+    errorCovPre --> v_rho (KL.s_rho^2)
+    gain --> K
+    measurementMatrix --> H
+    measurementNoiseCov --> Mk * R * Mk'
+    processNoiseCov --> L * Q * L'
+    state_post --> rho_p
+    state_pre --> KL.rho
+    transitionMatrix --> F
+  %}
+  
+  
+ 
+  % todo: use openCV kalman (or maybe not)
   
   conf = Config();
   zf = conf.zf;
@@ -325,60 +345,92 @@ function [KL] = UpdateInverseDepthKalman(...
       continue
     end  
     
-    %debug cout panic
+    % debug cout panic
     KL.rhoPredict(iter,2) = KL.rho(iter,2);
     
+    % keyline new homo coordinates
     q = KL.posImage(iter,:);
     
+    % keyline old homo coordinates
     q0 = KL.posImageMatch(iter,:);
     
+    % previous inverse depth variance: P(k-1)
     v_rho = KL.rho(iter,2)^2;
     
+    % shortcut for edge perpendicular direction
     u = KL.matchedGrad(iter,:) ./ KL.matchedNorm(iter);
     
-    %pixel displacement projected on u
+    % pixel displacement projected on u (the noised observation): z(k)
+    % left side of eq. 22
     Y = dot(u, (q-q0));
+    
+    % right side of eq. 23, excluding rho_p
+    % "observation model which maps the true state space into the observed space"
+    % h(x(k), v) = H * x(k) - N(0,1)
     H = Vel(1:2)'*zf - q0*Vel(3);
     H = dot(u, H);
-        
-    rho_p = 1 / ( 1/KL.rho(iter,1) + Vel(3) ); %predicted inv depth
+    
+    %%% PREDICTION %%%
+    
+    % inverse depth prediction: x(k)
+    % prediction equation is NOT eq. 21, but:
+    % f(x(k-1), w) = [1/(1/x(k-1) + Vel_z) * N(1,Q_Rel)] + N(0,Q_Abs)
+    rho_p = 1 / ( 1/KL.rho(iter,1) + Vel(3) );
     KL.rhoPredict(iter,1) = rho_p;
     
+    % transition between previous and current state
+    % F = df/dx(k-1)
     F = 1 / (1+ KL.rho(iter,1) * Vel(3)); %jacobian strikes back
     F *= F;
     
+    % covariance prediction: P(k) = F * P(k-1) * F' + L * Q * L';
+    % L = [df/dN1, df/dVel_z, df/dN2] = [x(k-1), -x(k).^2, 1]
+    % Q = [sigma_N1, sigma_Vel_z, sigma_N2] = [Q_Rel^2, sigma_Vel_z, Q_Abs^2]
     p_p = F*v_rho*F + ... % uncertainty propagation
           (KL.rho(iter,1)*conf.RESHAPE_Q_RELATIVE)^2 + ... % relative uncertainty model
           rho_p^2 * RVel(3,3) * rho_p^2 + ... % uncertainty on the Z velocity
           conf.RESHAPE_Q_ABSOLUTE^2; % absolute uncertainty model
-          
+    
+    %%% UPDATE %%%
+    
+    % measurement pre-fit residual: y
     e = Y-H*rho_p; % error correction
     
     %partial derivative of the correction equation with respect to uncertainty sources
-    Mk = [ -1 ,
-          u(1)*rho_p*zf,
-          u(2)*rho_p*zf,
-          -rho_p * dot(u, q0),
-          u(1)*rho_p*Vel(3),
-          u(2)*rho_p*Vel(3) ]';
+    Mk = [ -1 , % df/dw
+          u(1)*rho_p*zf, % df/dVel_y
+          u(2)*rho_p*zf, % df/dVel_x
+          -rho_p * dot(u, q0), % df/dVel_z
+          u(1)*rho_p*Vel(3), % df/dq_oy
+          u(2)*rho_p*Vel(3) ]'; % df/dq_ox
     
     R = zeros(6,6);
     loc_unc_sq = conf.LOCATION_UNCERTAINTY^2;
-    R(1,1) = loc_unc_sq;
-    R(2:4,2:4) = RVel;
-    R(5,5) = loc_unc_sq;
-    R(6,6) = loc_unc_sq;
+    R(1,1) = loc_unc_sq; % sigma_w
+    R(2:4,2:4) = RVel; % sigma_Vel_y, sigma_Vel_x, sigma_Vel_z (this probably should be just the diagonal)
+    R(5,5) = loc_unc_sq; % sigma_q_oy
+    R(6,6) = loc_unc_sq; % sigma_q_ox
     
     %Kalman update equations
+    
+    % pre-fit residual covariance
     S = H*p_p*H + (Mk*R*Mk');
+    
+    % Kalman gain
     K = p_p*H*(1/S);
+    
+    % updated state estimate
     KL.rho(iter,1) = rho_p + K*e;
+    
+    % updated state estimate covariance
     v_rho = (1-K*H) * p_p;
     if v_rho < 0 % equivalent to Nan, but Octave returns complex number
       KL.rho(iter,1) = conf.RHO_INIT;
       KL.rho(iter,2) = conf.S_RHO_MAX;
       continue
     end
+    
+    % standard deviation
     KL.rho(iter,2) = sqrt(v_rho);
     
     % is inverse depth goes beyond limit, apply correction
