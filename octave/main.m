@@ -188,6 +188,21 @@ for frame=12:12
             'Color', color, 'markerfacecolor', color);
     end
     hold off;
+    
+    
+    figure()
+    imshow(im1);
+    hold on;
+
+    for iter = 1:size(pos1,1)
+      color = rand(1,3);
+      plot([pos1(iter,2), pos2(iter,2)], ...
+            [pos1(iter,1), pos2(iter,1)], "-", ...
+            'Color', color, 'markerfacecolor', color);
+      plot(pos1(iter,2), pos1(iter,1), "o", ...
+            'Color', color, 'markerfacecolor', color);
+    end
+    hold off;
   end
   
   if conf.visualize_depth
