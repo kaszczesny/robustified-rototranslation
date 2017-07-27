@@ -47,6 +47,19 @@ W0_save = [];
 RVel_save = [];
 RW0_save = [];
 
+im_left = imresize(imread("../../00/image_0/000060.png"), conf.scale);
+im_right = imresize(imread("../../00/image_1/000060.png"), conf.scale);
+
+stereo = cv.StereoBM;
+disparity = stereo.compute(im_left, im_right);
+disparity = double(disparity)/16;
+
+for iter = 1:KL.ctr
+  if disparity(KL.pos(iter,1), KL.pos(iter,2)) > 0
+    KL.rho(iter,1) = disparity(KL.pos(iter,1), KL.pos(iter,2));
+  end
+end
+
 for frame=12:12
   KL_save{end+1} = KL;
   KL_prev = KL;
