@@ -4,13 +4,21 @@ function conf = Config()
 
 conf=struct();
 
-conf.im_name = @(x) sprintf("../data/KITTI/%.6d.png",x-1+50);
+%KITTI
+%conf.im_name = @(x) sprintf("../data/KITTI/%.6d.png",x-1+50);
+%TUM
+conf.im_name = @(x) sprintf("../data/TUM/%.6d.png",x);
 
-conf.scale = 1/3;
+conf.scale = 1/2;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale));
 conf.imgsize = imgsize;
-conf.principal_point =  [185.2157 607.1928] * conf.scale; %sort of half
-conf.zf = 718.856; %todo: zf_x and zf_y?
+%KITTI
+%conf.principal_point =  [185.2157 607.1928] * conf.scale; %sort of half
+%conf.zf = 718.856; %todo: zf_x and zf_y?
+%conf.FPS = 9.65; % todo: get actual value from dataset
+%TUM
+conf.principal_point =  [239.5 319.5] * conf.scale; %sort of half
+conf.zf = 525; %X 525, Y 525
 conf.FPS = 9.65; % todo: get actual value from dataset
 
   % DoG:

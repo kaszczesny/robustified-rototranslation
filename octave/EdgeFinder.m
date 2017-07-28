@@ -17,6 +17,9 @@ thresh_grad = min(conf.THRESH_GRAD_MAX, thresh_grad);
 
 %% DOG %%
 im = imresize(imread(im_name), conf.scale);
+if size(im, 3) > 1
+  im = rgb2gray(im);
+end
 im_blurred1 = double(cv.GaussianBlur(
               im, "KSize", [conf.ksize,conf.ksize], 
               "SigmaX", conf.sigma1, "SigmaY", conf.sigma1));

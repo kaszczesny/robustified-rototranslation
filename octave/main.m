@@ -32,7 +32,7 @@ Kp = 1;
 K = 1;
 P_Kp = 5e-6;
 
-[KL, img_mask] = EdgeFinder(conf.im_name(11));
+[KL, img_mask] = EdgeFinder(conf.im_name(1));
 
 %other fluff
 Pos = zeros(3,1); %estimated position
@@ -47,6 +47,7 @@ W0_save = [];
 RVel_save = [];
 RW0_save = [];
 
+%{
 im_left = imresize(imread("../../00/image_0/000060.png"), conf.scale);
 im_right = imresize(imread("../../00/image_1/000060.png"), conf.scale);
 
@@ -59,8 +60,9 @@ for iter = 1:KL.ctr
     KL.rho(iter,1) = disparity(KL.pos(iter,1), KL.pos(iter,2));
   end
 end
+%}
 
-for frame=12:12
+for frame=2:6
   KL_save{end+1} = KL;
   KL_prev = KL;
   img_mask_prev = img_mask;
