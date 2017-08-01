@@ -140,7 +140,7 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
       norm_t = 1;
       
       dq_min = -conf.SEARCH_RANGE - conf.LOCATION_UNCERTAINTY_MATCH;
-      dq_min =  conf.SEARCH_RANGE + conf.LOCATION_UNCERTAINTY_MATCH;
+      dq_max =  conf.SEARCH_RANGE + conf.LOCATION_UNCERTAINTY_MATCH;
       
       dq_rho = 0;
       t_steps = dq_max;
@@ -159,14 +159,14 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
   
   for t_i = 1:t_steps
     for i_inx = 1:2
-      if i_inx == 1
-        tt = tn;
-        if tt < dq_min
+      if i_inx
+        tt = tp;
+        if tt > dq_max
           continue
         end
       else  
-        tt = tp;
-        if tt > dq_max
+        tt = tn;
+        if tt < dq_min
           continue
         end
       end
@@ -177,7 +177,7 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
         continue
       end  
       j = KL_prev_img_mask( inx_y, inx_x );
-      if j == 0
+      if j == 0 % ??
         continue
       end
     
@@ -255,16 +255,16 @@ function [r_num, KL] = Regularize1Iter(KL)
       continue %no neighbors
     end
     
-    kn = KL.idx(iter,1); % next KL
-    pn = KL.idx(iter,2); % previous KL
+    kn = KL.idx(iter,2); % next KL
+    kp = KL.idx(iter,1); % previous KL
     
     rho = KL.rho(iter,1);
-    rho_p = KL.rho(pn,1);
+    rho_p = KL.rho(kp,1);
     rho_n = KL.rho(kn,1);
     
     % sigma is generally s_rho.^2
     sigma = KL.rho(iter,2)^2;
-    sigma_p = KL.rho(pn,2)^2;
+    sigma_p = KL.rho(kp,2)^2;
     sigma_n = KL.rho(kn,2)^2;
     
     if (rho_n - rho_p).^2 > sigma_n + sigma_p
@@ -274,8 +274,8 @@ function [r_num, KL] = Regularize1Iter(KL)
       continue %uncertainty test (probabilistic)
     end
     
-    alpha = dot(KL.grad(kn,:), KL.grad(pn,:)) ./ ...
-      (KL.norm(kn,:) * KL.norm(pn,:));
+    alpha = dot(KL.grad(kn,:), KL.grad(kp,:)) ./ ...
+      (KL.norm(kn,:) * KL.norm(kp,:));
     
     if alpha - thresh < 0
       % regularization is only performed if final alpha is > 0
