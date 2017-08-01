@@ -110,8 +110,13 @@ function [...
   
   n_match_tryvelrot = 0;
   
+  why = zeros(conf.imgsize) - 1;
+  escobar = why;
+  
   for iter = 1:pnum
     KL_prev.forward(iter) = -1; % reset forward match
+    
+    why(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 0;
     
     % don't use this keyline if uncertainty is too high
     % or if  keyline hasn't appeared in at least 2 consecutive frames (todo: investigate how that works)
@@ -120,6 +125,13 @@ function [...
        KL_prev.frames(iter) < min(conf.MATCH_NUM_THRESH, FrameCount)
        %todo: check if KL_prev.rho(iter,2) == 0
 
+      if KL_prev.rho(iter,2) > max_s_rho
+        why(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 1;
+      else
+        why(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 2;
+      end
+       
+       
       if conf.debug_minimizer
         if KL_prev.rho(iter,2) > max_s_rho
           printf('KL #%4d @frame #%4d: rho uncertainty too high: %f (%f)\n', ...
@@ -154,6 +166,8 @@ function [...
     if ( x<2 || y<2 || x>=conf.imgsize(2) || y>=conf.imgsize(1) )
       fm(iter) = conf.MAX_R/KL_prev.rho(iter, 2);
       
+      why(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 3;
+      
       if conf.debug_minimizer >= 2
         printf("KL #%4d @ frame #%4d: outside border after reprojection; y: %f, x: %f\n", ...
           iter, KL_prev.frame_id, p_pji_y, p_pji_x);
@@ -185,6 +199,7 @@ function [...
       df_dPi(iter, :) = 0;
       fm(iter) = conf.MAX_R ./ KL_prev.rho(iter,2);
       fi = 0;
+      why(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 4;
     else
       % Test_f_k was here - a quick test for KL match
       % f_m - gradient from current frame (extraced from aux) - apparently the gradient is not normalized
@@ -200,10 +215,12 @@ function [...
       %                  the two gradients m_0 and m_n. If the difference is above a certain
       %                  threshold then no match is found (...)
       % | m1.m2 - m2.m2|/m2.m2 > theshold?
+      escobar(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = abs(pablo_escobar - m2_norm_sq) / m2_norm_sq;
       if abs(pablo_escobar - m2_norm_sq) > conf.MATCH_THRESH * m2_norm_sq
         df_dPi(iter, :) = 0;
         fm(iter) = conf.MAX_R ./ KL_prev.rho(iter,2);
         fi = 0;
+        why(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 5;
       else
         d = [p_pji_y p_pji_x] - KL.posSubpix(kl_iter,:); % the distance vector: q_t - q_n
         
@@ -218,6 +235,8 @@ function [...
         fm(iter) = fi ./ KL_prev.rho(iter, 2); % d_m_i / sigma_rho_i
         
         n_match_tryvelrot++;
+        
+        why(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 6;
       end  
     end
     
@@ -231,6 +250,16 @@ function [...
     DResidualNew(iter) = fi;
     
   end
+  
+  if conf.visualize_minimizer_insides
+    figure(6);
+    imagesc(why); axis equal; colormap jet; colorbar
+    title('minimizer why')
+    
+    figure(7);
+    imagesc(escobar); axis equal; colormap jet; colorbar;
+    title('abs(pablo escobar)')
+  end  
   
   n_match_tryvelrot; % suppresing match number
   
@@ -613,6 +642,18 @@ function [ ...
     end
   end
   
+  if conf.visualize_minimizer_insides
+    im = zeros(conf.imgsize);
+    for iter = 1:KL_prev.ctr
+      im( KL_prev.pos(iter, 1), KL_prev.pos(iter, 2) ) = abs(Residual(iter));
+    end  
+    
+    figure(8)
+    imagesc(im);
+    axis equal; colormap jet; colorbar;
+    title('residual')
+  end  
+  
   %todo: Cholesky
   %todo: check out +cv/invert.m
   %[R, P, Q] = chol(JtJ);
@@ -649,7 +690,7 @@ function [ ...
   end
   
   if conf.visualize_score
-    figure()
+    figure(9)
     colors = [0,0,0;
               0,0,1;
               0,1,0;
@@ -664,6 +705,7 @@ function [ ...
       plot(iter,score_vec(iter,1),"*o", 'MarkerSize', 20, 'Color', colors(score_vec(iter,2)+1,:));
     end
     hold off;
+    title('minimizer score')
   end
   
   FrameCount++;

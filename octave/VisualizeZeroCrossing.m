@@ -7,7 +7,7 @@ win_s = (size(nei,1) - 1)/2;
 
 [x, y]= meshgrid([-win_s:win_s]);
 
-figure
+figure(5)
 subplot(1,2,1)
 mesh(y, x, nei) % DoG
 xlabel('y')

@@ -168,13 +168,23 @@ for frame=2:6
   
   
   if conf.visualize_matches
-    figure()
+    figure(10)
     pos1 =[];
     pos2 =[];
     imsize = conf.imgsize;
     
-    im1 = zeros(imsize);
-    im2 = zeros(imsize);
+    im1 = imread(conf.im_name(frame-1));
+    if length(size(im1)) == 3
+      im1 = rgb2gray(im1);
+    end
+    im1 = imresize(im1, conf.scale);
+    
+    im2 = imread(conf.im_name(frame));
+    if length(size(im2)) == 3
+      im2 = rgb2gray(im2);
+    end
+    im2 = imresize(im2, conf.scale);
+    
     for iter = 1:KL_prev.ctr
       im1(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 1;
     end
@@ -182,10 +192,10 @@ for frame=2:6
       im2(KL.pos(iter,1), KL.pos(iter,2)) = 1;
     end
     
-    for iter = 1:KL.ctr
-    if KL.matching(iter) != -1
-      pos1(end+1,:) = KL_prev.pos(KL.matching(iter),:);
-      pos2(end+1,:) = KL.pos(iter,:);
+    for iter = 1:conf.visualize_matches_step:KL.ctr
+      if KL.matching(iter) != -1
+        pos1(end+1,:) = KL_prev.pos(KL.matching(iter),:);
+        pos2(end+1,:) = KL.pos(iter,:);
       end
     end
 
@@ -203,9 +213,10 @@ for frame=2:6
             'Color', color, 'markerfacecolor', color);
     end
     hold off;
+    title('matches (m id)')
     
     
-    figure()
+    figure(11)
     imshow(im1);
     hold on;
 
@@ -218,6 +229,62 @@ for frame=2:6
             'Color', color, 'markerfacecolor', color);
     end
     hold off;
+    title('matches (m id)')
+  end
+  
+  if conf.visualize_matches
+    figure(12)
+    pos1 =[];
+    pos2 =[];
+    imsize = conf.imgsize;
+    
+    %im1 = imresize(imread(conf.im_name(frame-1)), conf.scale);
+    %im2 = imresize(imread(conf.im_name(frame)), conf.scale);
+    for iter = 1:KL_prev.ctr
+      im1(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 1;
+    end
+    for iter = 1:KL.ctr
+      im2(KL.pos(iter,1), KL.pos(iter,2)) = 1;
+    end
+    
+    for iter = 1:conf.visualize_matches_step:KL_prev.ctr
+      if KL_prev.forward(iter) != -1
+        pos1(end+1,:) = KL_prev.pos(iter,:);
+        pos2(end+1,:) = KL.pos(KL_prev.forward(iter),:);
+      end
+    end
+
+    im_plot = [im1, im2; im2, zeros(imsize)];
+    imshow(im_plot);
+    hold on;
+
+    for iter = 1:size(pos1,1)
+      color = rand(1,3);
+      plot([pos1(iter,2), pos2(iter,2)+imsize(2)], ...
+            [pos1(iter,1), pos2(iter,1)], "-o", ...
+            'Color', color, 'markerfacecolor', color);
+      plot([pos1(iter,2), pos2(iter,2)], ...
+            [pos1(iter,1), pos2(iter,1)+imsize(1)], "-o", ...
+            'Color', color, 'markerfacecolor', color);
+    end
+    hold off;
+    title('matches (m id f)')
+    
+    
+    figure(13)
+    imshow(im1);
+    hold on;
+
+    for iter = 1:size(pos1,1)
+      color = rand(1,3);
+      plot([pos1(iter,2), pos2(iter,2)], ...
+            [pos1(iter,1), pos2(iter,1)], "-", ...
+            'Color', color, 'markerfacecolor', color);
+      plot(pos1(iter,2), pos1(iter,1), "o", ...
+            'Color', color, 'markerfacecolor', color);
+    end
+    hold off;
+    title('matches (m id f)')
   end
   
   if conf.visualize_depth
@@ -231,9 +298,10 @@ for frame=2:6
         im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 0;
       end
     end
-    figure();
+    figure(14);
     imagesc(im_plot);
     axis equal; colormap jet; colorbar;
+    title('depth')
   end
   
   if conf.visualize_history
@@ -242,9 +310,10 @@ for frame=2:6
     for iter = 1:KL_prev.ctr
       im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = KL_prev.frames(iter);
     end  
-    figure
+    figure(15)
     imagesc(im_plot)
     axis equal; colormap jet; colorbar
+    title('history')
   end
   
   if any(isnan(KL_prev.rho(:))) && conf.debug_main

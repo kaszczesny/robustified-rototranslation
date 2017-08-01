@@ -10,7 +10,7 @@ conf=struct();
 conf.im_name = @(x) sprintf("../data/TUM/%.6d.png",x);
 
 conf.scale = 1/2;
-persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale));
+persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
 conf.imgsize = imgsize;
 %KITTI
 %conf.principal_point =  [185.2157 607.1928] * conf.scale; %sort of half
@@ -40,12 +40,23 @@ conf.detector_dog_thresh = 0.095259868922420; %Relation between DoG threshold an
 conf.win_s = 2;
 conf.PosNegThresh = 0.2;
 
+%figure 1, 2, 3, 4
 conf.visualize_edges = 0;
+%figure 5
 conf.visualize_crossing = 0;
+%figure 6, 7, 8
+conf.visualize_minimizer_insides = 1;
+%figure 9
 conf.visualize_score = 0;
+%figure 10, 11, 12, 13
 conf.visualize_matches = 1;
+conf.visualize_matches_step = 10;
+%figure 14
 conf.visualize_depth = 1;
-conf.visualize_history = 0;
+%figure 15
+conf.visualize_history = 1;
+%figure 16
+conf.visualize_matcher_insides = 1;
 conf.debug_main = 1;
 conf.debug_minimizer = 0;
 conf.debug_matching = 0;

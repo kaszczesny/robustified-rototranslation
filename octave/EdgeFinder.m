@@ -16,10 +16,11 @@ thresh_grad = max(conf.THRESH_GRAD_MIN, thresh_grad);
 thresh_grad = min(conf.THRESH_GRAD_MAX, thresh_grad);
 
 %% DOG %%
-im = imresize(imread(im_name), conf.scale);
-if size(im, 3) > 1
+im = imread(im_name);
+if length(size(im)) == 3
   im = rgb2gray(im);
 end
+im = imresize(im, conf.scale);
 im_blurred1 = double(cv.GaussianBlur(
               im, "KSize", [conf.ksize,conf.ksize], 
               "SigmaX", conf.sigma1, "SigmaY", conf.sigma1));
@@ -217,17 +218,20 @@ if conf.visualize_edges
      img(KLpos(i,1),KLpos(i,2))=2;
     end
   end
-  figure;imagesc(img);axis equal;
+  figure(1);
+  imagesc(img);axis equal;colorbar;
+  title('edges joined & rejected')
 end
 
 %% VISUALS %%
 if conf.visualize_edges
   [y x] = meshgrid(1:size(dog,2), 1:size(dog,1));
-  figure;
+  figure(2);
   imagesc(edge_probability);
   axis equal; colormap jet; colorbar;
   hold on;
   quiver(ys_im+y, xs_im+x, vec_y, vec_x);
+  title('edge probability')
 end
 
 keylines = zeros([size(im),3], 'uint8');
@@ -268,8 +272,10 @@ KL.matchedGrad = KLmatchedGrad;
 KL.matchedNorm = KLmatchedNorm;
 
 if conf.visualize_edges
-  figure; imshow(keylines);
+  figure(3);
+  imshow(keylines);
   hold on; quiver(ys_im+y, xs_im+x, vec_y, vec_x);
+  title('edge joining')
 end
 
 l_kl_num = KL.ctr;

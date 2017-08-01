@@ -34,6 +34,7 @@ end
 if conf.visualize_edges
   viz = -distance_field;
   viz(viz == 1) = -conf.MAX_R - 2;
-  figure; imagesc(viz);axis equal
+  figure(4);
+  imagesc(viz);axis equal;colorbar
   title('auxiliary')
 end
