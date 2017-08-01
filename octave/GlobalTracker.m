@@ -69,7 +69,7 @@ function [...
   % rotations
   R0 = RotationMatrix(VelRot([4:6]));
   RM = RotationMatrix([0 0 VelRot(3)]); % rotation about z-axis
-  RM = RM(1:2, 1:2); %na pewno?
+  RM = RM(1:2, 1:2);
   
   mnum = 0; %match counter
   
@@ -173,8 +173,8 @@ function [...
     %                  in the perpendicular direction m_n, up to a distance of max_d pixels"
     kl_m_m_copy = KL_prev.grad(iter, :);
     
-    KL_prev.grad(iter,1) = RM(2,1) * kl_m_m_copy(2) + RM(2,2) * kl_m_m_copy(1); % todo: possibly fucked up matrix coordinates
-    KL_prev.grad(iter,2) = RM(1,1) * kl_m_m_copy(2) + RM(1,2) * kl_m_m_copy(1); %chyba powinno byc odwrotnie, 1 zamieniona z 2
+    KL_prev.grad(iter,1) = RM(1,2) * kl_m_m_copy(2) + RM(1,1) * kl_m_m_copy(1); % todo: possibly fucked up matrix coordinates
+    KL_prev.grad(iter,2) = RM(2,2) * kl_m_m_copy(2) + RM(2,1) * kl_m_m_copy(1); %chyba powinno byc odwrotnie, 1 zamieniona z 2
     
     % Calc_f_J was here
     
