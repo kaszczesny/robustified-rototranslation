@@ -158,7 +158,7 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
   tp = dq_rho + 1;
   
   for t_i = 1:t_steps
-    for i_inx = 1:2
+    for i_inx = 0:1
       if i_inx
         tt = tp;
         if tt > dq_max
@@ -177,7 +177,7 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
         continue
       end  
       j = KL_prev_img_mask( inx_y, inx_x );
-      if j == 0 % ??
+      if j == 0
         continue
       end
     
