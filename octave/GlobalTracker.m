@@ -398,7 +398,7 @@ function [ ...
   Xnew = zeros(6,1);
   Xt = zeros(6,1);
   
-  pnum = KL.ctr;
+  pnum = KL_prev.ctr;
   
   P0Im = zeros(pnum, 3); %image coordinates
   P0m = zeros(pnum, 3); %3d coordinates
