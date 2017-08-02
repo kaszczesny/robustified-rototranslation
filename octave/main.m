@@ -170,8 +170,8 @@ for frame=2:2
   
   
   if conf.visualize_matches
-    VisualizeMatches(KL_prev, KL, frame, 0);
-    VisualizeMatches(KL_prev, KL, frame, 1);
+    VisualizeMatches(KL_prev, KL, 0);
+    VisualizeMatches(KL_prev, KL, 1);
   end
   
   if conf.visualize_depth
