@@ -4,9 +4,9 @@ function [] = VisualizeMatches( KL_prev, KL, frame, use_m_id )
   conf = Config();
   
   if use_m_id
-    title_string = "matches m_id";
+    title_string = "matches m id";
   else
-    title_string = "matches m_id_f";
+    title_string = "matches m id f";
   end    
     
     figure(10 + 2*use_m_id)

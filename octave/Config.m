@@ -7,9 +7,10 @@ conf=struct();
 %KITTI
 %conf.im_name = @(x) sprintf("../data/KITTI/%.6d.png",x-1+50);
 %TUM
-conf.im_name = @(x) sprintf("../data/TUM/%.6d.png",x);
+persistent files = glob("../data/TUM/*.png");
+conf.im_name = @(x) files{x};
 
-conf.scale = 1/2;
+conf.scale = 0.75;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
 conf.imgsize = imgsize;
 %KITTI
@@ -49,7 +50,7 @@ conf.visualize_minimizer_insides = 1;
 %figure 9
 conf.visualize_score = 0;
 %figure 10, 11, 12, 13
-conf.visualize_matches = 1;
+conf.visualize_matches = 0;
 conf.visualize_matches_step = 10;
 %figure 14
 conf.visualize_depth = 1;
