@@ -1,4 +1,6 @@
 function [KL, img_mask] = EdgeFinder(im_name)
+%internally uses yxz notation
+%returns xyz to struc
 
 persistent frame_id = 0;
 frame_id++;
@@ -255,20 +257,20 @@ end
 KL = struct();
 KL.frame_id = frame_id;
 KL.ctr = KLctr;
-KL.pos = KLpos;
-KL.posSubpix = KLposSubpix;
-KL.posImage = KLposImage;
-KL.posImageMatch = KLposImageMatch;
+KL.pos = KLpos(:,end:-1:1);
+KL.posSubpix = KLposSubpix(:,end:-1:1);
+KL.posImage = KLposImage(:,end:-1:1);
+KL.posImageMatch = KLposImageMatch(:,end:-1:1);
 KL.idx = KLidx;
-KL.grad = KLgrad;
-KL.vers = KLvers;
+KL.grad = KLgrad(:,end:-1:1);
+KL.vers = KLvers(:,end:-1:1);
 KL.norm = KLnorm;
 KL.rho = KLrho;
 KL.rhoPredict = KLrhoPredict;
 KL.matching = KLmatching;
 KL.forward = KLforward;
 KL.frames = KLframes;
-KL.matchedGrad = KLmatchedGrad;
+KL.matchedGrad = KLmatchedGrad(:,end:-1:1);
 KL.matchedNorm = KLmatchedNorm;
 
 if conf.visualize_edges
@@ -279,3 +281,4 @@ if conf.visualize_edges
 end
 
 l_kl_num = KL.ctr;
+img_mask = img_mask'; %to change mask to xyz

@@ -12,13 +12,13 @@ conf.im_name = @(x) files{x};
 
 conf.scale = 0.75;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
-conf.imgsize = imgsize;
+conf.imgsize = imgsize(end:-1:1);
 %KITTI
-%conf.principal_point =  [185.2157 607.1928] * conf.scale; %sort of half
+%conf.principal_point =  [607.1928 185.2157] * conf.scale; %sort of half, xyz
 %conf.zf = 718.856; %todo: zf_x and zf_y?
 %conf.FPS = 9.65; % todo: get actual value from dataset
 %TUM
-conf.principal_point =  [239.5 319.5] * conf.scale; %sort of half
+conf.principal_point =  [319.5 239.5] * conf.scale; %sort of half, xyz
 conf.zf = 525; %X 525, Y 525
 conf.FPS = 9.65; % todo: get actual value from dataset
 

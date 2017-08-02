@@ -8,7 +8,7 @@ function [s_rho] = EstimateQuantile(KL)
   conf = Config();
   bins = zeros(conf.N_BINS, 1);
 
-  for iter = 1:size(KL.rho, 1)
+  for iter = 1:KL.ctr
     %check in which bin s_rho is and increment its counter
     idx = floor( conf.N_BINS * (KL.rho(iter,2)-conf.S_RHO_MIN) / (conf.S_RHO_MAX - conf.S_RHO_MIN) ) + 1;
     %todo: idx is nan
@@ -60,7 +60,7 @@ function [...
 )
   % returns energy based on dot product of distance residuals
 
-  pnum = size(KL_prev.pos,1);
+  pnum = KL_prev.ctr;
   score = 0;
   JtJ = zeros(6,6);
   JtF = zeros(6,1);
@@ -102,8 +102,8 @@ function [...
   %                  into the points (q_t, rho_t) by using the warping function tau.
   PtIm(:,3) = 1 ./ Ptm(:,3);
   Pz_zf = conf.zf * PtIm(:,3);
-  PtIm(:,2) = Ptm(:,2) .* Pz_zf;
-  PtIm(:,1) = Ptm(:,1) .* Pz_zf;
+  PtIm(:,2) = Ptm(:,2) .* Pz_zf; %y
+  PtIm(:,1) = Ptm(:,1) .* Pz_zf; %x
   
   % the klist argument in C is actually OLD keymap,
   % while this->auxiliary field holds indexes for CURRENT keymap
@@ -149,8 +149,8 @@ function [...
     end
     
     % convert to image coordinates (just re-add p.p.): q_t
-    p_pji_y = PtIm(iter, 1) + conf.principal_point(1); 
-    p_pji_x = PtIm(iter, 2) + conf.principal_point(2); 
+    p_pji_y = PtIm(iter, 2) + conf.principal_point(2); 
+    p_pji_x = PtIm(iter, 1) + conf.principal_point(1); 
     
     x = round(p_pji_x);
     y = round(p_pji_y);
@@ -163,7 +163,7 @@ function [...
     end
     
     %if outside border, consider it a mismatch
-    if ( x<2 || y<2 || x>=conf.imgsize(2) || y>=conf.imgsize(1) )
+    if ( x<2 || y<2 || x>=conf.imgsize(1) || y>=conf.imgsize(2) )
       fm(iter) = conf.MAX_R/KL_prev.rho(iter, 2);
       
       why(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 3;
@@ -187,13 +187,13 @@ function [...
     %                  in the perpendicular direction m_n, up to a distance of max_d pixels"
     kl_m_m_copy = KL_prev.grad(iter, :);
     
-    KL_prev.grad(iter,1) = RM(1,2) * kl_m_m_copy(2) + RM(1,1) * kl_m_m_copy(1); % todo: possibly fucked up matrix coordinates
-    KL_prev.grad(iter,2) = RM(2,2) * kl_m_m_copy(2) + RM(2,1) * kl_m_m_copy(1); %chyba powinno byc odwrotnie, 1 zamieniona z 2
+    KL_prev.grad(iter,1) = RM(1,1) * kl_m_m_copy(1) + RM(1,2) * kl_m_m_copy(2); % todo: possibly fucked up matrix coordinates
+    KL_prev.grad(iter,2) = RM(2,1) * kl_m_m_copy(1) + RM(2,2) * kl_m_m_copy(2);
     
     % Calc_f_J was here
     
     % f_inx corresponds to (y,x)
-    kl_iter = KLidx_field(y,x); % index from current frame
+    kl_iter = KLidx_field(x,y); % index from current frame
     % if not -1, this is the closest (in image) KL to our KL_prev(iter) after it has been warped
     if kl_iter < 0
       df_dPi(iter, :) = 0;
@@ -222,7 +222,7 @@ function [...
         fi = 0;
         why(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 5;
       else
-        d = [p_pji_y p_pji_x] - KL.posSubpix(kl_iter,:); % the distance vector: q_t - q_n
+        d = [p_pji_x p_pji_y] - KL.posSubpix(kl_iter,:); % the distance vector: q_t - q_n
         
         u_m = KL.vers(kl_iter, :);
         
@@ -253,11 +253,11 @@ function [...
   
   if conf.visualize_minimizer_insides
     figure(6);
-    imagesc(why); axis equal; colormap jet; colorbar
+    imagesc(why'); axis equal; colormap jet; colorbar
     title('minimizer why')
     
     figure(7);
-    imagesc(escobar); axis equal; colormap jet; colorbar;
+    imagesc(escobar'); axis equal; colormap jet; colorbar;
     title('abs(pablo escobar)')
   end  
   
@@ -274,27 +274,27 @@ function [...
     RhoTmp0 = conf.zf * PtIm(:, 3); %z coordinate constant mul
     
     %Jx = df_Pix * zf * rho_t
-    Jm(:,2) = RhoTmp0 .* df_dPi(:,2);
-    %Jy = df_Piy * zf * rho_t
     Jm(:,1) = RhoTmp0 .* df_dPi(:,1);
+    %Jy = df_Piy * zf * rho_t
+    Jm(:,2) = RhoTmp0 .* df_dPi(:,2);
     %Jz = rho_t * qx_t * df_dPix + rho_t * qy_t * df_dPiy
     %zx
-    RhoTmp0 = PtIm(:,3) .* PtIm(:,2);
-    Jm(:,3) = RhoTmp0 .* df_dPi(:,2);
-    %zy
     RhoTmp0 = PtIm(:,3) .* PtIm(:,1);
-    Jm(:,3) += RhoTmp0 .* df_dPi(:,1);
+    Jm(:,3) = RhoTmp0 .* df_dPi(:,1);
+    %zy
+    RhoTmp0 = PtIm(:,3) .* PtIm(:,2);
+    Jm(:,3) += RhoTmp0 .* df_dPi(:,2);
     
     %Jwy = Jy * pz_t
-    Jm(:,5) = Jm(:,1) .* Ptm(:,3);
-    Jm(:,5) += Jm(:,3) .* Ptm(:,1);
-    %Jwx = Jx * pz_t
     Jm(:,4) = Jm(:,2) .* Ptm(:,3);
     Jm(:,4) += Jm(:,3) .* Ptm(:,2);
+    %Jwx = Jx * pz_t
+    Jm(:,5) = Jm(:,1) .* Ptm(:,3);
+    Jm(:,5) += Jm(:,3) .* Ptm(:,1);
     %Jwz = -Jx * py_t + Jy * px_t
-    RhoTmp0 = Jm(:,2) .*Ptm(:,1);
+    RhoTmp0 = Jm(:,1) .*Ptm(:,2);
     Jm(:,6) = -1 * RhoTmp0;
-    Jm(:,6) += Jm(:, 1) .* Ptm(:,2);
+    Jm(:,6) += Jm(:, 2) .* Ptm(:,1);
     
     %there should be a fragment to 0 the non-4-divisible knum, but due to no need for it in octave we'll omit this part
     
@@ -376,7 +376,7 @@ function [ ...
   INIT_ITER = 2; % Actually controls ProcJF in TryVelRot (true or false depending on iteration)
   
 
-  if size(KL_prev.idx , 1) < 1
+  if KL_prev.ctr < 1
     if conf.debug_minimizer
       printf('No keylines @frame #%4d!\n', KL_prev.frame_id)
     end  
@@ -398,7 +398,7 @@ function [ ...
   Xnew = zeros(6,1);
   Xt = zeros(6,1);
   
-  pnum = size(KL_prev.idx , 1);
+  pnum = KL.ctr;
   
   P0Im = zeros(pnum, 3); %image coordinates
   P0m = zeros(pnum, 3); %3d coordinates
@@ -408,15 +408,15 @@ function [ ...
   Rest = zeros(pnum, 1);
   
   %converto to ltcv
-  P0Im(:,1) = KL_prev.posImage(:,1); % y
-  P0Im(:,2) = KL_prev.posImage(:,2); % x
+  P0Im(:,1) = KL_prev.posImage(:,1); % x
+  P0Im(:,2) = KL_prev.posImage(:,2); % y
   P0Im(:,3) = KL_prev.rho(:,1);
   
   %proyect (eq 4.) imgage -> 3d
   P0m(:,3) = 1./ P0Im(:,3); % depth from inverse depth
   Pz_zf = 1./conf.zf * P0m(:,3);
-  P0m(:,1) = P0Im(:,1) .* Pz_zf; %y
-  P0m(:,2) = P0Im(:,2) .* Pz_zf; %x
+  P0m(:,2) = P0Im(:,2) .* Pz_zf; %y
+  P0m(:,1) = P0Im(:,1) .* Pz_zf; %x
   
   F = 0; %energy scores
   Fnew = 0;
@@ -649,7 +649,7 @@ function [ ...
     end  
     
     figure(8)
-    imagesc(im);
+    imagesc(im');
     axis equal; colormap jet; colorbar;
     title('residual')
   end  

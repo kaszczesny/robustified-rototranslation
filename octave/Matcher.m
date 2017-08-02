@@ -171,12 +171,12 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
         end
       end
       
-      inx_y = round(t(1) + pi0(1));
-      inx_x = round(t(2) + pi0(2));
-      if inx_y < 1 || inx_y > size(KL_prev_img_mask,1) || inx_x < 1 || inx_x > size(KL_prev_img_mask,2)
+      inx_y = round(t(2) + pi0(2));
+      inx_x = round(t(1) + pi0(1));
+      if inx_y < 1 || inx_y > size(KL_prev_img_mask,2) || inx_x < 1 || inx_x > size(KL_prev_img_mask,1)
         continue
       end  
-      j = KL_prev_img_mask( inx_y, inx_x );
+      j = KL_prev_img_mask( inx_x, inx_y );
       if j == 0
         continue
       end
@@ -398,18 +398,18 @@ function [KL] = UpdateInverseDepthKalman(...
     
     %partial derivative of the correction equation with respect to uncertainty sources
     Mk = [ -1 , % df/dw
-          u(1)*rho_p*zf, % df/dVel_y
-          u(2)*rho_p*zf, % df/dVel_x
+          u(1)*rho_p*zf, % df/dVel_x
+          u(2)*rho_p*zf, % df/dVel_y
           -rho_p * dot(u, q0), % df/dVel_z
-          u(1)*rho_p*Vel(3), % df/dq_oy
-          u(2)*rho_p*Vel(3) ]'; % df/dq_ox
+          u(1)*rho_p*Vel(3), % df/dq_ox
+          u(2)*rho_p*Vel(3) ]'; % df/dq_oy
     
     R = zeros(6,6);
     loc_unc_sq = conf.LOCATION_UNCERTAINTY^2;
     R(1,1) = loc_unc_sq; % sigma_w
-    R(2:4,2:4) = RVel; % sigma_Vel_y, sigma_Vel_x, sigma_Vel_z (this probably should be just the diagonal)
-    R(5,5) = loc_unc_sq; % sigma_q_oy
-    R(6,6) = loc_unc_sq; % sigma_q_ox
+    R(2:4,2:4) = RVel; % sigma_Vel_x, sigma_Vel_y, sigma_Vel_z (this probably should be just the diagonal)
+    R(5,5) = loc_unc_sq; % sigma_q_ox
+    R(6,6) = loc_unc_sq; % sigma_q_oy
     
     %Kalman update equations
     

@@ -12,7 +12,7 @@ function [] = VisualizeMatches( KL_prev, KL, frame, use_m_id )
     figure(10 + 2*use_m_id)
     pos1 =[];
     pos2 =[];
-    imsize = conf.imgsize;
+    imsize = conf.imgsize(end:-1:1); %xyz to yxz
     
     im1 = imread(conf.im_name(frame-1));
     if length(size(im1)) == 3
@@ -48,11 +48,11 @@ function [] = VisualizeMatches( KL_prev, KL, frame, use_m_id )
 
     for iter = 1:size(pos1,1)
       color = rand(1,3);
-      plot([pos1(iter,2), pos2(iter,2)+imsize(2)], ...
-            [pos1(iter,1), pos2(iter,1)], "-o", ...
+      plot([pos1(iter,1), pos2(iter,1)+imsize(1)], ...
+            [pos1(iter,2), pos2(iter,2)], "-o", ...
             'Color', color, 'markerfacecolor', color);
-      plot([pos1(iter,2), pos2(iter,2)], ...
-            [pos1(iter,1), pos2(iter,1)+imsize(1)], "-o", ...
+      plot([pos1(iter,1), pos2(iter,1)], ...
+            [pos1(iter,2), pos2(iter,2)+imsize(2)], "-o", ...
             'Color', color, 'markerfacecolor', color);
     end
     hold off;
@@ -65,10 +65,10 @@ function [] = VisualizeMatches( KL_prev, KL, frame, use_m_id )
 
     for iter = 1:size(pos1,1)
       color = rand(1,3);
-      plot([pos1(iter,2), pos2(iter,2)], ...
-            [pos1(iter,1), pos2(iter,1)], "-", ...
+      plot([pos1(iter,1), pos2(iter,1)], ...
+            [pos1(iter,2), pos2(iter,2)], "-", ...
             'Color', color, 'markerfacecolor', color);
-      plot(pos1(iter,2), pos1(iter,1), "o", ...
+      plot(pos1(iter,1), pos1(iter,2), "o", ...
             'Color', color, 'markerfacecolor', color);
     end
     hold off;
@@ -89,7 +89,7 @@ function [] = VisualizeDepth(KL_prev)
       end
     end
     figure(14);
-    imagesc(im_plot);
+    imagesc(im_plot');
     axis equal; colormap jet; colorbar;
     title('depth')
 end
@@ -103,7 +103,7 @@ function [] = VisualizeHistory(KL_prev)
       im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = KL_prev.frames(iter);
     end  
     figure(15)
-    imagesc(im_plot)
+    imagesc(im_plot')
     axis equal; colormap jet; colorbar;
     title('history')
   
