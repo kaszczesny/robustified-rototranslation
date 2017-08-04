@@ -1,6 +1,6 @@
 1;
 
-function [] = VisualizeMatches( KL_prev, KL, frame, use_m_id )
+function [] = VisualizeMatches( KL_prev, KL, use_m_id )
   conf = Config();
   
   if use_m_id
@@ -14,13 +14,13 @@ function [] = VisualizeMatches( KL_prev, KL, frame, use_m_id )
     pos2 =[];
     imsize = conf.imgsize(end:-1:1); %xyz to yxz
     
-    im1 = imread(conf.im_name(frame-1));
+    im1 = imread(conf.im_name(KL_prev.frame_id));
     if length(size(im1)) == 3
       im1 = rgb2gray(im1);
     end
     im1 = imresize(im1, conf.scale);
     
-    im2 = imread(conf.im_name(frame));
+    im2 = imread(conf.im_name(KL.frame_id));
     if length(size(im2)) == 3
       im2 = rgb2gray(im2);
     end
