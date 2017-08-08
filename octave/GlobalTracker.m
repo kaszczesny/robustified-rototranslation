@@ -24,7 +24,7 @@ function [s_rho] = EstimateQuantile(KL)
   a = 0; %accumulator
 
   for iter = 1:conf.N_BINS
-    if (a > conf.PERCENTILE * size(KL.rho, 1) )
+    if (a > conf.PERCENTILE * KL.ctr )
       s_rho = (iter - 1) * (conf.S_RHO_MAX-conf.S_RHO_MIN) / conf.N_BINS + conf.S_RHO_MIN;
       return
     end

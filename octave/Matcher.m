@@ -41,6 +41,15 @@ end
 function [nmatch, KL] = DirectedMatching(...
   Vel, RVel, R, KL_prev, KL_prev_img_mask, KL) %and constants
   
+  visualize_dmatches = Config().visualize_dmatches;
+  
+  if visualize_dmatches
+    img = KL_prev_img_mask*0;
+    for i=1:KL_prev.ctr
+       img(KL_prev.pos(i,2), KL_prev.pos(i,1)) = 1;
+    end
+  end
+  
   nmatch = 0;
   
   Vel = R * Vel; %back rotate translation
@@ -66,6 +75,16 @@ function [nmatch, KL] = DirectedMatching(...
     
     nmatch++;
     
+    if visualize_dmatches
+      img(KL_prev.pos(i_mch,2), KL_prev.pos(i_mch,1)) = 20; %+=3 to see matches converging to one pixel
+    end
+    
+  end
+  
+  if visualize_dmatches
+    figure(17);
+    imagesc(img);axis equal;colorbar;
+    title('edges matched by DirectedMatching')
   end
   
 end
@@ -98,7 +117,7 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
   
   norm_t = norm(t);
   
-  DrDv = [zf, zf, -p_m(2) - p_m(1)];
+  DrDv = [zf, zf, -p_m(1) - p_m(2)];
   sigma2_t = DrDv * RVel * DrDv'; % estimated uncertainty in the displacement
 
   if conf.debug_matching

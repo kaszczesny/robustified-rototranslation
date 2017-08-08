@@ -188,7 +188,7 @@ for yter = 1+win_s:size(dog, 1)-win_s
     KLctr += 1;
     KLpos = [KLpos; yter, xter];
     KLposSubpix = [KLposSubpix; ys+yter, xs+xter];
-    KLposImage = [KLposImage; [ys+yter, xs+xter]-conf.principal_point];
+    KLposImage = [KLposImage; [ys+yter, xs+xter]-conf.principal_point(2:-1:1)];
     % KLposImage is below
     KLidx = [KLidx; 0, 0];
     KLgrad = [KLgrad; theta([2 1])'];
