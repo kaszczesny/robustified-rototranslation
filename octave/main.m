@@ -33,7 +33,7 @@ Kp = 1;
 K = 1;
 P_Kp = 5e-6;
 
-[KL, img_mask] = EdgeFinder(conf.im_name(1));
+[KL, img_mask] = EdgeFinder(384, 1);
 
 %other fluff
 Pos = zeros(3,1); %estimated position
@@ -63,13 +63,13 @@ for iter = 1:KL.ctr
 end
 %}
 
-for frame=2:2
+for frame=384+[2:2:200]
   fflush(stdout);
   KL_save{end+1} = KL;
   KL_prev = KL;
   img_mask_prev = img_mask;
   
-  [KL, img_mask] = EdgeFinder(conf.im_name(frame));
+  [KL, img_mask] = EdgeFinder(frame, 0);
 
   % reset before new frame
   RVel = eye(3)*1e50;

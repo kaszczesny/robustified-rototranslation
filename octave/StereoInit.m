@@ -17,9 +17,11 @@ R1 = S.R1;
 R2 = S.R2;
 T = S.t;
 
-im1 = imresize(imread("../../00/image_0/000010.png"), 1);
-im2 = imresize(imread("../../00/image_1/000010.png"), 1);
+im1 = imresize(imread("../data/TUM/000015.png"), 1);
+im2 = imresize(imread("../data/TUM/000008.png"), 1);
+g1 = double(rgb2gray(im1));
+g2 = double(rgb2gray(im2));
 
 stereo = cv.StereoBM;
-disparsity = stereo.compute(im1, im2) /16;
-imagesc(double(disparsity))
+disparity = stereo.compute(g1, g2) /4;
+imagesc(double(disparity));

@@ -1,9 +1,7 @@
-function [KL, img_mask] = EdgeFinder(im_name)
+function [KL, img_mask] = EdgeFinder(frame_id, use_depth)
 %internally uses yxz notation
 %returns xyz to struc
 
-persistent frame_id = 0;
-frame_id++;
 
 persistent thresh_grad = Config().THRESH_GRAD_MIN;
 persistent l_kl_num = 0;
@@ -11,6 +9,10 @@ persistent l_kl_num = 0;
 %% CONFIG %%
 conf = Config();
 win_s = conf.win_s;
+
+
+im_name = conf.im_name(frame_id);
+im_name_depth = conf.im_name_depth(frame_id);
 
 % UpdateThresh %
 thresh_grad -= conf.THRESH_GRAD_GAIN * (conf.KL_REFERENCE_NUMBER - l_kl_num);
@@ -31,6 +33,15 @@ im_blurred2 = double(cv.GaussianBlur(
               "SigmaX", conf.sigma2, "SigmaY", conf.sigma2));
               %% ratio of kernels should be 4:1 or 5:1
 dog = double(im_blurred2) - double(im_blurred1);
+
+if use_depth
+  depth = imresize(imread(im_name_depth), conf.scale);
+  depth_mask = depth > 0; % depth == 0 means 100% uncertainty
+  depth = double(cv.GaussianBlur(depth, "KSize", [conf.ksize,conf.ksize]));
+  depth /= 2.^16; % TUM depth is a 16-bit PNG
+  depth *= 4; % whitest possible value corresponds to Kinect max distance
+  depth = 1./ depth; %inverse depth
+end
 
 
 %% KEYLINE INIT %%
@@ -177,6 +188,16 @@ for yter = 1+win_s:size(dog, 1)-win_s
       continue
     end
     
+    if use_depth
+      if depth_mask(yter,xter)
+        rho = depth(yter,xter);
+      else
+        continue
+      end
+    else
+      rho = conf.RHO_INIT;  
+    end  
+    
     % local normal vector, normalized to versor after projection to z=0
     n = [-theta(1) -theta(2) 1];
     %n = n ./ sqrt(sum(n([1 2]).^2));
@@ -194,7 +215,7 @@ for yter = 1+win_s:size(dog, 1)-win_s
     KLgrad = [KLgrad; theta([2 1])'];
     KLnorm = [KLnorm; sqrt(n2_m)];
     KLvers = [KLvers; KLgrad(end,:) ./ n2_m];
-    KLrho = [KLrho; conf.RHO_INIT, conf.RHO_MAX];
+    KLrho = [KLrho; rho, conf.RHO_MAX];
     KLrhoPredict = [KLrhoPredict; 0, 0];
     KLmatching = [KLmatching; -1];
     KLforward = [KLforward; -1];

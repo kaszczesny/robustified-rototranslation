@@ -7,8 +7,11 @@ conf=struct();
 %KITTI
 %conf.im_name = @(x) sprintf("../data/KITTI/%.6d.png",x-1+50);
 %TUM
-persistent files = glob("../data/TUM/*.png");
+% sorry, leaving my local paths
+persistent files = glob("/home/krzysztof/Desktop/rgbd_dataset_freiburg3_long_office_household/rgb/*.png");
 conf.im_name = @(x) files{x};
+persistent files_depth = glob("/home/krzysztof/Desktop/rgbd_dataset_freiburg3_long_office_household/depth/*.png");
+conf.im_name_depth = @(x) files_depth{x};
 
 conf.scale = 0.75;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
@@ -46,11 +49,11 @@ conf.visualize_edges = 0;
 %figure 5
 conf.visualize_crossing = 0;
 %figure 6, 7, 8
-conf.visualize_minimizer_insides = 1;
+conf.visualize_minimizer_insides = 0;
 %figure 9
 conf.visualize_score = 0;
 %figure 10, 11, 12, 13
-conf.visualize_matches = 0;
+conf.visualize_matches = 1;
 conf.visualize_matches_step = 10;
 %figure 14
 conf.visualize_depth = 1;
@@ -66,7 +69,7 @@ conf.debug_matching = 0;
 conf.MAX_R = 5;
 
 % EstimateQuantile
-conf.S_RHO_MIN = 1e-3; % starting uncertainty of histogram in EstimateQuantile
+conf.S_RHO_MIN = 1e-1; % starting uncertainty of histogram in EstimateQuantile
 conf.S_RHO_MAX = 20; % final uncertainty of histogram in EstimateQuantile
 conf.PERCENTILE = 0.9; % quantile threshold in EstimateQuantile
 conf.N_BINS = 100; %number of histogram bins in EstimateQuantile
