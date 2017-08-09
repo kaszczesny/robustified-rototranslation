@@ -460,6 +460,26 @@ function [ ...
     [U, D, Vt] = cv.SVD.Compute(ApI); 
     h = cv.SVD.BackSubst(U, D, Vt, -JtF); % back substitution
    
+   
+    % visualization of cost function in the direction of Jacobian
+    % this is too brutal for program execution to even be in Config
+    if 0
+      if iter==1
+        scores = [];
+        h = h ./ sqrt(dot(h,h));
+        k=[-0.01:0.0001:0.01];
+        for kk=1:length(k)
+          Xnew = X + (h*k(kk));
+          Fnew = TryVelRot(0,1,Xnew,KL_prev,KL,P0m,max_s_rho,
+          Residual,distance_field,KLidx_field, FrameCount, 0);
+          scores = [scores Fnew];
+        end
+        plot(k, scores);
+        keyboard("<<<")
+      end
+    end
+   
+   
     Xnew = X+h;
     
     if iter == INIT_ITER

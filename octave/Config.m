@@ -90,7 +90,7 @@ conf.TAU = 1e-3; %lm params
 conf.GLOBAL_MATCH_THRESHOLD = 500; %if number of matched KL is below, estimation will be restarted
 
 % DirectedMatching
-conf.MATCH_THRESH_MODULE = 1;
+conf.MATCH_THRESH_MODULE = 1; % Gradient matching threshold on the module
 conf.MATCH_THRESH_ANGLE_COS = cos(pi/4); % Gradient matching threshold on the angle
 conf.SEARCH_RANGE = 20; % Max Pixel Distance to search for
 conf.LOCATION_UNCERTAINTY_MATCH = 2; % Modelled Pixel uncertainty on the matching step
@@ -104,7 +104,7 @@ conf.RESHAPE_Q_RELATIVE = 1e-2; % Relative uncertainty added to depth error
 conf.LOCATION_UNCERTAINTY = 1; % Location error [px]
 
 %estimate rescaling
-conf.MATCH_NUM_MIN = 1; % Gradient matching threshold on the module
+conf.MATCH_NUM_MIN = 1; % 
 
 
 end
