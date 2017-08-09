@@ -48,6 +48,17 @@ W0_save = [];
 RVel_save = [];
 RW0_save = [];
 
+
+if conf.visualize_RT
+  %init
+  imrt = zeros(101);
+  imrt(51, 51) = 1;
+  figure(18)
+  imagesc(imrt);
+  axis equal; colormap jet; colorbar;
+  title('RT')
+end
+
 %{
 im_left = imresize(imread("../../00/image_0/000060.png"), conf.scale);
 im_right = imresize(imread("../../00/image_1/000060.png"), conf.scale);
@@ -63,7 +74,7 @@ for iter = 1:KL.ctr
 end
 %}
 
-for frame=2:2
+for frame=2:6
   fflush(stdout);
   KL_save{end+1} = KL;
   KL_prev = KL;
@@ -168,6 +179,14 @@ for frame=2:2
     end
   end
   
+  if conf.visualize_RT
+    imrt( floor(Pos(3)*100) + 51, floor(Pos(1)*100) + 51) = Pos(2) + 1;
+    
+    figure(18)
+    imagesc(imrt);
+    axis equal; colormap jet; colorbar;
+    title('RT')
+  end
   
   if conf.visualize_matches
     %VisualizeMatches(KL_prev, KL, 0);
