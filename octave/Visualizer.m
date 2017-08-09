@@ -106,5 +106,4 @@ function [] = VisualizeHistory(KL_prev)
     imagesc(im_plot')
     axis equal; colormap jet; colorbar;
     title('history')
-  
 end

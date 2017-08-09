@@ -10,7 +10,7 @@ conf=struct();
 persistent files = glob("../data/TUM/*.png");
 conf.im_name = @(x) files{x};
 
-conf.scale = 0.75;
+conf.scale = 0.5;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
 conf.imgsize = imgsize(end:-1:1);
 %KITTI
@@ -59,7 +59,9 @@ conf.visualize_history = 0;
 %figure 16
 conf.visualize_matcher_insides = 0;
 %figure 17
-conf.visualize_dmatches = 1;
+conf.visualize_dmatches = 0;
+%figure 18
+conf.visualize_RT = 1;
 
 %debug
 conf.debug_main = 1;
