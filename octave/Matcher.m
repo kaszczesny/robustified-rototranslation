@@ -27,7 +27,7 @@ function [nmatch, KL] = ForwardMatch(KL, KL_prev)
     end
   
     % clone to new
-    KL.rho(ikl_f,:) = KL_prev.rho(iter);
+    KL.rho(ikl_f,:) = KL_prev.rho(iter,:);
     KL.frames(ikl_f) = KL_prev.frames(iter) + 1;
     KL.matching(ikl_f) = iter;
     KL.posImageMatch(ikl_f,:) = KL_prev.posImage(iter,:);
@@ -118,10 +118,10 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
     dq_rho = k_rho * norm_t;
     
     % Minimum distance to seach for, constrained by -ERR_DQ
-    dq_min = max(0, norm_t*(k_rho - KL.rho(k,1))) - conf.LOCATION_UNCERTAINTY_MATCH;
+    dq_min = max(0, norm_t*(k_rho - KL.rho(k,2))) - conf.LOCATION_UNCERTAINTY_MATCH;
     
     % Maximum distance to seach for, constrained by max_radius+ERR_DQ
-    dq_max = min(conf.SEARCH_RANGE, norm_t*(k_rho + KL.rho(k,1))) + conf.LOCATION_UNCERTAINTY_MATCH;
+    dq_max = min(conf.SEARCH_RANGE, norm_t*(k_rho + KL.rho(k,2))) + conf.LOCATION_UNCERTAINTY_MATCH;
     
     if dq_rho > dq_max % If stating point grater than max
       dq_rho = (dq_max + dq_min)/2; % Start from the midle in both direction
@@ -135,7 +135,7 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
   else
       % If no displacemt (not common) search in perpendicular direction of the edge
       t = KL.grad(k,:);
-      norm_t = KL.norm(k,:);
+      norm_t = KL.norm(k);
       t /= norm_t;
       norm_t = 1;
       
@@ -151,7 +151,7 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
       end
   end
   
-  norm_m = KL.norm(k,:);
+  norm_m = KL.norm(k);
   
   %displacement counters
   tn = dq_rho;
@@ -186,7 +186,7 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
       cang = dot(KL_prev.grad(j,:), KL.grad(k,:)) / (norm_m0*norm_m);
       
       if cang < conf.MATCH_THRESH_ANGLE_COS || ...
-         abs(norm_m0/norm_m - 1) > conf.MATCH_NUM_MIN
+         abs(norm_m0/norm_m - 1) > conf.MATCH_THRESH_MODULE
          
          if conf.debug_matching && 0
           if cang < conf.MATCH_THRESH_ANGLE_COS
@@ -200,12 +200,12 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
          continue
       end
       
-      rho = KL.rho(k,1);
-      s_rho = KL.rho(k,2);
+      rho = KL_prev.rho(j,1);
+      s_rho = KL_prev.rho(j,2);
       
       v_rho_dr = conf.LOCATION_UNCERTAINTY_MATCH.^2 + ...
         s_rho.^2 * norm_t.^2 + ...
-        sigma2_t * rho.^2;
+        sigma2_t * rho.^2; %whaaat the fak
         
       if (tt - norm_t *rho).^2 > v_rho_dr
         if conf.debug_matching
@@ -248,7 +248,7 @@ function [r_num, KL] = Regularize1Iter(KL)
   r = zeros(KL.ctr,1);
   s = zeros(KL.ctr,1);
   
-  mask = zeros(KL.ctr,1);
+  mask = zeros(KL.ctr,1); % named "mask" because "set" is a keyword
   
   for iter=1:KL.ctr
     if (KL.idx(iter,1) == 0 || KL.idx(iter,2) == 0)
@@ -275,7 +275,7 @@ function [r_num, KL] = Regularize1Iter(KL)
     end
     
     alpha = dot(KL.grad(kn,:), KL.grad(kp,:)) ./ ...
-      (KL.norm(kn,:) * KL.norm(kp,:));
+      (KL.norm(kn) * KL.norm(kp));
     
     if alpha - thresh < 0
       % regularization is only performed if final alpha is > 0
@@ -471,9 +471,9 @@ function [KL, ...
   
   for iter=1:KL.ctr
     if KL.frames(iter) < MATCH_NUM_MIN || ...
-      KL.rho(iter,2) <= 0 || ...
-      KL.rho(iter,2) > s_rho_min || ...
-      KL.rhoPredict(iter,2) == 0 %todo: temporary test
+      KL.rhoPredict(iter,2) <= 0 || ...
+      KL.rho(iter,2) > s_rho_min %|| ...
+      %KL.rhoPredict(iter,2) == 0 %todo: temporary test
         continue
     end
     
