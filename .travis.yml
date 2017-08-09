@@ -3,6 +3,8 @@ language: android
 branches:
   except:
     - prototype
+    - xyz
+    - init_with_rgbd
 
 cache:
   - directories:
