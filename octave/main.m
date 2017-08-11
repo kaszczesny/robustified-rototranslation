@@ -3,6 +3,7 @@ clear -exclusive OPENCV
 close all
 if ~exist('OPENCV')
   pkg load image
+  pkg load optim
   setup_opencv
   graphics_toolkit('fltk')
   OPENCV = 1;
@@ -13,7 +14,10 @@ Matcher; % load functions
 GlobalTracker;
 Visualizer;
 
-n_frames = 10;
+
+frame_start = 1063;
+frame_interval = 2;
+n_frames = 6;%400;
 
 % arguments/returns for GlobalTracker
 F = 0; %energy based on dot product of distance residuals
@@ -33,7 +37,12 @@ Kp = 1;
 K = 1;
 P_Kp = 5e-6;
 
-[KL, img_mask] = EdgeFinder(conf.im_name(1));
+[KL, img_mask] = EdgeFinder(conf.im_name(frame_start));
+
+%TUM-only
+ground_truth = data=dlmread('../data/TUM/groundtruth.txt', ' ', 3, 1);
+ground_truth(:, :) -= ground_truth(frame_start, :);
+ground_truth(:, [1 2 3]) = ground_truth(:, [1 3 2]);
 
 %other fluff
 Pos = zeros(3,1); %estimated position
@@ -47,17 +56,25 @@ Vel_save = [];
 W0_save = [];
 RVel_save = [];
 RW0_save = [];
+Pos_save = [];
+Pose_save = [];
 
 
 if conf.visualize_RT
   %init
-  imrt = zeros(101);
-  imrt(51, 51) = 1;
   figure(18)
-  imagesc(imrt);
-  axis equal; colormap jet; colorbar;
   title('RT')
+  %xlabel('x')
+  %ylabel('z')
+  hold on
+  plot(0, 0, 'rx');
+  plot(ground_truth(frame_start, 3), ground_truth(frame_start, 1), 'b+')
+  plot([0 0], [0 0], 'go-')
+  Pos_prev = [0 0 0]';
+  hold off
+  pause(0)
 end
+
 
 %{
 im_left = imresize(imread("../../00/image_0/000060.png"), conf.scale);
@@ -74,7 +91,7 @@ for iter = 1:KL.ctr
 end
 %}
 
-for frame=2:6
+for frame=frame_start+[frame_interval:frame_interval:n_frames]
   fflush(stdout);
   KL_save{end+1} = KL;
   KL_prev = KL;
@@ -102,7 +119,7 @@ for frame=2:6
   Vel_save = cat(2, Vel, Vel_save);
   W0_save = cat(2, W0, W0_save);
   RVel_save = cat(3, RVel, RVel_save);
-  RW0_save = cat(4, RW0, RW0_save);
+  RW0_save = cat(3, RW0, RW0_save);
 
   % check for minimization erros
   if any(isnan([Vel; W0]))
@@ -167,7 +184,10 @@ for frame=2:6
 
   %estimate position and pose
   Pose = Pose * R;
+  Pos_prev = Pos;
   Pos += -Pose * Vel * K;
+  Pos_save = cat(2, Pos, Pos_save);
+  Pose_save = cat(3, Pose, Pose_save);
   
   % RVel = RVel ./ (dt_frame.^2); % quite no point in doing that
   
@@ -180,12 +200,17 @@ for frame=2:6
   end
   
   if conf.visualize_RT
-    imrt( floor(Pos(3)*100) + 51, floor(Pos(1)*100) + 51) = Pos(2) + 1;
-    
-    figure(18)
-    imagesc(imrt);
-    axis equal; colormap jet; colorbar;
-    title('RT')
+    figure(18);
+    hold on
+    plot([Pos_prev(1) Pos(1)], [Pos_prev(3) Pos(3)], 'rx-');
+    plot(ground_truth(frame+[-frame_interval 0], 3), ...
+      ground_truth(frame+[-frame_interval 0], 1), 'b+-')
+    plot( ...
+      Pos(1) + [0 ground_truth(frame,3)-ground_truth(frame-frame_interval,3)], ...
+      Pos(3) + [0 ground_truth(frame,1)-ground_truth(frame-frame_interval,1)], ...
+      'go-')
+    hold off
+    pause(0)
   end
   
   if conf.visualize_matches

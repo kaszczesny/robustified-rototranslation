@@ -10,17 +10,19 @@ conf=struct();
 persistent files = glob("../data/TUM/*.png");
 conf.im_name = @(x) files{x};
 
-conf.scale = 0.5;
+conf.scale = 0.75;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
 conf.imgsize = imgsize(end:-1:1);
 %KITTI
+%{
 conf.principal_point =  [607.1928 185.2157] * conf.scale; %sort of half, xyz
-conf.zf = 718.856; %todo: zf_x and zf_y?
+conf.zf = 718.856 * conf.scale; %todo: zf_x and zf_y?
 conf.FPS = 9.65; % todo: get actual value from dataset
+%}
 %TUM
-%conf.principal_point =  [319.5 239.5] * conf.scale; %sort of half, xyz
-%conf.zf = 525; %X 525, Y 525
-%conf.FPS = 9.65; % todo: get actual value from dataset
+conf.principal_point =  [319.5 239.5] * conf.scale; %sort of half, xyz
+conf.zf = 525 * conf.scale; %X 525, Y 525
+conf.FPS = 9.65; % todo: get actual value from dataset
 
   % DoG:
 conf.ksize = 13;

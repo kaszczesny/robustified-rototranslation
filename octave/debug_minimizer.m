@@ -35,5 +35,8 @@ max_s_rho = EstimateQuantile(KL_prev);
 
 
 y = @(x,pin) TryVelRot(0,0,pin,KL_prev, KL, P0m, max_s_rho, [], distance_field, KLidx_field,0,1);
+y2 = @(pin) TryVelRot(0,0,pin,KL_prev, KL, P0m, max_s_rho, [], distance_field, KLidx_field,0,1);
 
-[~, x] = leasqr(KL_prev.posSubpix, KL_prev.frames*0, zeros(1,6),y)
+%[~, x] = leasqr(KL_prev.posSubpix, KL_prev.frames*0, zeros(1,6),y)
+
+fminsearch(y2, zeros(1,6))
