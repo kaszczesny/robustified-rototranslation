@@ -7,7 +7,8 @@ conf=struct();
 %KITTI
 %conf.im_name = @(x) sprintf("../data/KITTI/%.6d.png",x-1+50);
 %TUM
-persistent files = glob("../data/TUM/*.png");
+%persistent files = glob("../data/TUM/*.png");
+persistent files = glob("../../rgbd_dataset_freiburg3_long_office_household/rgb/*.png");
 conf.im_name = @(x) files{x};
 
 conf.scale = 0.75;
