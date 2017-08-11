@@ -17,7 +17,7 @@ Visualizer;
 
 frame_start = 1063;
 frame_interval = 2;
-n_frames = 6;%400;
+n_frames = 1000;
 
 % arguments/returns for GlobalTracker
 F = 0; %energy based on dot product of distance residuals
@@ -40,9 +40,9 @@ P_Kp = 5e-6;
 [KL, img_mask] = EdgeFinder(conf.im_name(frame_start));
 
 %TUM-only
-ground_truth = data=dlmread('../data/TUM/groundtruth.txt', ' ', 3, 1);
+ground_truth = data=dlmread('../data/TUM/groundtruth_corrected.txt', ',');
 ground_truth(:, :) -= ground_truth(frame_start, :);
-ground_truth(:, [1 2 3]) = ground_truth(:, [1 3 2]);
+ground_truth(:, [1 3 2]) = ground_truth(:, [1 2 3]);
 
 %other fluff
 Pos = zeros(3,1); %estimated position
@@ -67,8 +67,9 @@ if conf.visualize_RT
   %xlabel('x')
   %ylabel('z')
   hold on
+  grid on
   plot(0, 0, 'rx');
-  plot(ground_truth(frame_start, 3), ground_truth(frame_start, 1), 'b+')
+  plot(ground_truth(frame_start, 1), ground_truth(frame_start, 3), 'b+')
   plot([0 0], [0 0], 'go-')
   Pos_prev = [0 0 0]';
   hold off
@@ -202,12 +203,12 @@ for frame=frame_start+[frame_interval:frame_interval:n_frames]
   if conf.visualize_RT
     figure(18);
     hold on
-    plot([Pos_prev(3) Pos(3)], [Pos_prev(1) Pos(1)], 'rx-');
-    plot(ground_truth(frame+[-frame_interval 0], 3), ...
-      ground_truth(frame+[-frame_interval 0], 1), 'b+-')
+    plot([Pos_prev(1) Pos(1)], [Pos_prev(3) Pos(3)], 'rx-');
+    plot(ground_truth(frame+[-frame_interval 0], 1), ...
+      ground_truth(frame+[-frame_interval 0], 3), 'b+-')
     plot( ...
-      Pos(3) + [0 ground_truth(frame,3)-ground_truth(frame-frame_interval,3)], ...
       Pos(1) + [0 ground_truth(frame,1)-ground_truth(frame-frame_interval,1)], ...
+      Pos(3) + [0 ground_truth(frame,3)-ground_truth(frame-frame_interval,3)], ...
       'go-')
     hold off
     pause(0)
