@@ -1,4 +1,4 @@
-function [im1, im2] = Generate2DData (imname, ytrans, xtrans, roll, outliers)
+function [im2] = Generate2DData (imname, ytrans, xtrans, roll, outliers)
 %im - name of image to transform
 %ytrans(pixel), xtrans(pixel), roll(angle) - transformation
 %outliers - 1 to add outliers, 0 otherwise
@@ -16,8 +16,6 @@ imsizetotal_ = size(im);
 imsize_ = [300, 400];
 
 start_ = floor(imsizetotal_-imsize_)/2;
-
-im1 = im( start_(1)+1:start_(1)+imsize_(1) , start_(2)+1:start_(2)+imsize_(2) );
 
 preim2 = imrotate(im, -roll, 'bilinear', 'loose');
 imsizetotal_ = size(preim2);

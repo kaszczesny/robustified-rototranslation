@@ -180,7 +180,7 @@ for frame=2:6
   end
   
   if conf.visualize_RT
-    imrt( floor(Pos(3)*100) + 51, floor(Pos(1)*100) + 51) = Pos(2) + 1;
+    imrt( floor(Pos(3)*1000) + 51, floor(Pos(1)*1000) + 51) = Pos(2) + 1;
     
     figure(18)
     imagesc(imrt);
