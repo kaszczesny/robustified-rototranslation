@@ -10,6 +10,8 @@ conf=struct();
 %persistent files = glob("../data/TUM/*.png");
 persistent files = glob("../../rgbd_dataset_freiburg3_long_office_household/rgb/*.png");
 conf.im_name = @(x) files{x};
+persistent files_depth = glob("../../rgbd_dataset_freiburg3_long_office_household/depth/*.png");
+conf.im_name_depth = @(x) files_depth{x};
 
 conf.scale = 0.75;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
@@ -76,7 +78,8 @@ conf.debug_matching = 0;
 conf.MAX_R = 5;
 
 % EstimateQuantile
-conf.S_RHO_MIN = 1e-3; % starting uncertainty of histogram in EstimateQuantile
+%conf.S_RHO_MIN = 1e-3; % starting uncertainty of histogram in EstimateQuantile
+conf.S_RHO_MIN = 1e-1; % starting uncertainty of histogram in EstimateQuantile
 conf.S_RHO_MAX = 20; % final uncertainty of histogram in EstimateQuantile
 conf.PERCENTILE = 0.9; % quantile threshold in EstimateQuantile
 conf.N_BINS = 100; %number of histogram bins in EstimateQuantile

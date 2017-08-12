@@ -38,7 +38,7 @@ Kp = 1;
 K = 1;
 P_Kp = 5e-6;
 
-[KL, img_mask] = EdgeFinder(conf.im_name(frame_start));
+[KL, img_mask] = EdgeFinder(frame_start, 1);
 
 %TUM-only
 ground_truth_ = data=dlmread('../data/TUM/groundtruth_corrected.txt', ',');
@@ -113,7 +113,7 @@ for frame=frame_start+[frame_interval:frame_interval:n_frames]
   KL_prev = KL;
   img_mask_prev = img_mask;
   
-  [KL, img_mask] = EdgeFinder(conf.im_name(frame));
+  [KL, img_mask] = EdgeFinder(frame, 0);
 
   % reset before new frame
   RVel = eye(3)*1e50;
