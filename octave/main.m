@@ -4,6 +4,7 @@ close all
 if ~exist('OPENCV')
   pkg load image
   pkg load optim
+  pkg load quaternion
   setup_opencv
   graphics_toolkit('fltk')
   OPENCV = 1;
@@ -40,9 +41,23 @@ P_Kp = 5e-6;
 [KL, img_mask] = EdgeFinder(conf.im_name(frame_start));
 
 %TUM-only
-ground_truth = data=dlmread('../data/TUM/groundtruth_corrected.txt', ',');
-ground_truth(:, :) -= ground_truth(frame_start, :);
+ground_truth_ = data=dlmread('../data/TUM/groundtruth_corrected.txt', ',');
+ground_truth = zeros(size(ground_truth_), 6);
+
+%ground truth translation
+ground_truth(:, 1:3) = ground_truth_(:, 1:3);
 ground_truth(:, [1 3 2]) = ground_truth(:, [1 2 3]);
+
+%ground truth rotation
+quat = quaternion( ...
+  ground_truth_(:, 7), ... % ww
+  ground_truth_(:, 4), ... % wx
+  ground_truth_(:, 6), ... % wz
+  ground_truth_(:, 5));... % wy
+ground_truth(:, 4:6) = q2rot(quat)';
+
+%start in zero
+ground_truth(:,:) -= ground_truth(frame_start,:);
 
 %other fluff
 Pos = zeros(3,1); %estimated position
@@ -203,6 +218,7 @@ for frame=frame_start+[frame_interval:frame_interval:n_frames]
   if conf.visualize_RT
     figure(18);
     hold on
+    grid on
     plot([Pos_prev(1) Pos(1)], [Pos_prev(3) Pos(3)], 'rx-');
     plot(ground_truth(frame+[-frame_interval 0], 1), ...
       ground_truth(frame+[-frame_interval 0], 3), 'b+-')
