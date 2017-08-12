@@ -2,7 +2,7 @@ close all
 
 setup_opencv
 pkg load image
-conf = Config();
+global conf = Config();
 load("../../points.mat");
 p1 = first;
 p2 = second;

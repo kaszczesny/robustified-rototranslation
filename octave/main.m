@@ -10,7 +10,7 @@ if ~exist('OPENCV')
   OPENCV = 1;
 end  
 
-conf = Config();
+global conf = Config();
 Matcher; % load functions
 GlobalTracker;
 Visualizer;
@@ -23,7 +23,7 @@ n_frames = 1000;
 % arguments/returns for GlobalTracker
 F = 0; %energy based on dot product of distance residuals
 Vel = zeros(3,1); %initial translation estimation (3 vector; init with zeros)
-Vel(3)=1;
+Vel(3)=1; % this will be used only if not cheating
 W0 = zeros(3,1); %initial rotation estimation (3 vector; init with zeros)
 RVel = eye(3)*1e50; %uncertainty Model if the initial Vel estimate will be used as prior (3x3 matrix; init with eye*1e50)
 RW0 = eye(3)*1e50;  %uncertainty Model if the initial W0  estimate will be used as prior (3x3 matrix; init with eye*1e50)
@@ -38,7 +38,10 @@ Kp = 1;
 K = 1;
 P_Kp = 5e-6;
 
-[KL, img_mask] = EdgeFinder(frame_start, 1);
+if ~conf.cheat
+  [KL, img_mask] = EdgeFinder(frame_start, 1);
+  % else this will be done in main loop
+end  
 
 %TUM-only
 ground_truth_ = data=dlmread('../data/TUM/groundtruth_corrected.txt', ',');
@@ -64,7 +67,7 @@ Pos = zeros(3,1); %estimated position
 R = eye(3); % rotation matrix
 Pose = eye(3); % global rotation
 klm_num = 0;
-EstimationOk = 1;
+EstimationOk = 0;
 
 KL_save = {};
 Vel_save = [];
@@ -109,6 +112,20 @@ end
 
 for frame=frame_start+[frame_interval:frame_interval:n_frames]
   fflush(stdout);
+  
+  if conf.cheat
+    if ~EstimationOk
+      printf("Reestimating frame %d\n", frame-frame_interval);
+      
+      % redo edge finding, this time with RGBD depth
+      [KL, img_mask] = EdgeFinder(frame-frame_interval, 1);
+      
+      % acquire VelRot from ground truth
+      Vel = ground_truth(frame-frame_interval, 1:3)';
+      W0 = ground_truth(frame-frame_interval, 4:6)';
+    end
+  end
+  
   KL_save{end+1} = KL;
   KL_prev = KL;
   img_mask_prev = img_mask;

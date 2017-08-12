@@ -5,7 +5,7 @@ function [s_rho] = EstimateQuantile(KL)
   % tells which s_rho (uncertainty) is such that S_RHO_MIN-s_rho == quantile
   
   
-  conf = Config();
+  global conf;
   bins = zeros(conf.N_BINS, 1);
 
   for iter = 1:KL.ctr
@@ -81,7 +81,7 @@ function [...
     Then they are projected into 3D by Equation 4
   %}
   
-  conf = Config();
+  global conf;
   
   % Rt is just flattened R0, Vt is Velocity (1:3) component of VelRot
   
@@ -370,7 +370,7 @@ function [ ...
   [distance_field, KLidx_field] = AuxiliaryImage(KL);
   
   % UsePriors is always false
-  conf = Config();
+  global conf;
   % init_type is always 2
   max_s_rho = EstimateQuantile(KL_prev);
   INIT_ITER = 2; % Actually controls ProcJF in TryVelRot (true or false depending on iteration)

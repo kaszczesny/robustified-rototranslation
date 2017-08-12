@@ -9,7 +9,7 @@ end
 pkg load optim
 
 GlobalTracker;
-conf = Config();
+global conf = Config();
 
 KL_prev = EdgeFinder(conf.im_name(1));
 KL      = EdgeFinder(conf.im_name(2));

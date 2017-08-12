@@ -2,7 +2,8 @@
 
 function [KL] = ForwardRotate( KL, R )
   % forward rotate old KL points
-  zf = Config().zf;
+  global conf;
+  zf = conf.zf;
   
   for iter=1:KL.ctr
     q = R * [KL.posSubpix(iter,:)./zf, 1]';
@@ -41,7 +42,8 @@ end
 function [nmatch, KL] = DirectedMatching(...
   Vel, RVel, R, KL_prev, KL_prev_img_mask, KL) %and constants
   
-  visualize_dmatches = Config().visualize_dmatches;
+  global conf;
+  visualize_dmatches = conf.visualize_dmatches;
   
   if visualize_dmatches
     img = KL_prev_img_mask*0;
@@ -94,8 +96,8 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
   Vel, RVel, R) % R is back rotation
   %called by DirectedMatching
   
-  conf = Config();
-  zf = Config().zf;
+  global conf;
+  zf = conf.zf;
 
   dq_min = 0;
   dq_max = 0;
@@ -257,7 +259,8 @@ function [r_num, KL] = Regularize1Iter(KL)
   %              this systematic error, neighbouring keylines are
   %              double tested before performing regularization."
   
-  thresh = Config().REGULARIZE_THRESH; % angular threshold
+  global conf;
+  thresh = conf.REGULARIZE_THRESH; % angular threshold
   % estimated uncertainty is the cut-off
   
   % todo: thresh is cos(beta). Beta should be 45, not 60
@@ -356,7 +359,7 @@ function [KL] = UpdateInverseDepthKalman(...
  
   % todo: use openCV kalman (or maybe not)
   
-  conf = Config();
+  global conf;
   zf = conf.zf;
  
   for (iter = 1:KL.ctr)
@@ -477,8 +480,9 @@ function [KL, ...
   P_Kp ... % Estimated uncertainty on global depth
 ] = EstimateReScaling(KL)
   
-  s_rho_min = Config().S_RHO_MAX; %because f you, that's why
-  MATCH_NUM_MIN = Config().MATCH_NUM_MIN; % always 1
+  global conf;
+  s_rho_min = conf.S_RHO_MAX; %because f you, that's why
+  MATCH_NUM_MIN = conf.MATCH_NUM_MIN; % always 1
   
   if KL.ctr <= 0
     Kp = 1;

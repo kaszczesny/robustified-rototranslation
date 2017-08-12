@@ -3,12 +3,13 @@ function [KL, img_mask] = EdgeFinder(frame_id, use_depth)
 %returns xyz to struc
 
 
-persistent thresh_grad = Config().THRESH_GRAD_MIN;
-persistent l_kl_num = 0;
-
 %% CONFIG %%
-conf = Config();
+global conf;
 win_s = conf.win_s;
+
+
+persistent thresh_grad = conf.THRESH_GRAD_MIN;
+persistent l_kl_num = 0;
 
 
 im_name = conf.im_name(frame_id);

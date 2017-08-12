@@ -1,7 +1,7 @@
 1;
 
 function [] = VisualizeMatches( KL_prev, KL, use_m_id )
-  conf = Config();
+  global conf;
   
   if use_m_id
     title_string = "matches m id";
@@ -76,7 +76,7 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
 end
 
 function [] = VisualizeDepth(KL_prev)
-  conf = Config();
+  global conf;
     
     im_plot = zeros(conf.imgsize);
     q = quantile(1./KL_prev.rho(:,1), 0.975);
@@ -95,7 +95,7 @@ function [] = VisualizeDepth(KL_prev)
 end
 
 function [] = VisualizeHistory(KL_prev)
-  conf = Config();
+  global conf;
   
     im_plot = zeros(conf.imgsize);
     

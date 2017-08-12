@@ -1,6 +1,6 @@
 function [distance_field, KLidx_field] = AuxiliaryImage (KL)
 
-conf = Config();
+global conf;
 
 distance_field = zeros(conf.imgsize) - 1; % init with -1 for better visualization
 KLidx_field = zeros(conf.imgsize) - 1;

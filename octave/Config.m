@@ -4,6 +4,8 @@ function conf = Config()
 
 conf=struct();
 
+conf.cheat = 1; %whether to use rgbd and groundtruth for calculations
+
 %KITTI
 %conf.im_name = @(x) sprintf("../data/KITTI/%.6d.png",x-1+50);
 %TUM
@@ -11,7 +13,8 @@ conf=struct();
 persistent files = glob("../../rgbd_dataset_freiburg3_long_office_household/rgb/*.png");
 conf.im_name = @(x) files{x};
 persistent files_depth = glob("../../rgbd_dataset_freiburg3_long_office_household/depth/*.png");
-conf.im_name_depth = @(x) files_depth{x};
+files_depth_mapping = csvread("../data/TUM/depth_idx.txt");
+conf.im_name_depth = @(x) files_depth{files_depth_mapping(x)};
 
 conf.scale = 0.75;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
@@ -55,12 +58,12 @@ conf.visualize_minimizer_insides = 0;
 %figure 9
 conf.visualize_score = 0;
 %figure 10, 11, 12, 13
-conf.visualize_matches = 0;
+conf.visualize_matches = 1;
 conf.visualize_matches_step = 10;
 %figure 14
 conf.visualize_depth = 0;
 %figure 15
-conf.visualize_history = 0;
+conf.visualize_history = 1;
 %figure 16
 conf.visualize_matcher_insides = 0;
 %figure 17

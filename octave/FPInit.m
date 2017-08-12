@@ -2,7 +2,7 @@ clear all
 close all
 
 pkg load image
-conf = Config();
+global conf = Config();
 setup_opencv
 
 %%%DETECTING%%%
