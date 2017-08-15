@@ -23,7 +23,7 @@ function [nmatch, KL] = ForwardMatch(KL, KL_prev)
   nmatch = 0;
   for iter = 1:KL_prev.ctr
     ikl_f = KL_prev.forward(iter);
-    if ikl_f < 0 || ikl_f < KL.ctr
+    if ikl_f < 0 || ikl_f > KL.ctr
       continue
     end
   
@@ -78,7 +78,7 @@ function [nmatch, KL] = DirectedMatching(...
     nmatch++;
     
     if visualize_dmatches
-      img(KL_prev.pos(i_mch,2), KL_prev.pos(i_mch,1)) = 20; %+=3 to see matches converging to one pixel
+      img(KL_prev.pos(i_mch,2), KL_prev.pos(i_mch,1)) +=3; %to see matches converging to one pixel
     end
     
   end
@@ -192,8 +192,8 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
         end
       end
       
-      inx_y = round(t(2) + pi0(2));
-      inx_x = round(t(1) + pi0(1));
+      inx_y = round(t(2)*tt + pi0(2));
+      inx_x = round(t(1)*tt + pi0(1));
       if inx_y < 1 || inx_y > size(KL_prev_img_mask,2) || inx_x < 1 || inx_x > size(KL_prev_img_mask,1)
         continue
       end  
