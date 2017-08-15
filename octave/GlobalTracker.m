@@ -329,6 +329,16 @@ function [...
     
   end
  
+  %figure(19)
+  %hist(fm,100)
+  %figure(20)
+  %im = zeros(conf.imgsize);
+  %im( KL_prev.pos(:, 1), KL_prev.pos(:, 2) ) = fm(:)';
+  %imagesc(im')
+  %axis equal; colorbar; colormap jet;
+  
+  
+  
   score = dot(fm, fm); %dot product
 
   if FullScore
