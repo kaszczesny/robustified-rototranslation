@@ -136,8 +136,8 @@ end
 PInv = pinv( Phi );
 
 %% EDGE FINDER LOOP %%
-for yter = 1+win_s:size(dog, 1)-win_s
-  for xter = 1+win_s:size(dog, 2)-win_s
+for yter = 1+3*win_s:size(dog, 1)-3*win_s
+  for xter = 1+3*win_s:size(dog, 2)-3*win_s
     % Test 1: local gradient must be sufficiently stronk
     if n2gI(yter,xter) < (thresh_grad*conf.max_img_value).^2;
       edge_probability(yter,xter) = 1;
