@@ -1,46 +1,155 @@
-\chapter{Wprowadzenie}
-\label{cha:wprowadzenie}
-
-\LaTeX~jest systemem składu umożliwiającym tworzenie dowolnego typu dokumentów (w~szczególności naukowych i technicznych) o wysokiej jakości typograficznej (\cite{Dil00}, \cite{Lam92}). Wysoka jakość składu jest niezależna od rozmiaru dokumentu -- zaczynając od krótkich listów do bardzo grubych książek. \LaTeX~automatyzuje wiele prac związanych ze składaniem dokumentów np.: referencje, cytowania, generowanie spisów (treśli, rysunków, symboli itp.) itd.
-
-\LaTeX~jest zestawem instrukcji umożliwiających autorom skład i wydruk ich prac na najwyższym poziomie typograficznym. Do formatowania dokumentu \LaTeX~stosuje \TeX a (wymiawamy 'tech' -- greckie litery $\tau$, $\epsilon$, $\chi$). Korzystając z~systemu składu \LaTeX~mamy za zadanie przygotować jedynie tekst źródłowy, cały ciężar składania, formatowania dokumentu przejmuje na siebie system.
-
-%---------------------------------------------------------------------------
-
-\section{Cele pracy}
-\label{sec:celePracy}
+\chapter{Theoretical background and state-of-the-art}
+\label{cha:intro}
 
 
-Celem poniższej pracy jest zapoznanie studentów z systemem \LaTeX~w zakresie umożliwiającym im samodzielne, profesjonalne złożenie pracy dyplomowej w systemie \LaTeX.
+In this chapter theory behind computer vision, 3D reconstruction and mathematical apparatus used in our algorithm are introduced@. Following topics are briefly reviewed@: pinhole camera model, basics of stereo vision, egomotion and 3D image transformations. Difference of Gaussians edge detection, Levenberg-Marquadt algorithm and Kalman filter can be found in Appendices B, C and D, respectively.
 
-\subsection{Jakiś tytuł}
+Literature connected with this topic is reviewed@. Finally, thorough analysis of Rebvo algorithm \cite{jose2015realtime} is performed@.
 
-\subsubsection{Jakiś tytuł w subsubsection}
+%-----------------
 
-
-\subsection{Jakiś tytuł 2}
-
-%---------------------------------------------------------------------------
-
-\section{Zawartość pracy}
-\label{sec:zawartoscPracy}
-
-W rodziale~\ref{cha:pierwszyDokument} przedstawiono podstawowe informacje dotyczące struktury dokumentów w \LaTeX u. Alvis~\cite{Alvis2011} jest językiem 
+\section{Pinhole camera model}
+\label{sec:pinhole}
 
 
+Pinhole camera model is a widely used and simple model that establishes connection between world coordinates $\Re^3$ and image-domain coordinates $\Re^2$ \cite{hartley2003multiple} (i.e. projective geometry).
+
+Figure. Every 3D point $Q$ can be associated with a ray $QO$ that passes through camera origin $O$, usually defined as origin of the 3D coordinate system origin. Such ray can be defined with homogeneous coordinates as set of points $(X, Y, Z)$ that satisfy Eq.~\ref{eq:homo}
+
+\begin{equation}
+(X, Y, Z) = k(Q_x, Q_y, Q_z)
+\label{eq:homo}
+\end{equation}
+where:
+\begin{eqwhere}[2cm]
+	\item[$k$] real parameter, \(k \neq 0\)
+	\item[$Q$] world coordinates point
+\end{eqwhere}
+
+Image plane \(\pi\) is a rectangle parallel to plane \(XOY\). Its distance from origin is equal to \(f\) (focal length). Usually it is assumed that image plane's \(z\) coordinate is positive -- otherwise formed image would be upside down. Point of \(OZ\) and \(\pi\) intersection is called principal point.
+
+World coordinate points Q are projected onto \(\pi\) as \(Q'\), thus forming a 2D image.
+
+%---------
+
+\section{Stereo vision}
+\label{sec:stereo}
 
 
+%---------
+
+\section{Egomotion}
+\label{sec:ego}
+
+%-----------
+
+\section{3D image transformations}
+\label{sec:3dtrans}
+
+\subsection{Notations of 3D rotation}
+
+Rodriguez, quaternion, Euler, expm
+
+\subsection{3D translation and rotation}
+
+% -----------
+
+\section{Literature}
 
 
+% -------------
+
+\section{The \textit{Rebvo} algorithm}
+
+In this section the \textit{Rebvo} algorithm \cite{jose2015realtime} description is paraphrased for need of this thesis.
+
+The algorithm is similar to semi-dense methods that achieve SLAM only with extracted features (in this case - edges). It is not a full SLAM system, so only 2 consecutive frames are stored at each time and no global map is created. Information from previous frames is retained as estimated depth.
+
+% ---
+
+\subsection{Notation (Keyline structure)}
+
+Pixels that contains subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}.
+
+\begin{table}[h]
+	\centering
+	
+	\begin{threeparttable}
+		\caption{Keyline structure}
+		\label{tab:keyline}
+		
+		\begin{tabularx}{0.6\textwidth}{C{1}}
+			\toprule
+			\thead{Nagłówek\tnote{a}} \\
+			\midrule
+			Tekst 1 \\
+			Tekst 2 \\
+			\bottomrule
+		\end{tabularx}
+		
+		\begin{tablenotes}
+			\footnotesize
+			\item[a] Jakiś komentarz\textellipsis
+		\end{tablenotes}
+		
+	\end{threeparttable}
+\end{table}
+
+% ---
+
+\subsection{Edge extraction}
+
+First main step of algorithm is edge extraction with subpixel accuracy. Extracted Keylines that are estimated to lie on same edge are joined.
+
+\subsubsection{Zero crossing of DoG}
+While many edge detection algorithms could be used in this step, authors of \textit{Rebvo} have chosen Difference of Gaussians, because it provides \cite{jose2015realtime}:
+\begin{enumerate}
+	\item repetivity -- an edge is detected similarly throughout consecutive frames,
+	\item precision -- edge positions are accurate,
+	\item low time \& memory complexity.
+\end{enumerate}
+
+Another advantage of DoG is that edge gradient can be obtained directly from normal vector of the fitted local plane.
+
+\subsubsection{Keyline joining}
+
+After obtaining individual Keylines, they are joined together to form continuous (from consecutive pixels) edges. % todo footnote
+For each Keyline, its neighbors are searched among 8 bordering pixels in direction perpendicular to edge gradient.
+Most of the time, the algorithm considers only individual Keylines. Their neighbors are used only in Matching step to ... % todo
+and in Regularization step, when ... % todo
+is averaged over Keyline and its neighbors.
 
 
+%--
 
+\subsection{Edge tracking}
 
+During minimization, previous and current Keylines are initially@ matched
 
+\subsubsection{Warping function}
 
+\subsubsection{Auxiliary image}
 
+\subsubsection{Keyline matching criteria}
 
+% todo Jan: figure
 
+\subsubsection{Energy minimization}
 
+\subsubsection{Initial conditions}
 
+\subsubsection{Reweighing}
 
+%--
+
+\subsection{Mapping}
+
+\subsubsection{Forward matching}
+
+\subsubsection{Directed matching}
+
+\subsubsection{Regularization}
+
+\subsubsection{Depth estimation}
+
+\subsubsection{Scale correction}
