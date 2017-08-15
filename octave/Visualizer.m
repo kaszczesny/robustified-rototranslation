@@ -59,7 +59,35 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
     title(title_string)
     
     
+    %keyboard("<<<")
+    
+    %close
     figure(11 + 2*use_m_id)
+    
+    
+    [y x] = meshgrid(1:conf.imgsize(1), 1:conf.imgsize(2));
+    im1_ = im1;
+    for iter = 1:KL_prev.ctr
+      im1_( KL_prev.pos(iter, 2), KL_prev.pos(iter,1) ) = 255;
+    end
+    for iter = 1:KL.ctr
+      im1_( KL.pos(iter, 2), KL.pos(iter,1) ) = 0;
+    end
+    imshow(im1_);
+    hold on
+    vec_y = zeros(conf.imgsize(2:-1:1));
+    vec_x = zeros(conf.imgsize(2:-1:1));
+    for iter = 1:KL.ctr
+      if KL.matching(iter) != -1
+        match = KL.matching(iter);
+        vec =  KL.pos(iter,:) - KL_prev.pos(match,:);
+        vec_y( KL_prev.pos(match,2), KL_prev.pos(match,1) ) = vec(1);
+        vec_x( KL_prev.pos(match,2), KL_prev.pos(match,1) ) = vec(2);
+      end
+    end
+    quiver(y, x, vec_y, vec_x, 0);
+    
+    %{
     imshow(im1);
     hold on;
 
@@ -71,6 +99,7 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
       plot(pos1(iter,1), pos1(iter,2), "o", ...
             'Color', color, 'markerfacecolor', color);
     end
+    %}
     hold off;
     title(title_string);
 end
@@ -78,18 +107,20 @@ end
 function [] = VisualizeDepth(KL_prev)
   global conf;
     
-    im_plot = zeros(conf.imgsize);
-    q = quantile(1./KL_prev.rho(:,1), 0.975);
+    im_plot = zeros(conf.imgsize) - 5;
+    %q = quantile(1./KL_prev.rho(:,1), 0.975);
+    q = 20;
     
     for iter = 1:KL_prev.ctr
       if 1./KL_prev.rho(iter,1) < q
         im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 1./KL_prev.rho(iter,1);
       else
-        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 0;
+        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = q*1.5;
       end
     end
     figure(14);
     imagesc(im_plot');
+    %axis equal; colormap cubehelix; colorbar;
     axis equal; colormap jet; colorbar;
     title('depth')
 end
