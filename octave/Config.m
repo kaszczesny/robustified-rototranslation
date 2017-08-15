@@ -16,7 +16,7 @@ persistent files_depth = glob("../../rgbd_dataset_freiburg3_long_office_househol
 files_depth_mapping = csvread("../data/TUM/depth_idx.txt");
 conf.im_name_depth = @(x) files_depth{files_depth_mapping(x)};
 
-conf.scale = 0.75;
+conf.scale = 0.66;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
 conf.imgsize = imgsize(end:-1:1);
 %KITTI
@@ -38,8 +38,8 @@ conf.sigma1 = 1.7818;
 conf.sigma2 = 2.30029;
 
   % Test 1:
-conf.THRESH_GRAD_MIN = 0.015;
-conf.THRESH_GRAD_MAX = 0.015;
+conf.THRESH_GRAD_MIN = 0.03;
+conf.THRESH_GRAD_MAX = 0.03;
 conf.THRESH_GRAD_GAIN = 1e-6;
 conf.KL_REFERENCE_NUMBER = 5000;
 conf.max_img_value = 255;
@@ -55,21 +55,21 @@ conf.visualize_edges = 0;
 conf.visualize_crossing = 0;
 %figure 6, 7, 8
 conf.visualize_minimizer_insides = 0;
-%figure 9
+%figure 9, 19
 conf.visualize_score = 0;
 %figure 10, 11, 12, 13
 conf.visualize_matches = 1;
-conf.visualize_matches_step = 10;
+conf.visualize_matches_step = 100;
 %figure 14
 conf.visualize_depth = 0;
 %figure 15
-conf.visualize_history = 1;
+conf.visualize_history = 0;
 %figure 16
 conf.visualize_matcher_insides = 0;
 %figure 17
 conf.visualize_dmatches = 0;
 %figure 18
-conf.visualize_RT = 1;
+conf.visualize_RT = 0;
 
 %debug
 conf.debug_main = 1;
@@ -81,8 +81,8 @@ conf.debug_matching = 0;
 conf.MAX_R = 5;
 
 % EstimateQuantile
-%conf.S_RHO_MIN = 1e-3; % starting uncertainty of histogram in EstimateQuantile
-conf.S_RHO_MIN = 1e-1; % starting uncertainty of histogram in EstimateQuantile
+conf.S_RHO_MIN = 1e-3; % starting uncertainty of histogram in EstimateQuantile
+%conf.S_RHO_MIN = 1e-1; % starting uncertainty of histogram in EstimateQuantile
 conf.S_RHO_MAX = 20; % final uncertainty of histogram in EstimateQuantile
 conf.PERCENTILE = 0.9; % quantile threshold in EstimateQuantile
 conf.N_BINS = 100; %number of histogram bins in EstimateQuantile

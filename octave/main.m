@@ -10,15 +10,16 @@ if ~exist('OPENCV')
   OPENCV = 1;
 end  
 
-global conf = Config();
+global conf;
+conf = Config();
 Matcher; % load functions
 GlobalTracker;
 Visualizer;
 
 
-frame_start = 1063;
-frame_interval = 2;
-n_frames = 1000;
+frame_start = 90;
+frame_interval = 1;
+n_frames = 2400;
 
 % arguments/returns for GlobalTracker
 F = 0; %energy based on dot product of distance residuals
@@ -170,6 +171,7 @@ for frame=frame_start+[frame_interval:frame_interval:n_frames]
     
   else
       R0 = RotationMatrix(W0); %forward rotation
+      % in C++ there is a multiplication by R, but at this point R=eye(3)
       R = R0'; %backward rotation;
       
       KL_prev = ForwardRotate( KL_prev, R' );
