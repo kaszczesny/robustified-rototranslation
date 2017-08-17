@@ -85,7 +85,7 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
         vec_x( KL_prev.pos(match,2), KL_prev.pos(match,1) ) = vec(2);
       end
     end
-    quiver(y, x, vec_y, vec_x, 0);
+    quiver(y, x, vec_y, vec_x, 0, 'color', [1 0 0]);
     
     %{
     imshow(im1);
