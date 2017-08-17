@@ -19,7 +19,7 @@ Visualizer;
 
 frame_start = 90;
 frame_interval = 1;
-n_frames = 2400;
+n_frames = 1;
 
 % arguments/returns for GlobalTracker
 F = 0; %energy based on dot product of distance residuals

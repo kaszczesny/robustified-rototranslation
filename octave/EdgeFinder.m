@@ -25,15 +25,22 @@ im = imread(im_name);
 if length(size(im)) == 3
   im = rgb2gray(im);
 end
+
 im = imresize(im, conf.scale);
+imc = im(2:end-1,2:end-1); %rectification correction
+
 im_blurred1 = double(cv.GaussianBlur(
-              im, "KSize", [conf.ksize,conf.ksize], 
+              imc, "KSize", [conf.ksize,conf.ksize], 
               "SigmaX", conf.sigma1, "SigmaY", conf.sigma1));
 im_blurred2 = double(cv.GaussianBlur(
-              im, "KSize", [conf.ksize,conf.ksize],
+              imc, "KSize", [conf.ksize,conf.ksize],
               "SigmaX", conf.sigma2, "SigmaY", conf.sigma2));
               %% ratio of kernels should be 4:1 or 5:1
-dog = double(im_blurred2) - double(im_blurred1);
+              
+
+doggy = double(im_blurred2) - double(im_blurred1);
+dog = zeros(conf.imgsize(2:-1:1));
+dog(2:end-1,2:end-1) = doggy;
 
 if use_depth
   depth = imresize(imread(im_name_depth), conf.scale);
@@ -136,8 +143,8 @@ end
 PInv = pinv( Phi );
 
 %% EDGE FINDER LOOP %%
-for yter = 1+3*win_s:size(dog, 1)-3*win_s
-  for xter = 1+3*win_s:size(dog, 2)-3*win_s
+for yter = 1+win_s:size(dog, 1)-win_s
+  for xter = 1+win_s:size(dog, 2)-win_s
     % Test 1: local gradient must be sufficiently stronk
     if n2gI(yter,xter) < (thresh_grad*conf.max_img_value).^2;
       edge_probability(yter,xter) = 1;

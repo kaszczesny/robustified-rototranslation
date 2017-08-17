@@ -16,7 +16,7 @@ persistent files_depth = glob("../../rgbd_dataset_freiburg3_long_office_househol
 files_depth_mapping = csvread("../data/TUM/depth_idx.txt");
 conf.im_name_depth = @(x) files_depth{files_depth_mapping(x)};
 
-conf.scale = 0.66;
+conf.scale = 1/3;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
 conf.imgsize = imgsize(end:-1:1);
 %KITTI
@@ -58,7 +58,7 @@ conf.visualize_minimizer_insides = 0;
 %figure 9, 19
 conf.visualize_score = 0;
 %figure 10, 11, 12, 13
-conf.visualize_matches = 1;
+conf.visualize_matches = 0;
 conf.visualize_matches_step = 100;
 %figure 14
 conf.visualize_depth = 0;
