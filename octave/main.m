@@ -112,7 +112,9 @@ end
 %}
 
 for frame=frame_start+[frame_interval:frame_interval:n_frames]
+  disp('')
   fflush(stdout);
+  tic
   
   if conf.cheat
     if ~EstimationOk
@@ -264,7 +266,9 @@ for frame=frame_start+[frame_interval:frame_interval:n_frames]
   
   if any(isnan(KL_prev.rho(:))) && conf.debug_main
     printf("rho is nan\n");
-  end  
+  end
+  
+  toc
 end
 
 % general todo: check sqrts in norms and squares in variances
