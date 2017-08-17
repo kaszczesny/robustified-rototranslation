@@ -4,7 +4,7 @@ function conf = Config()
 
 conf=struct();
 
-conf.cheat = 1; %whether to use rgbd and groundtruth for calculations
+conf.cheat = 0; %whether to use rgbd and groundtruth for calculations
 
 %KITTI
 %conf.im_name = @(x) sprintf("../data/KITTI/%.6d.png",x-1+50);
@@ -16,7 +16,7 @@ persistent files_depth = glob("../../rgbd_dataset_freiburg3_long_office_househol
 files_depth_mapping = csvread("../data/TUM/depth_idx.txt");
 conf.im_name_depth = @(x) files_depth{files_depth_mapping(x)};
 
-conf.scale = 1/3;
+conf.scale = 1/6;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
 conf.imgsize = imgsize(end:-1:1);
 %KITTI
@@ -70,6 +70,8 @@ conf.visualize_matcher_insides = 0;
 conf.visualize_dmatches = 0;
 %figure 18
 conf.visualize_RT = 0;
+%figure 19
+conf.visualize_3D = 1;
 
 %debug
 conf.debug_main = 1;

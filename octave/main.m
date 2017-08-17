@@ -19,7 +19,7 @@ Visualizer;
 
 frame_start = 90;
 frame_interval = 1;
-n_frames = 1;
+n_frames = 10;
 
 % arguments/returns for GlobalTracker
 F = 0; %energy based on dot product of distance residuals
@@ -256,6 +256,10 @@ for frame=frame_start+[frame_interval:frame_interval:n_frames]
   
   if conf.visualize_depth
     VisualizeDepth(KL_prev);
+  end
+  
+  if conf.visualize_3D & frame == frame_start + n_frames
+    VisualizeDepth3D(KL_prev);
   end
   
   if conf.visualize_history

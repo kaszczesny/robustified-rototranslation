@@ -138,3 +138,91 @@ function [] = VisualizeHistory(KL_prev)
     axis equal; colormap jet; colorbar;
     title('history')
 end
+
+function [] = VisualizeDepth3D(KL_prev)
+  global conf;
+    
+    edge_id = zeros(1,KL_prev.ctr);
+    figure(19)
+    hold on;
+    
+    for iter = 1:KL_prev.ctr
+      if edge_id(iter) == 1
+        continue;
+      end
+      
+      %making a vector of ids
+      id = iter;
+      edge_id(id) = 1;
+      nid = KL_prev.idx(iter,2);
+      pid = KL_prev.idx(iter,1);
+      edgevec = id;
+      
+      %nid
+      while nid ~= 0
+        stepid = id;
+        id = nid;
+        %check for prior iterations
+        if edge_id(id) == 1
+          break
+        end
+        %check for loop
+        if KL_prev.idx(id,1) == KL_prev.idx(id,2)
+          edge_id( KL_prev.idx(id,1) ) = 1;
+          edge_id( KL_prev.idx(id,2) ) = 1;
+          break
+        end
+        %check for change in idxses
+        if KL_prev.idx(id, 2) == stepid;
+          nid = KL_prev.idx(id, 1);
+        else nid = KL_prev.idx(id, 2);
+        end
+        
+        edgevec = [edgevec, id];
+        edge_id(id) = 1;
+      end
+      
+      %pid
+      while pid ~= 0
+        stepid = id;
+        id = pid;
+        %check for prior iterations
+        if edge_id(id) == 1
+          break
+        end
+        %check for loop
+        if KL_prev.idx(id,1) == KL_prev.idx(id,2)
+          edge_id( KL_prev.idx(id,1) ) = 1;
+          edge_id( KL_prev.idx(id,2) ) = 1;
+          break
+        end
+        %check for change in idxses
+        if KL_prev.idx(id, 1) == stepid;
+          pid = KL_prev.idx(id, 2);
+        else pid = KL_prev.idx(id, 1);
+        end
+        
+        edgevec = [id, edgevec];
+        edge_id(id) = 1;
+      end
+     
+      %make a coordinate vector
+      coor = [];
+      for iter = 1:length(edgevec)
+        if 1/KL_prev.rho(     edgevec(iter),1 ) > 5
+          depth = 5;
+        else
+          depth = 1/KL_prev.rho(     edgevec(iter),1 );
+        end
+        coor = [coor, [ KL_prev.posSubpix( edgevec(iter),1 ); ...
+                        depth                               ; ...
+                        KL_prev.posSubpix( edgevec(iter),2 )] ];
+      end 
+      
+      %visualize that edge
+      view(3)
+      plot3(coor(1,:), coor(2,:), coor(3,:), 'x-');
+    end
+    hold off;
+    
+end
