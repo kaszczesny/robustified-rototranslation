@@ -214,14 +214,15 @@ function [] = VisualizeDepth3D(KL_prev)
         else
           depth = 1/KL_prev.rho(     edgevec(iter),1 );
         end
-        coor = [coor, [ KL_prev.posSubpix( edgevec(iter),1 ); ...
+        coor = [coor, [ KL_prev.posImage( edgevec(iter),1 ); ...
                         depth                               ; ...
-                        KL_prev.posSubpix( edgevec(iter),2 )] ];
+                        KL_prev.posImage( edgevec(iter),2 )] ];
       end 
       
       %visualize that edge
       view(3)
-      plot3(coor(1,:), coor(2,:), coor(3,:), 'x-');
+      plot3(coor(1,:), coor(2,:), coor(3,:), 'x.-', ...
+            0, 0, 0, 'r.');
     end
     hold off;
     

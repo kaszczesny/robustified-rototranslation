@@ -111,6 +111,8 @@ for iter = 1:KL.ctr
 end
 %}
 
+sound = wavread('../data/sound.wav');
+
 for frame=frame_start+[frame_interval:frame_interval:n_frames]
   disp('')
   fflush(stdout);
@@ -260,7 +262,7 @@ for frame=frame_start+[frame_interval:frame_interval:n_frames]
     VisualizeDepth(KL_prev);
   end
   
-  if conf.visualize_3D & frame == frame_start + n_frames
+  if conf.visualize_3D
     VisualizeDepth3D(KL_prev);
   end
   
@@ -273,6 +275,11 @@ for frame=frame_start+[frame_interval:frame_interval:n_frames]
   end
   
   toc
+  
+  if conf.visualize_3D
+    soundsc(sound,44.1e3,16,[-50.0,50.0]);
+    keyboard("<<<") % type "return" to continue
+  end  
 end
 
 % general todo: check sqrts in norms and squares in variances
