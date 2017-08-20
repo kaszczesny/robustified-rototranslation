@@ -2,9 +2,9 @@
 \label{cha:intro}
 
 
-In this chapter theory behind computer vision, 3D reconstruction and mathematical apparatus used in our algorithm are introduced@. Following topics are briefly reviewed@: pinhole camera model, basics of stereo vision, egomotion and 3D image transformations. Difference of Gaussians edge detection, Levenberg-Marquadt algorithm and Kalman filter can be found in Appendices B, C and D, respectively.
+In this chapter theory behind computer vision, 3D reconstruction and mathematical apparatus used in our algorithm are introduced. Following topics are briefly discussed: pinhole camera model, basics of stereo vision, egomotion and 3D image transformations. Other topics -- Difference of Gaussians edge detection, Levenberg-Marquadt algorithm and Kalman filter -- can be found in Appendices B, C and D, respectively.
 
-Literature connected with this topic is reviewed@. Finally, thorough analysis of Rebvo algorithm \cite{jose2015realtime} is performed@.
+Literature connected with this topic is overviewed. Finally, Rebvo algorithm \cite{jose2015realtime} is thoroughly analyzed.
 
 %-----------------
 
@@ -12,9 +12,9 @@ Literature connected with this topic is reviewed@. Finally, thorough analysis of
 \label{sec:pinhole}
 
 
-Pinhole camera model is a widely used and simple model that establishes connection between world coordinates $\Re^3$ and image-domain coordinates $\Re^2$ \cite{hartley2003multiple} (i.e. projective geometry).
+Pinhole camera model is a widely used and simple model that establishes connection between world coordinates $\Re^3$ and image-domain coordinates $\Re^2$ (i.e. projective geometry) \cite{hartley2003multiple}.
 
-Figure. Every 3D point $Q$ can be associated with a ray $QO$ that passes through camera origin $O$, usually defined as origin of the 3D coordinate system origin. Such ray can be defined with homogeneous coordinates as set of points $(X, Y, Z)$ that satisfy Eq.~\ref{eq:homo}
+Figure. Every 3D point $Q$ can be associated with a ray $QO$ that passes through camera origin $O$, usually defined as origin of the 3D coordinate system origin. Such ray can be defined with homogeneous coordinates as set of points $\{(X, Y, Z)\}$ that satisfy Eq.~\ref{eq:homo}
 
 \begin{equation}
 (X, Y, Z) = k(Q_x, Q_y, Q_z)
@@ -26,7 +26,7 @@ where:
 	\item[$Q$] world coordinates point
 \end{eqwhere}
 
-Image plane \(\pi\) is a rectangle parallel to plane \(XOY\). Its distance from origin is equal to \(f\) (focal length). Usually it is assumed that image plane's \(z\) coordinate is positive -- otherwise formed image would be upside down. Point of \(OZ\) and \(\pi\) intersection is called principal point.
+Image plane \(\pi\) is a rectangle parallel to plane \(XOY\). Its distance from origin is equal to \(f\) (focal length). Usually it is assumed that image plane's \(z\) coordinate is positive -- otherwise formed image would be upside down. Point where \(OZ\) intersects \(\pi\) is called principal point.
 
 World coordinate points Q are projected onto \(\pi\) as \(Q'\), thus forming a 2D image.
 
@@ -61,15 +61,15 @@ Rodriguez, quaternion, Euler, expm
 
 \section{The \textit{Rebvo} algorithm}
 
-In this section the \textit{Rebvo} algorithm \cite{jose2015realtime} description is paraphrased for need of this thesis.
+In this section the \textit{Rebvo} algorithm \cite{jose2015realtime} description is paraphrased for needs of this thesis.
 
-The algorithm is similar to semi-dense methods that achieve SLAM only with extracted features (in this case - edges). It is not a full SLAM system, so only 2 consecutive frames are stored at each time and no global map is created. Information from previous frames is retained as estimated depth.
+\textit{Rebvo} is a monocular visual odometry algorithm capable of running in real time on an ARM processor \cite{jose2015realtime}. It is similar to semi-dense methods, that achieve SLAM using only extracted features (in this case - edges). It is not a full SLAM system, so only 2 consecutive frames are stored at each time and no global map is created. Information from previous frames is retained as estimated depth.
 
 % ---
 
 \subsection{Notation (Keyline structure)}
 
-Pixels that contains subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}.
+Pixels that contain subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}.
 
 \begin{table}[h]
 	\centering
@@ -78,12 +78,21 @@ Pixels that contains subpixel edge positions are called Keylines and, after edge
 		\caption{Keyline structure}
 		\label{tab:keyline}
 		
-		\begin{tabularx}{0.6\textwidth}{C{1}}
+		\begin{tabularx}{0.6\textwidth}{C{1} C{1}}
 			\toprule
-			\thead{Nagłówek\tnote{a}} \\
+			\thead{Structure field\tnote{a}} & \thead{Description} \\
 			\midrule
-			Tekst 1 \\
-			Tekst 2 \\
+			$q$ & subpixel position in image \\
+			$h$ & normalized $q$ (principal point moved to $(0,0)$ and coordinates divided by focal length $z_f$ \\
+			$\rho$, $\sigma_{\rho}$ & estimated inverse depth: $\frac{1}{Z}$, and its variance \\
+			$\rho_0$, $\sigma_{\rho_{0}}$ & inverse depth predicted by Kalman filter and its variance \\
+			$g$ & edge gradient obtained from DoG \\
+			$p_{id}$ & index of previous Keyline in an edge \\
+			$n_{id}$ & index of next Keyline in an edge \\
+			
+			matching/forward/historia \\
+			$h_0$ &  \\
+			$g_{0}$ & gradient of matched Keyline from previous frame \\
 			\bottomrule
 		\end{tabularx}
 		
