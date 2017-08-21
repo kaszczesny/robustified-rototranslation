@@ -188,6 +188,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       [klm_num, KL] = DirectedMatching(...
           Vel, RVel, R, KL_prev, img_mask_prev, KL);
       klm_num
+      
       if klm_num < conf.GLOBAL_MATCH_THRESHOLD
         RVel = eye(3)*1e50;
         Vel = zeros(3,1);
@@ -212,7 +213,8 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
         [KL] = UpdateInverseDepthKalman(Vel, RVel, RW0, KL);
         
         % optionally rescale depth
-        [KL, Kp, P_Kp] = EstimateReScaling(KL); 
+        [KL, Kp, P_Kp] = EstimateReScaling(KL);
+        
       end
   end
   
@@ -259,14 +261,14 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     VisualizeMatches(KL_prev, KL, 1);
   end
   
+  if conf.visualize_3D
+    VisualizeDepth3D(KL); %median filter is in there, so better get this done before vis_depth
+  end
+  
   if conf.visualize_depth
     VisualizeDepth(KL);
   end
-  
-  if conf.visualize_3D
-    VisualizeDepth3D(KL);
-  end
-  
+   
   if conf.visualize_history
     VisualizeHistory(KL);
   end
