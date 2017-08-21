@@ -228,12 +228,28 @@ function [] = VisualizeDepth3D(KL_prev)
         coor = [coor, [ KL_prev.posImage( edgevec(iter),1 ); ...
                         depth                               ; ...
                         KL_prev.posImage( edgevec(iter),2 )] ];
-      end 
+      end
+      %median filtering
+      medtemp = coor(2,:);
+      if size(coor, 2) >= 5
+        for iter = 3:size(coor,2)-2
+          depthvec = coor(2,iter-2:iter+2);
+          depthvecs = sort(depthvec);
+          med = median(depthvecs);
+        
+          %rewrite to KL_prev
+          KL_prev.rho(edgevec(iter),1) = 1/med;
+          medtemp(iter) = med;
+        end
+      end
+      coor(2,:) = medtemp;
       
-      %visualize that edge
-      view(3)
-      plot3(coor(1,:), coor(2,:), coor(3,:), 'x.-', ...
-            0, 0, 0, 'r.');
+      
+        %visualize that edge
+        view(3)
+        plot3(coor(1,:), coor(2,:), coor(3,:), 'x.-', ...
+              0, 0, 0, 'r.');     
+      
     end
     hold off;
     set(gca,'zdir', 'reverse')
