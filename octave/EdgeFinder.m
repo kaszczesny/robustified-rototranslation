@@ -72,6 +72,7 @@ s_rho0  Predicted Inverse Depth Uncertainty (f)
         KLrhoPredict
 
 p_m     Subpixel position in homo coordinates (plane on focal length zf) (2d f)
+        our homo coordinates are also normalized by zf
         KLposImage
 p_m_0   matched KL (subpixel) position in homo coordinates (2d f)
         KLposImageMatch
@@ -217,23 +218,32 @@ for yter = 1+win_s:size(dog, 1)-win_s
     KLctr += 1;
     KLpos = [KLpos; yter, xter];
     KLposSubpix = [KLposSubpix; ys+yter, xs+xter];
-    KLposImage = [KLposImage; [ys+yter, xs+xter]-conf.principal_point(2:-1:1)];
-    % KLposImage is below
-    KLidx = [KLidx; 0, 0];
+    %KLposImage = [KLposImage; [ys+yter, xs+xter]-conf.principal_point(2:-1:1)];
+    %KLidx = [KLidx; 0, 0];
     KLgrad = [KLgrad; theta([2 1])'];
     KLnorm = [KLnorm; sqrt(n2_m)];
     KLvers = [KLvers; KLgrad(end,:) ./ n2_m];
     KLrho = [KLrho; rho, conf.RHO_MAX];
-    KLrhoPredict = [KLrhoPredict; 0, 0];
-    KLmatching = [KLmatching; -1];
-    KLforward = [KLforward; -1];
-    KLframes = [KLframes; 0];
-    KLmatchedGrad = [KLmatchedGrad; 0, 0];
-    KLmatchedNorm = [KLmatchedNorm; 0];
+    %KLrhoPredict = [KLrhoPredict; 0, 0];
+    %KLmatching = [KLmatching; -1];
+    %KLforward = [KLforward; -1];
+    %KLframes = [KLframes; 0];
+    %KLmatchedGrad = [KLmatchedGrad; 0, 0];
+    %KLmatchedNorm = [KLmatchedNorm; 0];
     img_mask( yter, xter ) = KLctr;
   end
 end
 
+KLidx = zeros(KLctr,2);
+KLrhoPredict = zeros(KLctr,2);
+KLmatching = zeros(KLctr,1) -1;
+KLforward = zeros(KLctr,1) -1;
+KLframes = zeros(KLctr,1);
+KLmatchedGrad = zeros(KLctr,2);
+KLmatchedNorm = zeros(KLctr,1);
+
+KLposImage = pixelToNormalized(KLposSubpix(:,[2 1]));
+KLposImage = KLposImage(:, [2 1]);
 KLposImageMatch = KLposImage;
 
 

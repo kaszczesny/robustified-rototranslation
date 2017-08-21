@@ -10,16 +10,16 @@ if ~exist('OPENCV')
   OPENCV = 1;
 end  
 
+global frame;
 global conf;
 conf = Config();
 Matcher; % load functions
 GlobalTracker;
 Visualizer;
+Utils;
 
-
-frame_start = 90;
-frame_interval = 1;
-n_frames = 10;
+mkdir(conf.output_folder);
+copyfile('Config.m', strcat(conf.output_folder, '/Config.m'));
 
 % arguments/returns for GlobalTracker
 F = 0; %energy based on dot product of distance residuals
@@ -40,7 +40,8 @@ K = 1;
 P_Kp = 5e-6;
 
 if ~conf.cheat
-  [KL, img_mask] = EdgeFinder(frame_start, 1);
+  frame = conf.frame_start-1;
+  [KL, img_mask] = EdgeFinder(conf.frame_start, 1);
   % else this will be done in main loop
 end  
 
@@ -61,7 +62,7 @@ quat = quaternion( ...
 ground_truth(:, 4:6) = q2rot(quat)';
 
 %start in zero
-ground_truth(:,:) -= ground_truth(frame_start,:);
+ground_truth(:,:) -= ground_truth(conf.frame_start,:);
 
 %other fluff
 Pos = zeros(3,1); %estimated position
@@ -88,7 +89,7 @@ if conf.visualize_RT
   hold on
   grid on
   plot(0, 0, 'rx');
-  plot(ground_truth(frame_start, 1), ground_truth(frame_start, 3), 'b+')
+  plot(ground_truth(conf.frame_start, 1), ground_truth(conf.frame_start, 3), 'b+')
   plot([0 0], [0 0], 'go-')
   Pos_prev = [0 0 0]';
   hold off
@@ -113,21 +114,21 @@ end
 
 sound = wavread('../data/sound.wav');
 
-for frame=frame_start+[frame_interval:frame_interval:n_frames]
+for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frames]
   disp('')
   fflush(stdout);
   tic
   
   if conf.cheat
     if ~EstimationOk
-      printf("Reestimating frame %d\n", frame-frame_interval);
+      printf("Reestimating frame %d\n", frame-conf.frame_interval);
       
       % redo edge finding, this time with RGBD depth
-      [KL, img_mask] = EdgeFinder(frame-frame_interval, 1);
+      [KL, img_mask] = EdgeFinder(frame-conf.frame_interval, 1);
       
       % acquire VelRot from ground truth
-      Vel = ground_truth(frame-frame_interval, 1:3)';
-      W0 = ground_truth(frame-frame_interval, 4:6)';
+      Vel = ground_truth(frame-conf.frame_interval, 1:3)';
+      W0 = ground_truth(frame-conf.frame_interval, 4:6)';
     end
   end
   
@@ -243,11 +244,11 @@ for frame=frame_start+[frame_interval:frame_interval:n_frames]
     hold on
     grid on
     plot([Pos_prev(1) Pos(1)], [Pos_prev(3) Pos(3)], 'rx-');
-    plot(ground_truth(frame+[-frame_interval 0], 1), ...
-      ground_truth(frame+[-frame_interval 0], 3), 'b+-')
+    plot(ground_truth(frame+[-conf.frame_interval 0], 1), ...
+      ground_truth(frame+[-conf.frame_interval 0], 3), 'b+-')
     plot( ...
-      Pos(1) + [0 ground_truth(frame,1)-ground_truth(frame-frame_interval,1)], ...
-      Pos(3) + [0 ground_truth(frame,3)-ground_truth(frame-frame_interval,3)], ...
+      Pos(1) + [0 ground_truth(frame,1)-ground_truth(frame-conf.frame_interval,1)], ...
+      Pos(3) + [0 ground_truth(frame,3)-ground_truth(frame-conf.frame_interval,3)], ...
       'go-')
     hold off
     pause(0)
@@ -259,15 +260,15 @@ for frame=frame_start+[frame_interval:frame_interval:n_frames]
   end
   
   if conf.visualize_depth
-    VisualizeDepth(KL_prev);
+    VisualizeDepth(KL);
   end
   
   if conf.visualize_3D
-    VisualizeDepth3D(KL_prev);
+    VisualizeDepth3D(KL);
   end
   
   if conf.visualize_history
-    VisualizeHistory(KL_prev);
+    VisualizeHistory(KL);
   end
   
   if any(isnan(KL_prev.rho(:))) && conf.debug_main
@@ -278,7 +279,12 @@ for frame=frame_start+[frame_interval:frame_interval:n_frames]
   
   if conf.visualize_3D
     soundsc(sound,44.1e3,16,[-50.0,50.0]);
-    keyboard("<<<") % type "return" to continue
+    %keyboard("<<<") % type "return" to continue
+  end
+  
+  if any(KL_prev.rho(:,1) < 0)
+    disp('rho negative')  
+    keyboard("<<<")
   end  
 end
 

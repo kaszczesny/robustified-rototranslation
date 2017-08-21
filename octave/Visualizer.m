@@ -9,7 +9,7 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
     title_string = "matches m id f";
   end    
     
-    figure(10 + 2*use_m_id)
+    %figure(10 + 2*use_m_id)
     pos1 =[];
     pos2 =[];
     imsize = conf.imgsize(end:-1:1); %xyz to yxz
@@ -19,7 +19,7 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
       im1 = rgb2gray(im1);
     end
     im1 = imresize(im1, conf.scale);
-    
+    %{
     im2 = imread(conf.im_name(KL.frame_id));
     if length(size(im2)) == 3
       im2 = rgb2gray(im2);
@@ -57,7 +57,7 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
     end
     hold off;
     title(title_string)
-    
+    %}
     
     %keyboard("<<<")
     
@@ -109,13 +109,16 @@ function [] = VisualizeDepth(KL_prev)
     
     im_plot = zeros(conf.imgsize) - 5;
     %q = quantile(1./KL_prev.rho(:,1), 0.975);
-    q = 20;
+    q = 300;
     
     for iter = 1:KL_prev.ctr
+      if KL_prev.matching(iter) < 0
+        continue
+      end  
       if 1./KL_prev.rho(iter,1) < q
         im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 1./KL_prev.rho(iter,1);
       else
-        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = q*1.5;
+        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 350;
       end
     end
     figure(14);
@@ -123,6 +126,7 @@ function [] = VisualizeDepth(KL_prev)
     %axis equal; colormap cubehelix; colorbar;
     axis equal; colormap jet; colorbar;
     title('depth')
+    pause(0)
 end
 
 function [] = VisualizeHistory(KL_prev)
@@ -131,6 +135,9 @@ function [] = VisualizeHistory(KL_prev)
     im_plot = zeros(conf.imgsize);
     
     for iter = 1:KL_prev.ctr
+      if KL_prev.matching(iter) < 0
+        %continue
+      end  
       im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = KL_prev.frames(iter);
     end  
     figure(15)
@@ -144,6 +151,7 @@ function [] = VisualizeDepth3D(KL_prev)
     
     edge_id = zeros(1,KL_prev.ctr);
     figure(19)
+    clf
     hold on;
     
     for iter = 1:KL_prev.ctr
@@ -207,10 +215,13 @@ function [] = VisualizeDepth3D(KL_prev)
       end
      
       %make a coordinate vector
-      coor = [];
+      coor = zeros(3,0);
       for iter = 1:length(edgevec)
-        if 1/KL_prev.rho(     edgevec(iter),1 ) > 5
-          depth = 5;
+        if KL_prev.matching(edgevec(iter)) < 0
+          continue;
+        end  
+        if 1/KL_prev.rho(     edgevec(iter),1 ) > 300
+          depth = 300;
         else
           depth = 1/KL_prev.rho(     edgevec(iter),1 );
         end
@@ -225,5 +236,7 @@ function [] = VisualizeDepth3D(KL_prev)
             0, 0, 0, 'r.');
     end
     hold off;
+    set(gca,'zdir', 'reverse')
+    view(0,90)
     
 end

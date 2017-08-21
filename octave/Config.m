@@ -6,6 +6,15 @@ conf=struct();
 
 conf.cheat = 0; %whether to use rgbd and groundtruth for calculations
 
+%output images settings
+conf.save_images = 0;
+conf.output_folder = strftime("../results/%y-%m-%d_%H-%M-%S", localtime(time()));
+
+% main() setting
+conf.frame_start = 90;
+conf.frame_interval = 1;
+conf.n_frames = 2000;
+
 %KITTI
 %conf.im_name = @(x) sprintf("../data/KITTI/%.6d.png",x-1+50);
 %TUM
@@ -38,8 +47,8 @@ conf.sigma1 = 1.7818;
 conf.sigma2 = 2.30029;
 
   % Test 1:
-conf.THRESH_GRAD_MIN = 0.03;
-conf.THRESH_GRAD_MAX = 0.03;
+conf.THRESH_GRAD_MIN = 0.05;
+conf.THRESH_GRAD_MAX = 0.05;
 conf.THRESH_GRAD_GAIN = 1e-6;
 conf.KL_REFERENCE_NUMBER = 5000;
 conf.max_img_value = 255;
@@ -58,12 +67,12 @@ conf.visualize_minimizer_insides = 0;
 %figure 9, 19
 conf.visualize_score = 0;
 %figure 10, 11, 12, 13
-conf.visualize_matches = 0;
+conf.visualize_matches = 1;
 conf.visualize_matches_step = 100;
 %figure 14
-conf.visualize_depth = 0;
+conf.visualize_depth = 1;
 %figure 15
-conf.visualize_history = 0;
+conf.visualize_history = 1;
 %figure 16
 conf.visualize_matcher_insides = 0;
 %figure 17

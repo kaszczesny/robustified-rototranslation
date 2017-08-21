@@ -6,10 +6,10 @@ function [KL] = ForwardRotate( KL, R )
   zf = conf.zf;
   
   for iter=1:KL.ctr
-    q = R * [KL.posSubpix(iter,:)./zf, 1]';
+    q = R * [KL.posImage(iter,:)./zf, 1]';
     
     if abs(q(3)) > 0
-      KL.posSubpix(iter,:) = q(1:2) ./q(3) * zf;
+      KL.posImage(iter,:) = q(1:2) ./q(3) * zf;
       KL.rho(iter,:) /= q(3);
     end
   end
@@ -110,12 +110,12 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
   
   p_m3 = R * [KL.posImage(k,:)'; zf]; % backrotate the new keypoint to look on the old edge map's mask
   
-  p_m = p_m3(1:2) * zf ./ p_m3(3);
+  p_m = p_m3(1:2)' * zf ./ p_m3(3);
   k_rho = KL.rho(k,1) * zf ./ p_m3(3);
   
-  pi0 = p_m + conf.principal_point';
+  pi0 = p_m + conf.principal_point;
   
-  t = -(Vel(1:2) * zf - Vel(3) * p_m);
+  t = -(Vel(1:2)' * zf - Vel(3) * p_m);
   
   norm_t = norm(t);
   
@@ -519,6 +519,7 @@ function [KL, ...
   %end  
 
   % re_escale is always true
+  Kp
   KL.rho /= Kp;
   
 end

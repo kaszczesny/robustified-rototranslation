@@ -105,6 +105,8 @@ function [...
   PtIm(:,2) = Ptm(:,2) .* Pz_zf; %y
   PtIm(:,1) = Ptm(:,1) .* Pz_zf; %x
   
+  PtIm(:,1:2) = normalizedToPixel(PtIm(:,1:2));
+  
   % the klist argument in C is actually OLD keymap,
   % while this->auxiliary field holds indexes for CURRENT keymap
   
@@ -149,8 +151,8 @@ function [...
     end
     
     % convert to image coordinates (just re-add p.p.): q_t
-    p_pji_y = PtIm(iter, 2) + conf.principal_point(2); 
-    p_pji_x = PtIm(iter, 1) + conf.principal_point(1); 
+    p_pji_y = PtIm(iter, 2);
+    p_pji_x = PtIm(iter, 1);
     
     x = round(p_pji_x);
     y = round(p_pji_y);
