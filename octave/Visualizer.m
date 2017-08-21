@@ -109,7 +109,7 @@ function [] = VisualizeDepth(KL_prev)
     
     im_plot = zeros(conf.imgsize) - 5;
     %q = quantile(1./KL_prev.rho(:,1), 0.975);
-    q = 300;
+    q = 20;
     
     for iter = 1:KL_prev.ctr
       if KL_prev.matching(iter) < 0
@@ -118,7 +118,7 @@ function [] = VisualizeDepth(KL_prev)
       if 1./KL_prev.rho(iter,1) < q
         im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 1./KL_prev.rho(iter,1);
       else
-        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 350;
+        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 20;
       end
     end
     figure(14);
@@ -136,7 +136,8 @@ function [] = VisualizeHistory(KL_prev)
     
     for iter = 1:KL_prev.ctr
       if KL_prev.matching(iter) < 0
-        %continue
+        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = -5;
+        continue
       end  
       im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = KL_prev.frames(iter);
     end  
@@ -220,8 +221,8 @@ function [] = VisualizeDepth3D(KL_prev)
         if KL_prev.matching(edgevec(iter)) < 0
           continue;
         end  
-        if 1/KL_prev.rho(     edgevec(iter),1 ) > 300
-          depth = 300;
+        if 1/KL_prev.rho(     edgevec(iter),1 ) > 20
+          depth = 20;
         else
           depth = 1/KL_prev.rho(     edgevec(iter),1 );
         end

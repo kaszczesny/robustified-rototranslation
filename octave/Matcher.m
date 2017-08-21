@@ -367,7 +367,11 @@ function [KL] = UpdateInverseDepthKalman(...
       continue
     end  
     
-    % debug cout panic
+    % debug cout panic - should have left that
+    if any(KL.rho(iter,:) < 0) && conf.debug_kalman
+      printf("Kalman panic %04d %f %f\n", iter, KL.rho(iter,1), KL.rho(iter,2));
+    end
+    
     KL.rhoPredict(iter,2) = KL.rho(iter,2);
     
     % keyline new homo coordinates

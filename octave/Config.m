@@ -86,6 +86,7 @@ conf.visualize_3D = 1;
 conf.debug_main = 1;
 conf.debug_minimizer = 0;
 conf.debug_matching = 0;
+conf.debug_kalman = 1;
 
 
 % auxiliary image
