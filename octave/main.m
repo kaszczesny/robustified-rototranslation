@@ -261,9 +261,9 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     VisualizeMatches(KL_prev, KL, 1);
   end
   
-  if conf.visualize_3D
-    VisualizeDepth3D(KL); %median filter is in there, so better get this done before vis_depth
-  end
+  %if conf.visualize_3D
+    KL = VisualizeDepth3D(KL); %median filter is in there, so better get this done before vis_depth
+  %end
   
   if conf.visualize_depth
     VisualizeDepth(KL);
@@ -281,7 +281,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   
   if conf.visualize_3D
     soundsc(sound,44.1e3,16,[-50.0,50.0]);
-    %keyboard("<<<") % type "return" to continue
+    keyboard("<<<") % type "return" to continue
   end
   
   if any(KL_prev.rho(:,1) < 0)

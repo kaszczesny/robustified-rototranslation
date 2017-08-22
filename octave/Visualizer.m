@@ -147,13 +147,17 @@ function [] = VisualizeHistory(KL_prev)
     title('history')
 end
 
-function [] = VisualizeDepth3D(KL_prev)
+function [KL_prev] = VisualizeDepth3D(KL_prev)
   global conf;
     
     edge_id = zeros(1,KL_prev.ctr);
-    figure(19)
-    clf
-    hold on;
+    if conf.visualize_3D
+      figure(19)
+      clf
+      hold on;
+    end
+    
+    rho_copy = KL_prev.rho(:,1);
     
     for iter = 1:KL_prev.ctr
       if edge_id(iter) == 1
@@ -230,30 +234,41 @@ function [] = VisualizeDepth3D(KL_prev)
                         depth                               ; ...
                         KL_prev.posImage( edgevec(iter),2 )] ];
       end
+      
       %median filtering
+      dont = [-2 -1 0 size(coor,2)+[1 2 3]];
       medtemp = coor(2,:);
-      if size(coor, 2) >= 5
-        for iter = 3:size(coor,2)-2
-          depthvec = coor(2,iter-2:iter+2);
-          depthvecs = sort(depthvec);
-          med = median(depthvecs);
+      if size(coor, 2) >= 7
+        for iter = 1:size(coor,2)
+          idx = iter-3:iter+3;
+          depthvec = coor(2,setdiff(idx, dont)); % see what I dd there?
+          %depthvecs = sort(depthvec);
+          med = median(depthvec);
         
           %rewrite to KL_prev
-          KL_prev.rho(edgevec(iter),1) = 1/med;
+          rho_copy(edgevec(iter),1) = med;
           medtemp(iter) = med;
         end
       end
-      coor(2,:) = medtemp;
+      %coor(2,:) = medtemp;
       
-      
+      if conf.visualize_3D
         %visualize that edge
         view(3)
         plot3(coor(1,:), coor(2,:), coor(3,:), 'x.-', ...
-              0, 0, 0, 'r.');     
+              0, 0, 0, 'r.' ,...
+              coor(1,:), medtemp, coor(3,:), 'rx');
+      end        
       
     end
-    hold off;
-    set(gca,'zdir', 'reverse')
-    view(0,90)
+    if conf.visualize_3D
+      hold off;
+      set(gca,'zdir', 'reverse')
+      view(0,90)
+    end
+    
+    % todo: filter (remove) edges that have few keylines?
+    
+    KL_prev.rho(:,1) = 1 ./ rho_copy;
     
 end
