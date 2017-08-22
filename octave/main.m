@@ -75,7 +75,7 @@ Pos = zeros(3,1); %estimated position
 R = eye(3); % rotation matrix
 Pose = eye(3); % global rotation
 klm_num = 0;
-EstimationOk = 0;
+EstimationOk = 0; % changed from bool to counter
 
 KL_save = {};
 Vel_save = [];
@@ -126,12 +126,21 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   tic
   
   if conf.cheat
-    if ~EstimationOk
+    if EstimationOk == 0
       printf("Reestimating frame %d\n", frame-conf.frame_interval);
       
       % redo edge finding, this time with RGBD depth
       [KL, img_mask] = EdgeFinder(frame-conf.frame_interval, 1);
       
+      %{
+      figure(100);
+      X = KL.posImage(:,1) ./ conf.zf ./ KL.rho(:,1);
+      Y = KL.posImage(:,2) ./ conf.zf ./ KL.rho(:,1);
+      Z = 1 ./ KL.rho(:,1);
+      plot3(X,Z,Y,'b.')
+      set(gca,'zdir','reverse')
+      %}
+
       % acquire VelRot from ground truth
       Vel = ground_truth(frame-conf.frame_interval, 1:3)';
       W0 = ground_truth(frame-conf.frame_interval, 4:6)';
@@ -148,7 +157,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   RVel = eye(3)*1e50;
   RW0 = eye(3)*1e50; %yup, 1e-10 is never used
   R = eye(3);
-  EstimationOk = 1;
+  EstimationOk += 1;
 
   [ ...
     F, ...
@@ -212,14 +221,16 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       
         %regularize edgemap
         for i=1:2 % regularize twice
-          [r_num, KL] = Regularize1Iter(KL);
+          %[r_num, KL] = Regularize1Iter(KL);
         end
         
         %improve depth using kalman
         [KL] = UpdateInverseDepthKalman(Vel, RVel, RW0, KL);
         
-        % optionally rescale depth
-        [KL, Kp, P_Kp] = EstimateReScaling(KL);
+        if EstimationOk > 20
+          % optionally rescale depth
+          [KL, Kp, P_Kp] = EstimateReScaling(KL);
+        end  
         
       end
   end
@@ -240,10 +251,10 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   % RVel = RVel ./ (dt_frame.^2); % quite no point in doing that
   
   if conf.debug_main
-    if ~EstimationOk
+    if EstimationOk == 0
       printf("Frame #%4d NOK\n", frame);
     else
-      printf("Frame #%4d OK\n", frame);
+      printf("Frame #%4d OK (since %d frames)\n", frame, EstimationOk);
     end
   end
   
@@ -268,7 +279,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   end
   
   if conf.visualize_3D
-    VisualizeDepth3D(KL); %median filter is in there, so better get this done before vis_depth
+    KL = VisualizeDepth3D(KL); %median filter is in there, so better get this done before vis_depth
   end
   
   if conf.visualize_depth
@@ -286,7 +297,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   toc
   
   if conf.visualize_3D
-    soundsc(sound,44.1e3,16,[-50.0,50.0]);
+    %soundsc(sound,44.1e3,16,[-50.0,50.0]);
     %keyboard("<<<") % type "return" to continue
   end
   

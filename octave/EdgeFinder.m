@@ -45,9 +45,11 @@ dog(2:end-1,2:end-1) = doggy;
 if use_depth
   depth = imresize(imread(im_name_depth), conf.scale);
   depth_mask = depth > 0; % depth == 0 means 100% uncertainty
-  depth = double(cv.GaussianBlur(depth, "KSize", [conf.ksize,conf.ksize]));
-  depth /= 2.^16; % TUM depth is a 16-bit PNG
-  depth *= 4; % whitest possible value corresponds to Kinect max distance
+  %depth = double(cv.GaussianBlur(depth, "KSize", [conf.ksize,conf.ksize]));
+  depth = double(depth);
+  depth /= 5000; % TUM scaling factor
+  depth_mask(depth > conf.cheat_upper_bound) = 0;
+  depth_mask(depth < conf.cheat_lower_bound) = 0;
   depth = 1./ depth; %inverse depth
 end
 
@@ -223,7 +225,7 @@ for yter = 1+win_s:size(dog, 1)-win_s
     KLgrad = [KLgrad; theta([2 1])'];
     KLnorm = [KLnorm; sqrt(n2_m)];
     KLvers = [KLvers; KLgrad(end,:) ./ n2_m];
-    KLrho = [KLrho; rho, conf.RHO_MAX];
+    KLrho = [KLrho; rho, conf.S_RHO_MAX];
     %KLrhoPredict = [KLrhoPredict; 0, 0];
     %KLmatching = [KLmatching; -1];
     %KLforward = [KLforward; -1];

@@ -524,7 +524,10 @@ function [KL, ...
 
   % re_escale is always true
   Kp
-  KL.rho /= Kp;
+  if conf.APPLY_SCALE
+    % idea - applay scale only after init has been finished
+    KL.rho /= Kp;
+  end  
   
 end
 

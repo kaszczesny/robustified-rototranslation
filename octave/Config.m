@@ -4,7 +4,7 @@ function conf = Config()
 
 conf=struct();
 
-conf.cheat = 0; %whether to use rgbd and groundtruth for calculations
+conf.cheat = 1; %whether to use rgbd and groundtruth for calculations
 
 %output images settings
 conf.save_images = 0;
@@ -12,7 +12,7 @@ conf.output_folder = strftime("../results/%y-%m-%d_%H-%M-%S", localtime(time()))
 
 % main() setting
 conf.frame_start = 90;
-conf.frame_interval = 1;
+conf.frame_interval = 5;
 conf.n_frames = 2000;
 
 %KITTI
@@ -25,7 +25,7 @@ persistent files_depth = glob("../../rgbd_dataset_freiburg3_long_office_househol
 files_depth_mapping = csvread("../data/TUM/depth_idx.txt");
 conf.im_name_depth = @(x) files_depth{files_depth_mapping(x)};
 
-conf.scale = 1/6;
+conf.scale = 1/5;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
 conf.imgsize = imgsize(end:-1:1);
 %KITTI
@@ -62,7 +62,7 @@ conf.PosNegThresh = 0.2;
 conf.visualize_edges = 0;
 %figure 5
 conf.visualize_crossing = 0;
-%figure 6, 7, 8
+%figure 6, 7, 8, 40
 conf.visualize_minimizer_insides = 0;
 %figure 9, 19
 conf.visualize_score = 0;
@@ -78,7 +78,7 @@ conf.visualize_matcher_insides = 0;
 %figure 17
 conf.visualize_dmatches = 0;
 %figure 18
-conf.visualize_RT = 0;
+conf.visualize_RT = 1;
 %figure 19
 conf.visualize_3D = 1;
 
@@ -92,10 +92,15 @@ conf.debug_kalman = 1;
 % auxiliary image
 conf.MAX_R = 5;
 
+%limiting RGB-D depth in cheating EdgeFinder
+conf.cheat_lower_bound = 1.5;
+conf.cheat_upper_bound = 4;
+
 % EstimateQuantile
-conf.S_RHO_MIN = 1e-3; % starting uncertainty of histogram in EstimateQuantile
-%conf.S_RHO_MIN = 1e-1; % starting uncertainty of histogram in EstimateQuantile
-conf.S_RHO_MAX = 20; % final uncertainty of histogram in EstimateQuantile
+%conf.S_RHO_MIN = 1e-3; % starting uncertainty of histogram in EstimateQuantile
+conf.S_RHO_MIN = 1/5; % starting uncertainty of histogram in EstimateQuantile
+%conf.S_RHO_MAX = 20; % final uncertainty of histogram in EstimateQuantile
+conf.S_RHO_MAX = 1/0.5; % final uncertainty of histogram in EstimateQuantile
 conf.PERCENTILE = 0.9; % quantile threshold in EstimateQuantile
 conf.N_BINS = 100; %number of histogram bins in EstimateQuantile
 conf.S_RHO_INIT = 1e3; %todo: why 1e3
@@ -107,10 +112,9 @@ conf.REWEIGHT_DISTANCE = 2.; % Distance cut-off for reweigthing (k_hubber/k_hube
   
 
 %global tracker
-conf.RHO_MAX = 20; % init inverse depth uncertainty; todo: merge with S_RHO_MAX?
 conf.RHO_INIT = 1; % init inverse depth
 
-conf.ITER_MAX = 10; % iterations of Farquad probably Eq. (9)
+conf.ITER_MAX = 15; % iterations of Farquad probably Eq. (9)
 conf.LM_INIT_V = 2; %lm params
 conf.TAU = 1e-3; %lm params
 
@@ -133,6 +137,7 @@ conf.LOCATION_UNCERTAINTY = 1; % Location error [px]
 
 %estimate rescaling
 conf.MATCH_NUM_MIN = 1; % 
+conf.APPLY_SCALE = 0;
 
 
 end

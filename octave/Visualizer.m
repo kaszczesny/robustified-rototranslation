@@ -146,13 +146,18 @@ function [] = VisualizeHistory(KL_prev)
     title('history')
 end
 
-function [] = VisualizeDepth3D(KL_prev)
+function [KL_prev] = VisualizeDepth3D(KL_prev)
   global conf;
+    
+    % todo untangle visualization from filter
+    % todo median over larger neighborhood
     
     edge_id = zeros(1,KL_prev.ctr);
     figure(19)
     clf
     hold on;
+    
+    rho_copy = KL_prev.rho(:,1);
     
     for iter = 1:KL_prev.ctr
       if edge_id(iter) == 1
@@ -238,7 +243,7 @@ function [] = VisualizeDepth3D(KL_prev)
           med = median(depthvecs);
         
           %rewrite to KL_prev
-          KL_prev.rho(edgevec(iter),1) = 1/med;
+          rho_copy(edgevec(iter),1) = 1/med;
           medtemp(iter) = med;
         end
       end
@@ -247,12 +252,14 @@ function [] = VisualizeDepth3D(KL_prev)
       
         %visualize that edge
         view(3)
-        plot3(coor(1,:), coor(2,:), coor(3,:), 'x.-', ...
+        plot3(coor(1,:)./conf.zf.*coor(2,:), coor(2,:), coor(3,:)./conf.zf.*coor(2,:), 'x.-', ...
               0, 0, 0, 'r.');     
       
     end
     hold off;
     set(gca,'zdir', 'reverse')
     view(0,90)
+    
+    KL_prev.rho(:,1) = rho_copy;
     
 end

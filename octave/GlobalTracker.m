@@ -36,7 +36,8 @@ function [...
     score, ...
     JtJ, JtF, ...
     KL_prev_forward, ... % only forward field is updated
-    DResidualNew ...
+    DResidualNew, ...
+    fm ...
 ] = TryVelRot( ...
     ReWeight, ... % Rewighting switch
     ProcJF, ... % Calculate Jacobians or just energy score?
@@ -342,6 +343,7 @@ function [...
   
   
   score = dot(fm, fm); %dot product
+  mean(abs(fm))
 
   if FullScore
     score = fm;
@@ -384,7 +386,7 @@ function [ ...
   % UsePriors is always false
   global conf;
   % init_type is always 2
-  max_s_rho = EstimateQuantile(KL_prev);
+  max_s_rho = EstimateQuantile(KL_prev)
   INIT_ITER = 2; % Actually controls ProcJF in TryVelRot (true or false depending on iteration)
   
 
@@ -621,7 +623,7 @@ function [ ...
   ResidualNew = Residual*0;
   
   %reweight
-  [F, JtJ, JtF, KL_prev.forward, ResidualNew] = TryVelRot(
+  [F, JtJ, JtF, KL_prev.forward, ResidualNew, fm] = TryVelRot(
     1,1,X,
     KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field, FrameCount, 0);
@@ -646,7 +648,7 @@ function [ ...
     h = cv.SVD.BackSubst(U, D, Vt, -JtF); % back substitution
     
     Xnew = X+h;
-    [Fnew, JtJnew, JtFnew, KL_prev.forward, ResidualNew] = TryVelRot(
+    [Fnew, JtJnew, JtFnew, KL_prev.forward, ResidualNew, fmNew] = TryVelRot(
       1,1,Xnew,
       KL_prev, KL, P0m,
       max_s_rho,Residual, distance_field, KLidx_field, FrameCount, 0);
@@ -657,6 +659,7 @@ function [ ...
       X=Xnew;
       JtJ = JtJnew;
       JtF = JtFnew;
+      fm = fmNew;
       u *= max( 0.33, 1-((2*gain-1)^3));
       v = 2;
       eff_steps++;
@@ -684,6 +687,9 @@ function [ ...
     imagesc(im');
     axis equal; colormap jet; colorbar;
     title('residual')
+    
+    figure(40)
+    hist(fm, 100)
   end  
   
   %todo: Cholesky
