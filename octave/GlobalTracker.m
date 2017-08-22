@@ -342,6 +342,7 @@ function [...
   
   
   score = dot(fm, fm); %dot product
+  mean(abs(fm))
 
   if FullScore
     score = fm;
@@ -384,7 +385,7 @@ function [ ...
   % UsePriors is always false
   global conf;
   % init_type is always 2
-  max_s_rho = EstimateQuantile(KL_prev);
+  max_s_rho = EstimateQuantile(KL_prev)
   INIT_ITER = 2; % Actually controls ProcJF in TryVelRot (true or false depending on iteration)
   
 

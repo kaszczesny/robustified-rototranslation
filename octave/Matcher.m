@@ -524,7 +524,7 @@ function [KL, ...
 
   % re_escale is always true
   Kp
-  KL.rho /= Kp;
+  %KL.rho /= Kp;
   
 end
 

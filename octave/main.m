@@ -41,7 +41,7 @@ P_Kp = 5e-6;
 
 if ~conf.cheat
   frame = conf.frame_start-1;
-  [KL, img_mask] = EdgeFinder(conf.frame_start, 1);
+  [KL, img_mask] = EdgeFinder(conf.frame_start, 0);
   % else this will be done in main loop
 end  
 
@@ -125,6 +125,13 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       
       % redo edge finding, this time with RGBD depth
       [KL, img_mask] = EdgeFinder(frame-conf.frame_interval, 1);
+      
+      figure(100);
+      X = KL.posImage(:,1) ./ conf.zf ./ KL.rho(:,1);
+      Y = KL.posImage(:,2) ./ conf.zf ./ KL.rho(:,1);
+      Z = 1 ./ KL.rho(:,1);
+      plot3(X,Z,Y,'b.')
+      set(gca,'zdir','reverse')
       
       % acquire VelRot from ground truth
       Vel = ground_truth(frame-conf.frame_interval, 1:3)';
@@ -281,7 +288,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   
   if conf.visualize_3D
     soundsc(sound,44.1e3,16,[-50.0,50.0]);
-    keyboard("<<<") % type "return" to continue
+    %keyboard("<<<") % type "return" to continue
   end
   
   if any(KL_prev.rho(:,1) < 0)

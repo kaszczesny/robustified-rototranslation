@@ -136,7 +136,6 @@ function [] = VisualizeHistory(KL_prev)
     
     for iter = 1:KL_prev.ctr
       if KL_prev.matching(iter) < 0
-        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = -5;
         continue
       end  
       im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = KL_prev.frames(iter);
@@ -225,22 +224,22 @@ function [KL_prev] = VisualizeDepth3D(KL_prev)
         if KL_prev.matching(edgevec(iter)) < 0
           continue;
         end  
-        if 1/KL_prev.rho(     edgevec(iter),1 ) > 20
-          depth = 20;
-        else
+        %if 1/KL_prev.rho(     edgevec(iter),1 ) > 20
+        %  depth = 20;
+        %else
           depth = 1/KL_prev.rho(     edgevec(iter),1 );
-        end
+        %end
         coor = [coor, [ KL_prev.posImage( edgevec(iter),1 ); ...
                         depth                               ; ...
                         KL_prev.posImage( edgevec(iter),2 )] ];
       end
       
       %median filtering
-      dont = [-2 -1 0 size(coor,2)+[1 2 3]];
+      dont = [-4 -3 -2 -1 0 size(coor,2)+[1 2 3 4 5]];
       medtemp = coor(2,:);
-      if size(coor, 2) >= 7
+      if size(coor, 2) >= 9
         for iter = 1:size(coor,2)
-          idx = iter-3:iter+3;
+          idx = iter-5:iter+5;
           depthvec = coor(2,setdiff(idx, dont)); % see what I dd there?
           %depthvecs = sort(depthvec);
           med = median(depthvec);
@@ -255,9 +254,9 @@ function [KL_prev] = VisualizeDepth3D(KL_prev)
       if conf.visualize_3D
         %visualize that edge
         view(3)
-        plot3(coor(1,:), coor(2,:), coor(3,:), 'x.-', ...
-              0, 0, 0, 'r.' ,...
-              coor(1,:), medtemp, coor(3,:), 'rx');
+        plot3(coor(1,:)./conf.zf.*coor(2,:), coor(2,:), coor(3,:)./conf.zf.*coor(2,:), 'x.', ...
+              0, 0, 0, 'r.')% ,...
+              %coor(1,:)./conf.zf.*medtemp, medtemp, coor(3,:)./conf.zf.*medtemp, 'rx');
       end        
       
     end
@@ -269,6 +268,6 @@ function [KL_prev] = VisualizeDepth3D(KL_prev)
     
     % todo: filter (remove) edges that have few keylines?
     
-    KL_prev.rho(:,1) = 1 ./ rho_copy;
+    %KL_prev.rho(:,1) = 1 ./ rho_copy;
     
 end
