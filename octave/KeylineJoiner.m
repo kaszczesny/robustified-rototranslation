@@ -66,11 +66,10 @@ for kl1 = 1:size(KLpos,1)
 end
 
 KLpos -= 1;
-KLref = zeros(1, length(KLidx));
-
+KLref = zeros(1, size(KLidx,1));
 
 % get rid of 3-pixel edges now, instead of global tracker
-for iter = 1:length(KLidx)
+for iter = 1:size(KLidx,1)
   if KLidx(iter, 1) == 0 || KLidx(iter,2) == 0
     KLref(iter) = 0;
   else

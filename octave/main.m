@@ -36,7 +36,6 @@ FrameCount = 0; %number of processed frames
 
 % something with rescaling depth
 Kp = 1;
-K = 1;
 P_Kp = 5e-6;
 
 if ~conf.cheat
@@ -132,6 +131,8 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       % redo edge finding, this time with RGBD depth
       [KL, img_mask] = EdgeFinder(frame-conf.frame_interval, 1);
       
+      KL.frames += 1;
+      
       %{
       figure(100);
       X = KL.posImage(:,1) ./ conf.zf ./ KL.rho(:,1);
@@ -189,6 +190,8 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       printf("frame #%4d: Error in estimation\n", frame);
     end
     
+    continue
+    
   else
       R0 = RotationMatrix(W0); %forward rotation
       % in C++ there is a multiplication by R, but at this point R=eye(3)
@@ -221,7 +224,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       
         %regularize edgemap
         for i=1:2 % regularize twice
-          %[r_num, KL] = Regularize1Iter(KL);
+          [r_num, KL] = Regularize1Iter(KL);
         end
         
         %improve depth using kalman
@@ -244,7 +247,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   %estimate position and pose
   Pose = Pose * R;
   Pos_prev = Pos;
-  Pos += -Pose * Vel * K;
+  Pos += -Pose * Vel;
   Pos_save = cat(2, Pos_save, Pos);
   Pose_save = cat(3, Pose_save, Pose);
   
@@ -253,6 +256,8 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   if conf.debug_main
     if EstimationOk == 0
       printf("Frame #%4d NOK\n", frame);
+      soundsc(sound,44.1e3,16,[-50.0,50.0]);
+      keyboard("<<<")
     else
       printf("Frame #%4d OK (since %d frames)\n", frame, EstimationOk);
     end
@@ -284,6 +289,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   
   if conf.visualize_depth
     VisualizeDepth(KL);
+    VisualizeDepthVar(KL);
   end
    
   if conf.visualize_history

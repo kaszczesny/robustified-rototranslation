@@ -748,4 +748,9 @@ function [ ...
   
   FrameCount++;
   
+  if cond(JtJ) > 1e10
+    Vel = NaN(3,1);
+    W0 = NaN(3,1);
+  end
+  
 end

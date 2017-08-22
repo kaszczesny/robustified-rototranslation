@@ -129,6 +129,25 @@ function [] = VisualizeDepth(KL_prev)
     pause(0)
 end
 
+function [] = VisualizeDepthVar(KL_prev)
+  global conf;
+    
+    im_plot = zeros(conf.imgsize) - 5;
+    
+    for iter = 1:KL_prev.ctr
+      if KL_prev.matching(iter) < 0
+        continue
+      end  
+      im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = KL_prev.rho(iter,2);
+    end
+    figure(25);
+    imagesc(im_plot');
+    %axis equal; colormap cubehelix; colorbar;
+    axis equal; colormap jet; colorbar;
+    title('depth uncertainty')
+    pause(0)
+end
+
 function [] = VisualizeHistory(KL_prev)
   global conf;
   
