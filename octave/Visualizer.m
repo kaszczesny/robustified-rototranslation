@@ -136,7 +136,6 @@ function [] = VisualizeHistory(KL_prev)
     
     for iter = 1:KL_prev.ctr
       if KL_prev.matching(iter) < 0
-        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = -5;
         continue
       end  
       im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = KL_prev.frames(iter);

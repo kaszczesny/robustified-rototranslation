@@ -41,7 +41,7 @@ P_Kp = 5e-6;
 
 if ~conf.cheat
   frame = conf.frame_start-1;
-  [KL, img_mask] = EdgeFinder(conf.frame_start, 1);
+  [KL, img_mask] = EdgeFinder(conf.frame_start, 0);
   % else this will be done in main loop
 end  
 
@@ -59,10 +59,16 @@ quat = quaternion( ...
   ground_truth_(:, 4), ... % wx
   ground_truth_(:, 6), ... % wz
   ground_truth_(:, 5));... % wy
-ground_truth(:, 4:6) = q2rot(quat)';
+ground_truth(:, 4:6) = q2rot(unit(quat))';
 
 %start in zero
 ground_truth(:,:) -= ground_truth(conf.frame_start,:);
+ground_truth(:,1:3) *= -1; %empirical
+%leaving ground_truth as it is so as not to break RT plotting
+
+%make things easier
+frames = conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frames];
+gr_tr = ground_truth(frames,:);
 
 %other fluff
 Pos = zeros(3,1); %estimated position
@@ -155,10 +161,10 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       rel_error, error_score, FrameCount ...
   );
   
-  Vel_save = cat(2, Vel, Vel_save);
-  W0_save = cat(2, W0, W0_save);
-  RVel_save = cat(3, RVel, RVel_save);
-  RW0_save = cat(3, RW0, RW0_save);
+  Vel_save = cat(2, Vel_save, Vel);
+  W0_save = cat(2, W0_save, W0);
+  RVel_save = cat(3, RVel_save, RVel);
+  RW0_save = cat(3, RW0_save, RW0);
 
   % check for minimization erros
   if any(isnan([Vel; W0]))
@@ -228,8 +234,8 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   Pose = Pose * R;
   Pos_prev = Pos;
   Pos += -Pose * Vel * K;
-  Pos_save = cat(2, Pos, Pos_save);
-  Pose_save = cat(3, Pose, Pose_save);
+  Pos_save = cat(2, Pos_save, Pos);
+  Pose_save = cat(3, Pose_save, Pose);
   
   % RVel = RVel ./ (dt_frame.^2); % quite no point in doing that
   
