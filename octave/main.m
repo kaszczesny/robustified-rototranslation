@@ -286,14 +286,11 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     KL = VisualizeDepth3D(KL); %median filter is in there, so better get this done before vis_depth
   end
   
-  if conf.visualize_depth
-    VisualizeDepth(KL);
-    VisualizeDepthVar(KL);
-  end
+  
+  VisualizeDepth(KL);
+  VisualizeDepthVar(KL);
    
-  if conf.visualize_history
-    VisualizeHistory(KL);
-  end
+  VisualizeHistory(KL);
   
   if any(isnan(KL_prev.rho(:))) && conf.debug_main
     printf("rho is nan\n");

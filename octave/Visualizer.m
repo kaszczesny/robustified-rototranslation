@@ -63,27 +63,23 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
     
     %close
     
-    % todo: red and blue here
-    im1_ = im1;
+    im1_ = cat(3, im1, im1, im1);
     for iter = 1:KL_prev.ctr
-      im1_( KL_prev.pos(iter, 2), KL_prev.pos(iter,1) ) = 255;
+      im1_( KL_prev.pos(iter, 2), KL_prev.pos(iter,1), : ) = [255 0 0];
     end
     for iter = 1:KL.ctr
-      im1_( KL.pos(iter, 2), KL.pos(iter,1) ) = 0;
+      if im1_( KL.pos(iter, 2), KL.pos(iter,1), 1 ) == 255
+        red = 255;
+      else
+        red = 0;
+      end  
+      im1_( KL.pos(iter, 2), KL.pos(iter,1), : ) = [red 0 255];
     end
     
-    save_img(besos(viz, -conf.MAX_R - 2, 0), KL.frame_id, 4);
+    save_img(im1_, KL.frame_id, 11 + 2*use_m_id);
     
     if conf.visualize_matches %&& use_m_id == 1
       figure(11 + 2*use_m_id)
-      
-      im1_ = im1;
-      for iter = 1:KL_prev.ctr
-        im1_( KL_prev.pos(iter, 2), KL_prev.pos(iter,1) ) = 255;
-      end
-      for iter = 1:KL.ctr
-        im1_( KL.pos(iter, 2), KL.pos(iter,1) ) = 0;
-      end
       
       imshow(im1_);
       hold on
@@ -101,7 +97,7 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
         end
       end
       
-      quiver(y, x, vec_y, vec_x, 0, 'color', [1 0 0]);
+      quiver(y, x, vec_y, vec_x, 0, 'color', [0.3 1 0.3]);
       
       hold off;
       title(title_string);
@@ -125,9 +121,9 @@ end
 function [] = VisualizeDepth(KL_prev)
   global conf;
     
-    im_plot = zeros(conf.imgsize) - 5;
+    im_plot = zeros(conf.imgsize);
     %q = quantile(1./KL_prev.rho(:,1), 0.975);
-    q = 20;
+    q = 1./conf.S_RHO_MIN;
     
     for iter = 1:KL_prev.ctr
       if KL_prev.matching(iter) < 0
@@ -136,34 +132,49 @@ function [] = VisualizeDepth(KL_prev)
       if 1./KL_prev.rho(iter,1) < q
         im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 1./KL_prev.rho(iter,1);
       else
-        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 20;
+        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = q;
       end
     end
-    figure(14);
-    imagesc(im_plot');
-    %axis equal; colormap cubehelix; colorbar;
-    axis equal; colormap jet; colorbar;
-    title('depth')
-    pause(0)
+    
+    save_img(besos(im_plot, 0, q), KL_prev.frame_id, 14);
+    
+    if conf.visualize_depth
+      figure(14);
+      imagesc(im_plot');
+      %axis equal; colormap cubehelix; colorbar;
+      axis equal; colormap jet; colorbar;
+      title('depth')
+      pause(0)
+    end
 end
 
 function [] = VisualizeDepthVar(KL_prev)
   global conf;
     
-    im_plot = zeros(conf.imgsize) - 5;
+    im_plot = zeros(conf.imgsize);
+    q = 1./conf.S_RHO_MIN;
     
     for iter = 1:KL_prev.ctr
       if KL_prev.matching(iter) < 0
         continue
       end  
-      im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = KL_prev.rho(iter,2);
+      if 1./KL_prev.rho(iter,2) < q
+        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = 1./KL_prev.rho(iter,2);
+      else
+        im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = q;
+      end
     end
-    figure(25);
-    imagesc(im_plot');
-    %axis equal; colormap cubehelix; colorbar;
-    axis equal; colormap jet; colorbar;
-    title('depth uncertainty')
-    pause(0)
+    
+    save_img(besos(im_plot, 0, q), KL_prev.frame_id, 25);
+    
+    if conf.visualize_depth
+      figure(25);
+      imagesc(im_plot');
+      %axis equal; colormap cubehelix; colorbar;
+      axis equal; colormap jet; colorbar;
+      title('depth uncertainty')
+      pause(0)
+    end  
 end
 
 function [] = VisualizeHistory(KL_prev)
@@ -176,11 +187,16 @@ function [] = VisualizeHistory(KL_prev)
         continue
       end  
       im_plot(KL_prev.pos(iter,1), KL_prev.pos(iter,2)) = KL_prev.frames(iter);
-    end  
-    figure(15)
-    imagesc(im_plot')
-    axis equal; colormap jet; colorbar;
-    title('history')
+    end
+    
+    save_img(besos(im_plot, 0, 25), KL_prev.frame_id, 15);
+    
+    if conf.visualize_history
+      figure(15)
+      imagesc(im_plot')
+      axis equal; colormap jet; colorbar;
+      title('history')
+    end
 end
 
 function [KL_prev] = VisualizeDepth3D(KL_prev)
