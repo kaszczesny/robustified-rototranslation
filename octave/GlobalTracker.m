@@ -683,10 +683,10 @@ function [ ...
       im_fm( KL_prev.pos(iter, 1), KL_prev.pos(iter, 2) ) = fm(iter);
     end
     
-    save_img(besos(why, 0, 6), 6);
-    save_img(besos(escobar, 0, 2), 7);
-    save_img(besos(im, -1.5, 1.5), 8);
-    save_img(besos(im_fm, -1.5, 1.5), 41);
+    save_img(besos(why, 0, 6), KL_prev.frame_id, 6);
+    save_img(besos(escobar, 0, 2), KL_prev.frame_id, 7);
+    save_img(besos(im, -1.5, 1.5), KL_prev.frame_id, 8);
+    save_img(besos(im_fm, -1.5, 1.5), KL_prev.frame_id, 41);
     
   if conf.visualize_minimizer_insides
     figure(6);

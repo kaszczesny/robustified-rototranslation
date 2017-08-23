@@ -34,7 +34,7 @@ end
 
   viz = -distance_field;
   viz(viz == 1) = -conf.MAX_R - 2;
-  save_img(besos(viz, -conf.MAX_R - 2, 0), 4);
+  save_img(besos(viz, -conf.MAX_R - 2, 0), KL.frame_id, 4);
 if conf.visualize_edges
   figure(4);
   imagesc(viz');axis equal;colorbar

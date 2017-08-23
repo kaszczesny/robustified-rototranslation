@@ -40,9 +40,8 @@ function [colored] = besos(img, lower, upper)
     colored = reshape(colors(Gs,:), [size(Gs) 3]);
 end
 
-function [] = save_img(img, figure_num)
+function [] = save_img(img, frame, figure_num)
   global conf;
-  global frame;
   
   if ~conf.save_images
     return

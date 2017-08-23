@@ -261,7 +261,7 @@ KLposImageMatch = KLposImage;
      img(KLpos(i,1),KLpos(i,2))=2;
     end
   end
-  save_img(besos(img', 0, 3), 1);
+  save_img(besos(img', 0, 3), frame_id, 1);
 if conf.visualize_edges
   figure(1);
   imagesc(img);axis equal;colorbar;
@@ -269,7 +269,7 @@ if conf.visualize_edges
 end
 
 %% VISUALS %%
-save_img(besos(edge_probability', 0, 6), 2);
+save_img(besos(edge_probability', 0, 6), frame_id, 2);
 if conf.visualize_edges
   [y x] = meshgrid(1:size(dog,2), 1:size(dog,1));
   figure(2);
@@ -317,7 +317,7 @@ KL.frames = KLframes;
 KL.matchedGrad = KLmatchedGrad(:,end:-1:1);
 KL.matchedNorm = KLmatchedNorm;
 
-save_img(keylines, 3);
+save_img(keylines, frame_id, 3);
 if conf.visualize_edges
   figure(3);
   imshow(keylines);
