@@ -43,7 +43,7 @@ dog = zeros(conf.imgsize(2:-1:1));
 dog(2:end-1,2:end-1) = doggy;
 
 if use_depth
-  depth = imresize(imread(im_name_depth), conf.scale);
+  depth = imresize(imread(im_name_depth), conf.scale, 'nearest');
   depth_mask = depth > 0; % depth == 0 means 100% uncertainty
   %depth = double(cv.GaussianBlur(depth, "KSize", [conf.ksize,conf.ksize]));
   depth = double(depth);
@@ -203,6 +203,7 @@ for yter = 1+win_s:size(dog, 1)-win_s
       if depth_mask(yter,xter)
         rho = depth(yter,xter);
       else
+        edge_probability(yter,xter) = 6;
         continue
       end
     else
@@ -215,7 +216,7 @@ for yter = 1+win_s:size(dog, 1)-win_s
     vec_x(yter,xter) = n(2); %weirdly, n(1) and n(2) are swapped
     vec_y(yter,xter) = n(1);
     
-    edge_probability(yter,xter) = 6;
+    edge_probability(yter,xter) = 7;
   
     KLctr += 1;
     KLpos = [KLpos; yter, xter];
@@ -250,23 +251,26 @@ KLposImageMatch = KLposImage;
 
 
 %% KEYLINE JOINING %%
-[KLidx, KLref] = KeylineJoiner((edge_probability == 6), KLpos, KLgrad, KLidx);
+[KLidx, KLref] = KeylineJoiner((edge_probability == 7), KLpos, KLgrad, KLidx);
 
-if conf.visualize_edges
+
   img = im*0;
-  for i=1:length(KLidx)
+  for i=1:size(KLidx,1)
     if KLref(i)
      img(KLpos(i,1), KLpos(i,2))=1;
     else
      img(KLpos(i,1),KLpos(i,2))=2;
     end
   end
+  save_img(besos(img', 0, 3), frame_id, 1);
+if conf.visualize_edges
   figure(1);
   imagesc(img);axis equal;colorbar;
   title('edges joined & rejected')
 end
 
 %% VISUALS %%
+save_img(besos(edge_probability', 0, 7), frame_id, 2);
 if conf.visualize_edges
   [y x] = meshgrid(1:size(dog,2), 1:size(dog,1));
   figure(2);
@@ -314,11 +318,38 @@ KL.frames = KLframes;
 KL.matchedGrad = KLmatchedGrad(:,end:-1:1);
 KL.matchedNorm = KLmatchedNorm;
 
+save_img(keylines, frame_id, 3);
 if conf.visualize_edges
   figure(3);
   imshow(keylines);
   hold on; quiver(ys_im+y, xs_im+x, vec_y, vec_x);
   title('edge joining')
+end
+
+if conf.visualize_3D && use_depth
+  figure(100);
+  X = KL.posImage(:,1) ./ conf.zf ./ KL.rho(:,1);
+  Y = KL.posImage(:,2) ./ conf.zf ./ KL.rho(:,1);
+  Z = 1 ./ KL.rho(:,1);
+  hold on
+  plot3(X,Z,Y,'b.')
+  for yter = 1:size(edge_probability,1)
+    for xter = 1:size(edge_probability,2)
+      if edge_probability(yter,xter) == 6
+        if depth(yter,xter) == 0
+          col = 'r.';
+          d = conf.cheat_lower_bound;
+        else
+          col = 'k.';
+          d = depth(yter,xter);
+        end  
+        XY = pixelToNormalized([xter yter]) ./ conf.zf * d;
+        plot3(XY(1), d, XY(2), col);
+      end
+    end
+  end  
+  set(gca,'zdir','reverse')
+  hold off
 end
 
 l_kl_num = KL.ctr;

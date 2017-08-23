@@ -54,13 +54,15 @@ function [nmatch, KL] = DirectedMatching(...
   
   nmatch = 0;
   
+  why = zeros([conf.imgsize, 5]);
+  
   Vel = R * Vel; %back rotate translation
   RVel = R * RVel * R';
   
   for iter = 1:KL.ctr
     % clear is always false
     
-    i_mch = SearchMatch( KL_prev, KL_prev_img_mask, KL, iter, ...
+    [i_mch, why] = SearchMatch( why, KL_prev, KL_prev_img_mask, KL, iter, ...
       Vel, RVel, R );
       
     if i_mch < 0
@@ -87,11 +89,31 @@ function [nmatch, KL] = DirectedMatching(...
     figure(17);
     imagesc(img);axis equal;colorbar;
     title('edges matched by DirectedMatching')
+    
+    figure(26)
+    imagesc(why(:,:,1)');axis equal; colorbar;
+    title('stereolines')
+    
+    figure(27)
+    imagesc(why(:,:,2)');axis equal; colorbar;
+    title('directed ang')
+    
+    figure(28)
+    imagesc(why(:,:,3)');axis equal; colorbar;
+    title('directed mod')
+    
+    figure(29)
+    imagesc(why(:,:,4)');axis equal; colorbar;
+    title('directed cons')
+    
+    figure(30)
+    imagesc(why(:,:,5)');axis equal; colorbar;
+    title('directed final')
   end
   
 end
 
-function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
+function [idx, why] = SearchMatch( why, KL_prev, KL_prev_img_mask, KL, ...
   k, ... % index of KL in new frame
   Vel, RVel, R) % R is back rotation
   %called by DirectedMatching
@@ -196,7 +218,8 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
       inx_x = round(t(1)*tt + pi0(1));
       if inx_y < 1 || inx_y > size(KL_prev_img_mask,2) || inx_x < 1 || inx_x > size(KL_prev_img_mask,1)
         continue
-      end  
+      end
+      why( inx_x, inx_y, 1 ) += 1;
       j = KL_prev_img_mask( inx_x, inx_y );
       if j == 0
         continue
@@ -205,6 +228,8 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
       norm_m0 = KL_prev.norm(j);
       
       cang = dot(KL_prev.grad(j,:), KL.grad(k,:)) / (norm_m0*norm_m);
+      
+      why( inx_x, inx_y, 2:3 ) = [cang, norm_m0/norm_m-1];
       
       if cang < conf.MATCH_THRESH_ANGLE_COS || ...
          abs(norm_m0/norm_m - 1) > conf.MATCH_THRESH_MODULE
@@ -228,14 +253,19 @@ function [idx] = SearchMatch( KL_prev, KL_prev_img_mask, KL, ...
         s_rho.^2 * norm_t.^2 + ...
         sigma2_t * rho.^2; %whaaat the fak
         
-      if (tt - norm_t *rho).^2 > v_rho_dr
+      why( inx_x, inx_y, 4 ) = 0.9*(tt - norm_t *rho).^2 - v_rho_dr;
+        
+      if 1.1*(tt - norm_t *rho).^2 > v_rho_dr
         if conf.debug_matching
           printf('KL #%4d @frame #%4d: model inconsistent\n', ...
                   iter, KL_prev.frame_id)
         end
         continue
       end  
-        
+      
+      
+      why( inx_x, inx_y, 5 ) += 1;
+      
       idx = j;
       return  
       
@@ -265,6 +295,13 @@ function [r_num, KL] = Regularize1Iter(KL)
   
   % todo: thresh is cos(beta). Beta should be 45, not 60
   
+  test1 = zeros(conf.imgsize);
+  sigmas = zeros(conf.imgsize);
+  test2 = zeros(conf.imgsize);
+  alphas = zeros(conf.imgsize);
+  why = zeros(conf.imgsize);
+  dif = zeros(conf.imgsize);
+  
   r_num = 0;
   
   r = zeros(KL.ctr,1);
@@ -289,7 +326,11 @@ function [r_num, KL] = Regularize1Iter(KL)
     sigma_p = KL.rho(kp,2)^2;
     sigma_n = KL.rho(kn,2)^2;
     
-    if (rho_n - rho_p).^2 > sigma_n + sigma_p
+    test1( KL.pos(iter,1), KL.pos(iter,2) ) =  abs(rho_n - rho_p);
+    sigmas( KL.pos(iter,1), KL.pos(iter,2) ) = mean([sqrt(sigma_n), sqrt(sigma_p)]);
+    why( KL.pos(iter,1), KL.pos(iter,2) ) = 1;
+    
+    if abs(rho_n - rho_p) > mean([sqrt(sigma_n), sqrt(sigma_p)])
       % todo: in article it's a bit different (eq 15):
       %  abs(rho_n - rho_p) > sigma_n + sigma_p
       %  ^ this was squared    ^ this wasn't 
@@ -298,6 +339,9 @@ function [r_num, KL] = Regularize1Iter(KL)
     
     alpha = dot(KL.grad(kn,:), KL.grad(kp,:)) ./ ...
       (KL.norm(kn) * KL.norm(kp));
+      
+    test2( KL.pos(iter,1), KL.pos(iter,2) ) = alpha;
+    why( KL.pos(iter,1), KL.pos(iter,2) ) = 2;
     
     if alpha - thresh < 0
       % regularization is only performed if final alpha is > 0
@@ -305,6 +349,9 @@ function [r_num, KL] = Regularize1Iter(KL)
     end
     
     alpha = (alpha-thresh)/(1-thresh); % weighting factor: [0, 1]
+    
+    alphas( KL.pos(iter,1), KL.pos(iter,2) ) = alpha;
+    why( KL.pos(iter,1), KL.pos(iter,2) ) = 3;
     
     %if sigma == 0 || sigma_n == 0 || sigma_p == 0
       % todo: not sure why this happens
@@ -321,6 +368,8 @@ function [r_num, KL] = Regularize1Iter(KL)
     s(iter) = dot([wrn wr wrp], sqrt([sigma_n sigma sigma_p])) / ...
       sum([wrn wr wrp]);
       
+    dif(  KL.pos(iter,1), KL.pos(iter,2) ) = KL.rho(iter,1) - r(iter); 
+      
     mask(iter) = 1;
     r_num++;    
   end
@@ -329,6 +378,38 @@ function [r_num, KL] = Regularize1Iter(KL)
       KL.rho(iter,1) = r(iter);
       KL.rho(iter,2) = s(iter);
     end
+  end
+  
+  if conf.visualize_regularization
+    figure(16)
+    imagesc(why');
+    axis equal; colormap jet; colorbar;
+    title('regularize why')
+    
+    figure(20)
+    imagesc(test1');
+    axis equal; colormap jet; colorbar;
+    title('regularize test1')
+    
+    figure(21)
+    imagesc(sigmas');
+    axis equal; colormap jet; colorbar;
+    title('regularize sigmas')
+    
+    figure(22)
+    imagesc(test2');
+    axis equal; colormap jet; colorbar;
+    title('regularize test2')
+    
+    figure(23)
+    imagesc(alphas');
+    axis equal; colormap jet; colorbar;
+    title('regularize alphas')
+    
+    figure(24)
+    imagesc(dif');
+    axis equal; colormap jet; colorbar;
+    title('regularize diff')
   end
   
   return

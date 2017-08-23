@@ -7,7 +7,7 @@ conf=struct();
 conf.cheat = 1; %whether to use rgbd and groundtruth for calculations
 
 %output images settings
-conf.save_images = 0;
+conf.save_images = 1;
 conf.output_folder = strftime("../results/%y-%m-%d_%H-%M-%S", localtime(time()));
 
 % main() setting
@@ -73,24 +73,24 @@ conf.PosNegThresh = 0.2;
 conf.visualize_edges = 0;
 %figure 5
 conf.visualize_crossing = 0;
-%figure 6, 7, 8, 40
+%figure 6, 7, 8, 40, 41
 conf.visualize_minimizer_insides = 0;
-%figure 9, 19
+%figure 9
 conf.visualize_score = 0;
 %figure 10, 11, 12, 13
 conf.visualize_matches = 1;
 conf.visualize_matches_step = 100;
-%figure 14
+%figure 14, 25
 conf.visualize_depth = 1;
 %figure 15
 conf.visualize_history = 1;
-%figure 16
-conf.visualize_matcher_insides = 0;
-%figure 17
+%figure 16, 20, 21, 22, 23, 24
+conf.visualize_regularization = 0;
+%figure 17, 26, 27, 28, 29, 30
 conf.visualize_dmatches = 0;
 %figure 18
 conf.visualize_RT = 1;
-%figure 19
+%figure 19, 100
 conf.visualize_3D = 1;
 
 %debug
