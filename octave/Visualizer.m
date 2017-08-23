@@ -62,10 +62,8 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
     %keyboard("<<<")
     
     %close
-    figure(11 + 2*use_m_id)
     
-    
-    [y x] = meshgrid(1:conf.imgsize(1), 1:conf.imgsize(2));
+    % todo: red and blue here
     im1_ = im1;
     for iter = 1:KL_prev.ctr
       im1_( KL_prev.pos(iter, 2), KL_prev.pos(iter,1) ) = 255;
@@ -73,19 +71,41 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
     for iter = 1:KL.ctr
       im1_( KL.pos(iter, 2), KL.pos(iter,1) ) = 0;
     end
-    imshow(im1_);
-    hold on
-    vec_y = zeros(conf.imgsize(2:-1:1));
-    vec_x = zeros(conf.imgsize(2:-1:1));
-    for iter = 1:KL.ctr
-      if KL.matching(iter) != -1
-        match = KL.matching(iter);
-        vec =  KL.pos(iter,:) - KL_prev.pos(match,:);
-        vec_y( KL_prev.pos(match,2), KL_prev.pos(match,1) ) = vec(1);
-        vec_x( KL_prev.pos(match,2), KL_prev.pos(match,1) ) = vec(2);
+    
+    save_img(besos(viz, -conf.MAX_R - 2, 0), KL.frame_id, 4);
+    
+    if conf.visualize_matches %&& use_m_id == 1
+      figure(11 + 2*use_m_id)
+      
+      im1_ = im1;
+      for iter = 1:KL_prev.ctr
+        im1_( KL_prev.pos(iter, 2), KL_prev.pos(iter,1) ) = 255;
       end
+      for iter = 1:KL.ctr
+        im1_( KL.pos(iter, 2), KL.pos(iter,1) ) = 0;
+      end
+      
+      imshow(im1_);
+      hold on
+      
+      [y x] = meshgrid(1:conf.imgsize(1), 1:conf.imgsize(2));
+      
+      vec_y = zeros(conf.imgsize(2:-1:1));
+      vec_x = zeros(conf.imgsize(2:-1:1));
+      for iter = 1:KL.ctr
+        if KL.matching(iter) != -1
+          match = KL.matching(iter);
+          vec =  KL.pos(iter,:) - KL_prev.pos(match,:);
+          vec_y( KL_prev.pos(match,2), KL_prev.pos(match,1) ) = vec(1);
+          vec_x( KL_prev.pos(match,2), KL_prev.pos(match,1) ) = vec(2);
+        end
+      end
+      
+      quiver(y, x, vec_y, vec_x, 0, 'color', [1 0 0]);
+      
+      hold off;
+      title(title_string);
     end
-    quiver(y, x, vec_y, vec_x, 0, 'color', [1 0 0]);
     
     %{
     imshow(im1);
@@ -100,8 +120,6 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
             'Color', color, 'markerfacecolor', color);
     end
     %}
-    hold off;
-    title(title_string);
 end
 
 function [] = VisualizeDepth(KL_prev)

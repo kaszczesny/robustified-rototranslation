@@ -79,7 +79,7 @@ conf.visualize_regularization = 0;
 conf.visualize_dmatches = 0;
 %figure 18
 conf.visualize_RT = 1;
-%figure 19
+%figure 19, 100
 conf.visualize_3D = 1;
 
 %debug

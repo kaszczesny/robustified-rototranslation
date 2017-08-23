@@ -135,15 +135,6 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       [KL, img_mask] = EdgeFinder(frame-conf.frame_interval, 1);
       
       KL.frames += 1;
-      
-      %{
-      figure(100);
-      X = KL.posImage(:,1) ./ conf.zf ./ KL.rho(:,1);
-      Y = KL.posImage(:,2) ./ conf.zf ./ KL.rho(:,1);
-      Z = 1 ./ KL.rho(:,1);
-      plot3(X,Z,Y,'b.')
-      set(gca,'zdir','reverse')
-      %}
 
       % acquire VelRot from ground truth
       Vel = ground_truth(frame-conf.frame_interval, 1:3)';
@@ -228,9 +219,12 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
         end
       else
       
-        %regularize edgemap
-        for i=1:2 % regularize twice
-          [r_num, KL] = Regularize1Iter(KL);
+        % regularize only after median filter has been applied once
+        if FrameCount > 1
+          %regularize edgemap
+          for i=1:2 % regularize twice
+            [r_num, KL] = Regularize1Iter(KL);
+          end
         end
         
         %improve depth using kalman
@@ -284,10 +278,9 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     pause(0)
   end
   
-  if conf.visualize_matches
-    %VisualizeMatches(KL_prev, KL, 0);
-    VisualizeMatches(KL_prev, KL, 1);
-  end
+  
+  VisualizeMatches(KL_prev, KL, 0);
+  VisualizeMatches(KL_prev, KL, 1);
   
   if conf.visualize_3D
     KL = VisualizeDepth3D(KL); %median filter is in there, so better get this done before vis_depth
