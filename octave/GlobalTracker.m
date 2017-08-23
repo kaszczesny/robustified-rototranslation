@@ -37,7 +37,7 @@ function [...
     JtJ, JtF, ...
     KL_prev_forward, ... % only forward field is updated
     DResidualNew, ...
-    fm ...
+    fm, why, escobar ...
 ] = TryVelRot( ...
     ReWeight, ... % Rewighting switch
     ProcJF, ... % Calculate Jacobians or just energy score?
@@ -113,7 +113,7 @@ function [...
   
   n_match_tryvelrot = 0;
   
-  why = zeros(conf.imgsize) - 1;
+  why = zeros(conf.imgsize);
   escobar = why;
   
   for iter = 1:pnum
@@ -254,6 +254,7 @@ function [...
     
   end
   
+  %{
   if conf.visualize_minimizer_insides
     figure(6);
     imagesc(why'); axis equal; colormap jet; colorbar
@@ -263,6 +264,7 @@ function [...
     imagesc(escobar'); axis equal; colormap jet; colorbar;
     title('abs(pablo escobar)')
   end  
+  %}
   
   n_match_tryvelrot; % suppresing match number
   
@@ -331,16 +333,6 @@ function [...
     
     
   end
- 
-  %figure(19)
-  %hist(fm,100)
-  %figure(20)
-  %im = zeros(conf.imgsize);
-  %im( KL_prev.pos(:, 1), KL_prev.pos(:, 2) ) = fm(:)';
-  %imagesc(im')
-  %axis equal; colorbar; colormap jet;
-  
-  
   
   score = dot(fm, fm); %dot product
   mean(abs(fm))
@@ -623,7 +615,7 @@ function [ ...
   ResidualNew = Residual*0;
   
   %reweight
-  [F, JtJ, JtF, KL_prev.forward, ResidualNew, fm] = TryVelRot(
+  [F, JtJ, JtF, KL_prev.forward, ResidualNew, fm, why, escobar] = TryVelRot(
     1,1,X,
     KL_prev, KL, P0m,
     max_s_rho,Residual, distance_field, KLidx_field, FrameCount, 0);
@@ -648,7 +640,8 @@ function [ ...
     h = cv.SVD.BackSubst(U, D, Vt, -JtF); % back substitution
     
     Xnew = X+h;
-    [Fnew, JtJnew, JtFnew, KL_prev.forward, ResidualNew, fmNew] = TryVelRot(
+    [Fnew, JtJnew, JtFnew, KL_prev.forward, ResidualNew, ...
+      fmNew, whyNew, escobarNew] = TryVelRot(
       1,1,Xnew,
       KL_prev, KL, P0m,
       max_s_rho,Residual, distance_field, KLidx_field, FrameCount, 0);
@@ -660,6 +653,8 @@ function [ ...
       JtJ = JtJnew;
       JtF = JtFnew;
       fm = fmNew;
+      why = whyNew;
+      escobar = escobarNew;
       u *= max( 0.33, 1-((2*gain-1)^3));
       v = 2;
       eff_steps++;
@@ -677,19 +672,42 @@ function [ ...
     end
   end
   
-  if conf.visualize_minimizer_insides
+  
     im = zeros(conf.imgsize);
     for iter = 1:KL_prev.ctr
-      im( KL_prev.pos(iter, 1), KL_prev.pos(iter, 2) ) = abs(Residual(iter));
-    end  
+      im( KL_prev.pos(iter, 1), KL_prev.pos(iter, 2) ) = Residual(iter);
+    end
     
+    im_fm = zeros(conf.imgsize);
+    for iter = 1:KL_prev.ctr
+      im_fm( KL_prev.pos(iter, 1), KL_prev.pos(iter, 2) ) = fm(iter);
+    end
+    
+    save_img(besos(why, 0, 6), 6);
+    save_img(besos(escobar, 0, 2), 7);
+    save_img(besos(im, -1.5, 1.5), 8);
+    save_img(besos(im_fm, -1.5, 1.5), 41);
+    
+  if conf.visualize_minimizer_insides
+    figure(6);
+    imagesc(why'); axis equal; colormap jet; colorbar
+    title('minimizer why')
+    
+    figure(7);
+    imagesc(escobar'); axis equal; colormap jet; colorbar;
+    title('abs(pablo escobar)')
+  
     figure(8)
     imagesc(im');
     axis equal; colormap jet; colorbar;
     title('residual')
     
     figure(40)
-    hist(fm, 100)
+    hist(fm,100)
+    
+    figure(41)
+    imagesc(im_fm')
+    axis equal; colorbar; colormap jet;
   end  
   
   %todo: Cholesky

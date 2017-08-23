@@ -252,21 +252,24 @@ KLposImageMatch = KLposImage;
 %% KEYLINE JOINING %%
 [KLidx, KLref] = KeylineJoiner((edge_probability == 6), KLpos, KLgrad, KLidx);
 
-if conf.visualize_edges
+
   img = im*0;
-  for i=1:length(KLidx)
+  for i=1:size(KLidx,1)
     if KLref(i)
      img(KLpos(i,1), KLpos(i,2))=1;
     else
      img(KLpos(i,1),KLpos(i,2))=2;
     end
   end
+  save_img(besos(img', 0, 3), 1);
+if conf.visualize_edges
   figure(1);
   imagesc(img);axis equal;colorbar;
   title('edges joined & rejected')
 end
 
 %% VISUALS %%
+save_img(besos(edge_probability', 0, 6), 2);
 if conf.visualize_edges
   [y x] = meshgrid(1:size(dog,2), 1:size(dog,1));
   figure(2);
@@ -314,6 +317,7 @@ KL.frames = KLframes;
 KL.matchedGrad = KLmatchedGrad(:,end:-1:1);
 KL.matchedNorm = KLmatchedNorm;
 
+save_img(keylines, 3);
 if conf.visualize_edges
   figure(3);
   imshow(keylines);

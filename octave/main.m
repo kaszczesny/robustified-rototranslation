@@ -18,8 +18,11 @@ GlobalTracker;
 Visualizer;
 Utils;
 
-mkdir(conf.output_folder);
-copyfile('Config.m', strcat(conf.output_folder, '/Config.m'));
+if conf.save_images
+  printf("%s\n\n", conf.output_folder)
+  mkdir(conf.output_folder);
+  copyfile('Config.m', strcat(conf.output_folder, '/Config.m'));
+end  
 
 % arguments/returns for GlobalTracker
 F = 0; %energy based on dot product of distance residuals
@@ -74,7 +77,7 @@ Pos = zeros(3,1); %estimated position
 R = eye(3); % rotation matrix
 Pose = eye(3); % global rotation
 klm_num = 0;
-EstimationOk = 0; % changed from bool to counter
+EstimationOk = 0;
 
 KL_save = {};
 Vel_save = [];
@@ -125,7 +128,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   tic
   
   if conf.cheat
-    if EstimationOk == 0
+    if ~EstimationOk
       printf("Reestimating frame %d\n", frame-conf.frame_interval);
       
       % redo edge finding, this time with RGBD depth
@@ -158,7 +161,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   RVel = eye(3)*1e50;
   RW0 = eye(3)*1e50; %yup, 1e-10 is never used
   R = eye(3);
-  EstimationOk += 1;
+  EstimationOk = 1;
 
   [ ...
     F, ...
@@ -185,9 +188,11 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     Kp = 1;
     P_Kp = 1e50;
     
+    FrameCount = 0;
     EstimationOk = 0;
     if conf.debug_main
-      printf("frame #%4d: Error in estimation\n", frame);
+      printf("frame #%4d: Error in estimation, KLs: %d, %d\n", frame,
+        KL_prev.ctr, KL.ctr);
     end
     
     continue
@@ -215,6 +220,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
         Kp = 1;
         P_Kp = 10;
         
+        FrameCount = 0;
         EstimationOk = 0;
         if conf.debug_main
           printf("frame #%4d: KL match number too low: %4d, keylines: %4d\n", ...
@@ -230,7 +236,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
         %improve depth using kalman
         [KL] = UpdateInverseDepthKalman(Vel, RVel, RW0, KL);
         
-        if EstimationOk > 20
+        if FrameCount > 20
           % optionally rescale depth
           [KL, Kp, P_Kp] = EstimateReScaling(KL);
         end  
@@ -254,12 +260,12 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   % RVel = RVel ./ (dt_frame.^2); % quite no point in doing that
   
   if conf.debug_main
-    if EstimationOk == 0
+    if ~EstimationOk
       printf("Frame #%4d NOK\n", frame);
       soundsc(sound,44.1e3,16,[-50.0,50.0]);
       keyboard("<<<")
     else
-      printf("Frame #%4d OK (since %d frames)\n", frame, EstimationOk);
+      printf("Frame #%4d OK (since %d frames)\n", frame, FrameCount-1);
     end
   end
   

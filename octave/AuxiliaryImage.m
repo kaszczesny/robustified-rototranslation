@@ -31,9 +31,11 @@ for idx = 1:KL.ctr
   end
 end
 
-if conf.visualize_edges
+
   viz = -distance_field;
   viz(viz == 1) = -conf.MAX_R - 2;
+  save_img(besos(viz, -conf.MAX_R - 2, 0), 4);
+if conf.visualize_edges
   figure(4);
   imagesc(viz');axis equal;colorbar
   title('auxiliary')
