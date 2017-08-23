@@ -43,7 +43,7 @@ dog = zeros(conf.imgsize(2:-1:1));
 dog(2:end-1,2:end-1) = doggy;
 
 if use_depth
-  depth = imresize(imread(im_name_depth), conf.scale);
+  depth = imresize(imread(im_name_depth), conf.scale, 'nearest');
   depth_mask = depth > 0; % depth == 0 means 100% uncertainty
   %depth = double(cv.GaussianBlur(depth, "KSize", [conf.ksize,conf.ksize]));
   depth = double(depth);
