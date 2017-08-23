@@ -62,7 +62,11 @@ ground_truth(:, 4:6) = q2rot(unit(quat))';
 
 %start in zero
 ground_truth(:,:) -= ground_truth(conf.frame_start,:);
-ground_truth(:,1:3) *= -1; %empirical
+anglegt = 200;
+scalegt = 4/5;
+Rgt = [cosd(anglegt) -sind(anglegt); sind(anglegt) cosd(anglegt)];
+
+%ground_truth(:,1:3) *= -1; %empirical
 %leaving ground_truth as it is so as not to break RT plotting
 
 %make things easier
@@ -83,24 +87,7 @@ RVel_save = [];
 RW0_save = [];
 Pos_save = [];
 Pose_save = [];
-
-
-if conf.visualize_RT
-  %init
-  figure(18)
-  title('RT')
-  %xlabel('x')
-  %ylabel('z')
-  hold on
-  grid on
-  plot(0, 0, 'rx');
-  plot(ground_truth(conf.frame_start, 1), ground_truth(conf.frame_start, 3), 'b+')
-  plot([0 0], [0 0], 'go-')
-  Pos_prev = [0 0 0]';
-  hold off
-  pause(0)
-end
-
+gt_save = [];
 
 %{
 im_left = imresize(imread("../../00/image_0/000060.png"), conf.scale);
@@ -133,14 +120,14 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       
       KL.frames += 1;
       
-      %{
+      
       figure(100);
       X = KL.posImage(:,1) ./ conf.zf ./ KL.rho(:,1);
       Y = KL.posImage(:,2) ./ conf.zf ./ KL.rho(:,1);
       Z = 1 ./ KL.rho(:,1);
       plot3(X,Z,Y,'b.')
       set(gca,'zdir','reverse')
-      %}
+      
 
       % acquire VelRot from ground truth
       Vel = ground_truth(frame-conf.frame_interval, 1:3)';
@@ -263,17 +250,47 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     end
   end
   
-  if conf.visualize_RT
-    figure(18);
-    hold on
-    grid on
-    plot([Pos_prev(1) Pos(1)], [Pos_prev(3) Pos(3)], 'rx-');
-    plot(ground_truth(frame+[-conf.frame_interval 0], 1), ...
-      ground_truth(frame+[-conf.frame_interval 0], 3), 'b+-')
-    plot( ...
-      Pos(1) + [0 ground_truth(frame,1)-ground_truth(frame-conf.frame_interval,1)], ...
-      Pos(3) + [0 ground_truth(frame,3)-ground_truth(frame-conf.frame_interval,3)], ...
-      'go-')
+  if conf.visualize_RT  
+    gt_now = ground_truth(frame, 1:3).*scalegt;
+    gt_now([1 3]) *= Rgt;
+    
+    gt_save = cat(1, gt_save, gt_now);
+    
+    %dont draw anything until init is finished (few frames)
+    if (frame - conf.frame_start)/conf.frame_interval == 8
+      figure(18);
+      title('RT')
+      hold on
+      grid on
+      
+      %get new zero coordinate
+      pos_zero = Pos;
+      gt_zero = gt_now;
+      %draw everything up until now
+      for iter = 2:8
+        plot( [Pos_save(1, iter-1) Pos_save(1, iter)]-pos_zero(1), ...
+              [Pos_save(3, iter-1) Pos_save(3, iter)]-pos_zero(3), 'rx-');
+        plot( [gt_save(iter-1,1) gt_save(iter,1)]-gt_zero(1), ...
+              [gt_save(iter-1,3) gt_save(iter,3)]-gt_zero(3), 'b+-')
+      end
+    end
+    if (frame - conf.frame_start)/conf.frame_interval > 8
+      figure(18)
+      hold on
+      grid on
+      
+      plot( [Pos_prev(1) Pos(1)]-pos_zero(1), ...
+            [Pos_prev(3) Pos(3)]-pos_zero(3), 'rx-');
+      plot( [gt_save(end-1,1) gt_save(end,1)]-gt_zero(1), ...
+            [gt_save(end-1,3) gt_save(end,3)]-gt_zero(3), 'b+-')
+    end
+    
+    %plot(ground_truth(frame+[-conf.frame_interval 0], 1), ...
+    %  ground_truth(frame+[-conf.frame_interval 0], 3), 'b+-')
+    %plot( ...
+    %  Pos(1) + [0 ground_truth(frame,1)-ground_truth(frame-conf.frame_interval,1)], ...
+    %  Pos(3) + [0 ground_truth(frame,3)-ground_truth(frame-conf.frame_interval,3)], ...
+    %  'go-')
     hold off
     pause(0)
   end

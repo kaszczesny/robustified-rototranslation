@@ -11,9 +11,9 @@ conf.save_images = 0;
 conf.output_folder = strftime("../results/%y-%m-%d_%H-%M-%S", localtime(time()));
 
 % main() setting
-conf.frame_start = 90;
+conf.frame_start = 2200;
 conf.frame_interval = 5;
-conf.n_frames = 2000;
+conf.n_frames = 300;
 
 %KITTI
 %conf.im_name = @(x) sprintf("../data/KITTI/%.6d.png",x-1+50);
@@ -24,7 +24,13 @@ conf.im_name = @(x) files{x};
 persistent files_depth = glob("../../rgbd_dataset_freiburg3_long_office_household/depth/*.png");
 files_depth_mapping = csvread("../data/TUM/depth_idx.txt");
 conf.im_name_depth = @(x) files_depth{files_depth_mapping(x)};
-
+%{
+persistent files = glob("../../rgbd_dataset_freiburg2_pioneer_slam2/rgb/*.png");
+conf.im_name = @(x) files{x};
+persistent files_depth = glob("../../rgbd_dataset_freiburg2_pioneer_slam2/depth/*.png");
+files_depth_mapping = csvread("../data/TUM/depth_idx.txt");
+conf.im_name_depth = @(x) files_depth{files_depth_mapping(x)};
+%}
 conf.scale = 1/5;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
 conf.imgsize = imgsize(end:-1:1);
@@ -34,11 +40,16 @@ conf.principal_point =  [607.1928 185.2157] * conf.scale; %sort of half, xyz
 conf.zf = 718.856 * conf.scale; %todo: zf_x and zf_y?
 conf.FPS = 9.65; % todo: get actual value from dataset
 %}
-%TUM
-conf.principal_point =  [319.5 239.5] * conf.scale; %sort of half, xyz
-conf.zf = 525 * conf.scale; %X 525, Y 525
+%TUM fr3
+conf.principal_point =  [320.1 247.6] * conf.scale; %sort of half, xyz
+conf.zf = mean([535.4, 539.2]) * conf.scale; %X 525, Y 525
 conf.FPS = 9.65; % todo: get actual value from dataset
-
+%TUM fr2
+%{
+conf.principal_point =  [325.1 249.7] * conf.scale; %sort of half, xyz
+conf.zf = mean([520.9, 521.0]) * conf.scale; %X 525, Y 525
+conf.FPS = 9.65; % todo: get actual value from dataset
+%}
   % DoG:
 conf.ksize = 13;
 %conf.sigma1 = 3; 
@@ -47,8 +58,8 @@ conf.sigma1 = 1.7818;
 conf.sigma2 = 2.30029;
 
   % Test 1:
-conf.THRESH_GRAD_MIN = 0.05;
-conf.THRESH_GRAD_MAX = 0.05;
+conf.THRESH_GRAD_MIN = 0.02;
+conf.THRESH_GRAD_MAX = 0.02;
 conf.THRESH_GRAD_GAIN = 1e-6;
 conf.KL_REFERENCE_NUMBER = 5000;
 conf.max_img_value = 255;

@@ -1,14 +1,14 @@
 from glob import glob
 import numpy as np
 
-pngs_ = glob("rgbd_dataset_freiburg3_long_office_household/rgb/*.png")
+pngs_ = glob("../../../rgbd_dataset_freiburg3_long_office_household/rgb/*.png")
 pngs = []
 for png in pngs_:
 	pngs.append( float(png.split("/")[-1][:-4]) )
 
 pngs = sorted(pngs)
 
-csv = np.loadtxt("rgbd_dataset_freiburg3_long_office_household/groundtruth.txt", delimiter=" ",
+csv = np.loadtxt("../../../rgbd_dataset_freiburg3_long_office_household/groundtruth.txt", delimiter=" ",
 	skiprows=3)
 
 
