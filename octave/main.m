@@ -174,6 +174,15 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
         KL_prev.ctr, KL.ctr);
     end
     
+    Pos_save = cat(2, Pos_save, Pos);
+    Pose_save = cat(3, Pose_save, Pose);
+    if conf.visualize_RT  
+      gt_now = ground_truth(frame, 1:3).*scalegt;
+      gt_now([1 3]) *= Rgt;
+      
+      gt_save = cat(1, gt_save, gt_now);
+    end  
+    
     continue
     
   else
@@ -245,7 +254,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     if ~EstimationOk
       printf("Frame #%4d NOK\n", frame);
       soundsc(sound,44.1e3,16,[-50.0,50.0]);
-      keyboard("<<<")
+      %keyboard("<<<")
     else
       printf("Frame #%4d OK (since %d frames)\n", frame, FrameCount-1);
     end
@@ -315,6 +324,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   end
   
   time_save(end+1) = toc;
+  time_save(end)
   
   if conf.visualize_3D
     %soundsc(sound,44.1e3,16,[-50.0,50.0]);
