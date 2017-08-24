@@ -91,6 +91,7 @@ RW0_save = [];
 Pos_save = [];
 Pose_save = [];
 gt_save = [];
+time_save = [];
 
 %{
 im_left = imresize(imread("../../00/image_0/000060.png"), conf.scale);
@@ -122,13 +123,6 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       [KL, img_mask] = EdgeFinder(frame-conf.frame_interval, 1);
       
       KL.frames += 1;
-      
-      figure(100);
-      X = KL.posImage(:,1) ./ conf.zf ./ KL.rho(:,1);
-      Y = KL.posImage(:,2) ./ conf.zf ./ KL.rho(:,1);
-      Z = 1 ./ KL.rho(:,1);
-      plot3(X,Z,Y,'b.')
-      set(gca,'zdir','reverse')
 
       % acquire VelRot from ground truth
       Vel = ground_truth(frame-conf.frame_interval, 1:3)';
@@ -320,7 +314,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     printf("rho is nan\n");
   end
   
-  toc
+  time_save(end+1) = toc;
   
   if conf.visualize_3D
     %soundsc(sound,44.1e3,16,[-50.0,50.0]);
@@ -332,6 +326,3 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     keyboard("<<<")
   end  
 end
-
-% general todo: check sqrts in norms and squares in variances
-% todo: more debug messages

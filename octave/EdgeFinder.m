@@ -341,7 +341,7 @@ if conf.visualize_3D && use_depth
           d = conf.cheat_lower_bound;
         else
           col = 'k.';
-          d = depth(yter,xter);
+          d = 1./depth(yter,xter);
         end  
         XY = pixelToNormalized([xter yter]) ./ conf.zf * d;
         plot3(XY(1), d, XY(2), col);

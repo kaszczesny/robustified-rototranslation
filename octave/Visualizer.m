@@ -78,7 +78,7 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
     
     save_img(im1_, KL.frame_id, 11 + 2*use_m_id);
     
-    if conf.visualize_matches %&& use_m_id == 1
+    if conf.visualize_matches && use_m_id == 1
       figure(11 + 2*use_m_id)
       
       imshow(im1_);
@@ -167,7 +167,7 @@ function [] = VisualizeDepthVar(KL_prev)
     
     save_img(besos(im_plot, 0, q), KL_prev.frame_id, 25);
     
-    if conf.visualize_depth
+    if conf.visualize_depth && 0
       figure(25);
       imagesc(im_plot');
       %axis equal; colormap cubehelix; colorbar;
