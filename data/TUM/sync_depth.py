@@ -1,7 +1,7 @@
 from glob import glob
 import numpy as np
 
-pngs_ = glob("../../../rgbd_dataset_freiburg3_long_office_household/rgb/*.png")
+pngs_ = glob("../../../rgbd_dataset_freiburg1_xyz/rgb/*.png")
 pngs = []
 for png in pngs_:
 	pngs.append( float(png.split("/")[-1][:-4]) )
@@ -9,7 +9,7 @@ for png in pngs_:
 pngs = np.array(sorted(pngs))
 
 
-depths_ = glob("../../../rgbd_dataset_freiburg3_long_office_household/depth/*.png")
+depths_ = glob("../../../rgbd_dataset_freiburg1_xyz/depth/*.png")
 depths = []
 for depth in depths_:
 	depths.append( float(depth.split("/")[-1][:-4]) )
