@@ -92,6 +92,7 @@ Pos_save = [];
 Pose_save = [];
 gt_save = [];
 time_save = [];
+ok = [];
 
 %{
 im_left = imresize(imread("../../00/image_0/000060.png"), conf.scale);
@@ -181,7 +182,9 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       gt_now([1 3]) *= Rgt;
       
       gt_save = cat(1, gt_save, gt_now);
-    end  
+    end
+    
+    ok(end+1) = 0;
     
     continue
     
@@ -214,6 +217,21 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
           printf("frame #%4d: KL match number too low: %4d, keylines: %4d\n", ...
             frame, klm_num, KL.ctr);
         end
+        
+        Pos_save = cat(2, Pos_save, Pos);
+        Pose_save = cat(3, Pose_save, Pose);
+        if conf.visualize_RT  
+          gt_now = ground_truth(frame, 1:3).*scalegt;
+          gt_now([1 3]) *= Rgt;
+          
+          gt_save = cat(1, gt_save, gt_now);
+        end
+        
+        ok(end+1) = 0;
+        
+        continue
+        
+        
       else
       
         % regularize only after median filter has been applied once
@@ -247,6 +265,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   Pos += -Pose * Vel;
   Pos_save = cat(2, Pos_save, Pos);
   Pose_save = cat(3, Pose_save, Pose);
+  ok(end+1) = 1;
   
   % RVel = RVel ./ (dt_frame.^2); % quite no point in doing that
   
