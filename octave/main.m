@@ -17,6 +17,7 @@ Matcher; % load functions
 GlobalTracker;
 Visualizer;
 Utils;
+FitTrajectory;
 
 if conf.save_images
   printf("%s\n\n", conf.output_folder)
@@ -65,9 +66,9 @@ ground_truth(:, 4:6) = q2rot(unit(quat))';
 
 %start in zero
 ground_truth(:,:) -= ground_truth(conf.frame_start,:);
-anglegt = 200;
-scalegt = 4/5;
-Rgt = [cosd(anglegt) -sind(anglegt); sind(anglegt) cosd(anglegt)];
+%anglegt = 200;
+%scalegt = 4/5;
+%Rgt = [cosd(anglegt) -sind(anglegt); sind(anglegt) cosd(anglegt)];
 
 %ground_truth(:,1:3) *= -1; %empirical
 %leaving ground_truth as it is so as not to break RT plotting
@@ -280,10 +281,13 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   end
   
   if conf.visualize_RT  
+    gt_now = ground_truth(frame, 1:3);
+    gt_save = cat(1, gt_save, gt_now);
+    %{
     gt_now = ground_truth(frame, 1:3).*scalegt;
     gt_now([1 3]) *= Rgt;
     
-    gt_save = cat(1, gt_save, gt_now);
+    ;
     
     %dont draw anything until init is finished (few frames)
     if (frame - conf.frame_start)/conf.frame_interval == 8
@@ -322,6 +326,10 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     %  'go-')
     hold off
     pause(0)
+    %}
+    if size(Pos_save,2) > 10
+      [scale, score, R, T]=FitTrajectory_(gt_save(5:end,:)', Pos_save(:,5:end))
+    end
   end
   
   
