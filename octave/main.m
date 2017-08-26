@@ -112,7 +112,14 @@ end
 
 sound = wavread('../data/sound.wav');
 
+i = 0;
 for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frames]
+  i++;
+  if mod(i,10) == 0 && conf.save_images
+    save(sprintf("%s/dump.mat", conf.output_folder), Pos_save, ...
+      Pose_save, RVel_save, RW0_save, Vel_save, W0_save, ...
+      gt_save, time_save, ok);
+  end
   disp('')
   fflush(stdout);
   tic
