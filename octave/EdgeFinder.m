@@ -207,7 +207,8 @@ for yter = 1+win_s:size(dog, 1)-win_s
         continue
       end
     else
-      rho = conf.RHO_INIT;  
+      %rho = conf.RHO_INIT;  
+      rho = 1./normrnd(2, 0.5);  
     end  
     
     % local normal vector, normalized to versor after projection to z=0
