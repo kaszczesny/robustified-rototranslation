@@ -4,16 +4,16 @@ function conf = Config()
 
 conf=struct();
 
-conf.cheat = 1; %whether to use rgbd and groundtruth for calculations
+conf.cheat = 0; %whether to use rgbd and groundtruth for calculations
 
 %output images settings
 conf.save_images = 1;
 conf.output_folder = strftime("../results/%y-%m-%d_%H-%M-%S", localtime(time()));
 
 % main() setting
-conf.frame_start = 2200;
+conf.frame_start = 90;
 conf.frame_interval = 5;
-conf.n_frames = 300;
+conf.n_frames = 2000;
 
 %KITTI
 %conf.im_name = @(x) sprintf("../data/KITTI/%.6d.png",x-1+50);
@@ -31,7 +31,7 @@ persistent files_depth = glob("../../rgbd_dataset_freiburg2_pioneer_slam2/depth/
 files_depth_mapping = csvread("../data/TUM/depth_idx.txt");
 conf.im_name_depth = @(x) files_depth{files_depth_mapping(x)};
 %}
-conf.scale = 1/5;
+conf.scale = 1/6;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
 conf.imgsize = imgsize(end:-1:1);
 %KITTI
@@ -105,11 +105,11 @@ conf.MAX_R = 5;
 
 %limiting RGB-D depth in cheating EdgeFinder
 conf.cheat_lower_bound = 1.5;
-conf.cheat_upper_bound = 4;
+conf.cheat_upper_bound = 1e3;
 
 % EstimateQuantile
-%conf.S_RHO_MIN = 1e-3; % starting uncertainty of histogram in EstimateQuantile
-conf.S_RHO_MIN = 1/5; % starting uncertainty of histogram in EstimateQuantile
+conf.S_RHO_MIN = 1e-3; % starting uncertainty of histogram in EstimateQuantile
+%conf.S_RHO_MIN = 1/5; % starting uncertainty of histogram in EstimateQuantile
 %conf.S_RHO_MAX = 20; % final uncertainty of histogram in EstimateQuantile
 conf.S_RHO_MAX = 1/0.5; % final uncertainty of histogram in EstimateQuantile
 conf.PERCENTILE = 0.9; % quantile threshold in EstimateQuantile
