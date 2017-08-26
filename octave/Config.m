@@ -48,7 +48,7 @@ conf.im_name_depth = @(x) files_depth{files_depth_mapping(x)};
 
 %%%%%%%%%%%%%%%%%%%%%
 
-conf.scale = 1/2;
+conf.scale = 1/3;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
 conf.imgsize = imgsize(end:-1:1);
 
@@ -88,8 +88,8 @@ conf.sigma1 = 1.7818;
 conf.sigma2 = 2.30029;
 
   % Test 1:
-conf.THRESH_GRAD_MIN = 0.02;
-conf.THRESH_GRAD_MAX = 0.02;
+conf.THRESH_GRAD_MIN = 0.05;
+conf.THRESH_GRAD_MAX = 0.05;
 conf.THRESH_GRAD_GAIN = 1e-6;
 conf.KL_REFERENCE_NUMBER = 5000;
 conf.max_img_value = 255;
