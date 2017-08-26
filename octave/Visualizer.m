@@ -123,7 +123,7 @@ function [] = VisualizeDepth(KL_prev)
     
     im_plot = zeros(conf.imgsize);
     %q = quantile(1./KL_prev.rho(:,1), 0.975);
-    q = 1./conf.S_RHO_MIN;
+    q = min(1./conf.S_RHO_MIN, 10);
     
     for iter = 1:KL_prev.ctr
       if KL_prev.matching(iter) < 0
@@ -167,7 +167,7 @@ function [] = VisualizeDepthVar(KL_prev)
     
     save_img(besos(im_plot, 0, q), KL_prev.frame_id, 25);
     
-    if conf.visualize_depth && 0
+    if conf.visualize_depth
       figure(25);
       imagesc(im_plot');
       %axis equal; colormap cubehelix; colorbar;

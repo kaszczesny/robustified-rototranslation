@@ -253,9 +253,9 @@ function [idx, why] = SearchMatch( why, KL_prev, KL_prev_img_mask, KL, ...
         s_rho.^2 * norm_t.^2 + ...
         sigma2_t * rho.^2; %whaaat the fak
         
-      why( inx_x, inx_y, 4 ) = (tt - norm_t *rho).^2 - v_rho_dr;
+      why( inx_x, inx_y, 4 ) = 1.1*(tt - norm_t *rho).^2 - v_rho_dr;
         
-      if (tt - norm_t *rho).^2 > v_rho_dr
+      if 1.1*(tt - norm_t *rho).^2 > v_rho_dr
         if conf.debug_matching
           printf('KL #%4d @frame #%4d: model inconsistent\n', ...
                   iter, KL_prev.frame_id)
