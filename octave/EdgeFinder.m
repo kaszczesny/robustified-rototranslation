@@ -207,7 +207,8 @@ for yter = 1+win_s:size(dog, 1)-win_s
         continue
       end
     else
-      rho = conf.RHO_INIT;  
+      %rho = conf.RHO_INIT;  
+      rho = 1./normrnd(2, 0.5);  
     end  
     
     % local normal vector, normalized to versor after projection to z=0
@@ -341,7 +342,7 @@ if conf.visualize_3D && use_depth
           d = conf.cheat_lower_bound;
         else
           col = 'k.';
-          d = depth(yter,xter);
+          d = 1./depth(yter,xter);
         end  
         XY = pixelToNormalized([xter yter]) ./ conf.zf * d;
         plot3(XY(1), d, XY(2), col);

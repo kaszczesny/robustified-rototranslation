@@ -4,7 +4,7 @@ function conf = Config()
 
 conf=struct();
 
-conf.cheat = 1; %whether to use rgbd and groundtruth for calculations
+conf.cheat = 0; %whether to use rgbd and groundtruth for calculations
 
 %output images settings
 conf.save_images = 1;
@@ -34,7 +34,6 @@ conf.im_name = @(x) files{x};
 persistent files_depth = glob("../../rgbd_dataset_freiburg2_desk_with_person/depth/*.png");
 files_depth_mapping = csvread("../data/TUM/depth_idx.txt");
 conf.im_name_depth = @(x) files_depth{files_depth_mapping(x)};
-%
 %{
 persistent files = glob("../../rgbd_dataset_freiburg1_xyz/rgb/*.png");
 conf.im_name = @(x) files{x};
@@ -42,6 +41,7 @@ persistent files_depth = glob("../../rgbd_dataset_freiburg1_xyz/depth/*.png");
 files_depth_mapping = csvread("../data/TUM/depth_idx.txt");
 conf.im_name_depth = @(x) files_depth{files_depth_mapping(x)};
 %}
+
 conf.scale = 1/5;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
 conf.imgsize = imgsize(end:-1:1);
@@ -58,17 +58,18 @@ conf.zf = mean([535.4, 539.2]) * conf.scale; %X
 conf.FPS = 9.65; % todo: get actual value from dataset
 %}
 %TUM fr2
-%{
+%
 conf.principal_point =  [325.1 249.7] * conf.scale; %sort of half, xyz
 conf.zf = mean([520.9, 521.0]) * conf.scale
 conf.FPS = 9.65; % todo: get actual value from dataset
-%}
-%TUM fr1
 %
+%TUM fr1
+%{
 conf.principal_point =  [318.6 255.3] * conf.scale; %sort of half, xyz
 conf.zf = mean([517.3, 516.5]) * conf.scale;
 conf.FPS = 9.65; % todo: get actual value from dataset
-%
+%}
+
 
   % DoG:
 conf.ksize = 13;
@@ -125,11 +126,11 @@ conf.MAX_R = 5;
 
 %limiting RGB-D depth in cheating EdgeFinder
 conf.cheat_lower_bound = 1.5;
-conf.cheat_upper_bound = 4;
+conf.cheat_upper_bound = 1e3;
 
 % EstimateQuantile
-%conf.S_RHO_MIN = 1e-3; % starting uncertainty of histogram in EstimateQuantile
-conf.S_RHO_MIN = 1/5; % starting uncertainty of histogram in EstimateQuantile
+conf.S_RHO_MIN = 1e-3; % starting uncertainty of histogram in EstimateQuantile
+%conf.S_RHO_MIN = 1/5; % starting uncertainty of histogram in EstimateQuantile
 %conf.S_RHO_MAX = 20; % final uncertainty of histogram in EstimateQuantile
 conf.S_RHO_MAX = 1/0.5; % final uncertainty of histogram in EstimateQuantile
 conf.PERCENTILE = 0.9; % quantile threshold in EstimateQuantile

@@ -78,7 +78,7 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
     
     save_img(im1_, KL.frame_id, 11 + 2*use_m_id);
     
-    if conf.visualize_matches %&& use_m_id == 1
+    if conf.visualize_matches && use_m_id == 1
       figure(11 + 2*use_m_id)
       
       imshow(im1_);
@@ -123,7 +123,7 @@ function [] = VisualizeDepth(KL_prev)
     
     im_plot = zeros(conf.imgsize);
     %q = quantile(1./KL_prev.rho(:,1), 0.975);
-    q = 1./conf.S_RHO_MIN;
+    q = min(1./conf.S_RHO_MIN, 10);
     
     for iter = 1:KL_prev.ctr
       if KL_prev.matching(iter) < 0

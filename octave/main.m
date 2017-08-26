@@ -17,6 +17,7 @@ Matcher; % load functions
 GlobalTracker;
 Visualizer;
 Utils;
+FitTrajectory;
 
 if conf.save_images
   printf("%s\n\n", conf.output_folder)
@@ -65,9 +66,9 @@ ground_truth(:, 4:6) = q2rot(unit(quat))';
 
 %start in zero
 ground_truth(:,:) -= ground_truth(conf.frame_start,:);
-anglegt = 200;
-scalegt = 4/5;
-Rgt = [cosd(anglegt) -sind(anglegt); sind(anglegt) cosd(anglegt)];
+%anglegt = 200;
+%scalegt = 4/5;
+%Rgt = [cosd(anglegt) -sind(anglegt); sind(anglegt) cosd(anglegt)];
 
 %ground_truth(:,1:3) *= -1; %empirical
 %leaving ground_truth as it is so as not to break RT plotting
@@ -91,6 +92,8 @@ RW0_save = [];
 Pos_save = [];
 Pose_save = [];
 gt_save = [];
+time_save = [];
+ok = [];
 
 %{
 im_left = imresize(imread("../../00/image_0/000060.png"), conf.scale);
@@ -109,7 +112,14 @@ end
 
 sound = wavread('../data/sound.wav');
 
+iiii = 0;
 for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frames]
+  iiii++;
+  if mod(iiii,10) == 0 && conf.save_images
+    save(sprintf("%s/dump.mat", conf.output_folder), 'Pos_save', ...
+      'Pose_save', 'RVel_save', 'RW0_save', 'Vel_save', 'W0_save', ...
+      'gt_save', 'time_save', 'ok');
+  end
   disp('')
   fflush(stdout);
   tic
@@ -122,13 +132,6 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       [KL, img_mask] = EdgeFinder(frame-conf.frame_interval, 1);
       
       KL.frames += 1;
-      
-      figure(100);
-      X = KL.posImage(:,1) ./ conf.zf ./ KL.rho(:,1);
-      Y = KL.posImage(:,2) ./ conf.zf ./ KL.rho(:,1);
-      Z = 1 ./ KL.rho(:,1);
-      plot3(X,Z,Y,'b.')
-      set(gca,'zdir','reverse')
 
       % acquire VelRot from ground truth
       Vel = ground_truth(frame-conf.frame_interval, 1:3)';
@@ -180,6 +183,17 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
         KL_prev.ctr, KL.ctr);
     end
     
+    Pos_save = cat(2, Pos_save, Pos);
+    Pose_save = cat(3, Pose_save, Pose);
+    if conf.visualize_RT  
+      gt_now = ground_truth(frame, 1:3).*scalegt;
+      gt_now([1 3]) *= Rgt;
+      
+      gt_save = cat(1, gt_save, gt_now);
+    end
+    
+    ok(end+1) = 0;
+    
     continue
     
   else
@@ -211,6 +225,21 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
           printf("frame #%4d: KL match number too low: %4d, keylines: %4d\n", ...
             frame, klm_num, KL.ctr);
         end
+        
+        Pos_save = cat(2, Pos_save, Pos);
+        Pose_save = cat(3, Pose_save, Pose);
+        if conf.visualize_RT  
+          gt_now = ground_truth(frame, 1:3).*scalegt;
+          gt_now([1 3]) *= Rgt;
+          
+          gt_save = cat(1, gt_save, gt_now);
+        end
+        
+        ok(end+1) = 0;
+        
+        continue
+        
+        
       else
       
         % regularize only after median filter has been applied once
@@ -244,6 +273,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   Pos += -Pose * Vel;
   Pos_save = cat(2, Pos_save, Pos);
   Pose_save = cat(3, Pose_save, Pose);
+  ok(end+1) = 1;
   
   % RVel = RVel ./ (dt_frame.^2); % quite no point in doing that
   
@@ -251,17 +281,20 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     if ~EstimationOk
       printf("Frame #%4d NOK\n", frame);
       soundsc(sound,44.1e3,16,[-50.0,50.0]);
-      keyboard("<<<")
+      %keyboard("<<<")
     else
       printf("Frame #%4d OK (since %d frames)\n", frame, FrameCount-1);
     end
   end
   
   if conf.visualize_RT  
+    gt_now = ground_truth(frame, 1:3);
+    gt_save = cat(1, gt_save, gt_now);
+    %{
     gt_now = ground_truth(frame, 1:3).*scalegt;
     gt_now([1 3]) *= Rgt;
     
-    gt_save = cat(1, gt_save, gt_now);
+    ;
     
     %dont draw anything until init is finished (few frames)
     if (frame - conf.frame_start)/conf.frame_interval == 8
@@ -300,6 +333,10 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     %  'go-')
     hold off
     pause(0)
+    %}
+    if size(Pos_save,2) > 10
+      [scale, score, R, T]=FitTrajectory_(gt_save(5:end,:)', Pos_save(:,5:end))
+    end
   end
   
   
@@ -320,11 +357,12 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     printf("rho is nan\n");
   end
   
-  toc
+  time_save(end+1) = toc;
+  time_save(end)
   
-  if conf.visualize_3D
-    %soundsc(sound,44.1e3,16,[-50.0,50.0]);
-    %keyboard("<<<") % type "return" to continue
+  if exist('stop', 'file') > 0
+    soundsc(sound,44.1e3,16,[-50.0,50.0]);
+    keyboard("<<<") % type "return" to continue
   end
   
   if any(KL_prev.rho(:,1) < 0)
@@ -332,6 +370,3 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     keyboard("<<<")
   end  
 end
-
-% general todo: check sqrts in norms and squares in variances
-% todo: more debug messages
