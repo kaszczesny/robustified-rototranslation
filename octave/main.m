@@ -360,9 +360,9 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   time_save(end+1) = toc;
   time_save(end)
   
-  if conf.visualize_3D
-    %soundsc(sound,44.1e3,16,[-50.0,50.0]);
-    %keyboard("<<<") % type "return" to continue
+  if exist('stop', 'file') > 0
+    soundsc(sound,44.1e3,16,[-50.0,50.0]);
+    keyboard("<<<") % type "return" to continue
   end
   
   if any(KL_prev.rho(:,1) < 0)
