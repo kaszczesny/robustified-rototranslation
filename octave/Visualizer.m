@@ -64,11 +64,13 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
     %close
     
     im1_ = cat(3, im1, im1, im1);
+    im1__ = im1*0;
     for iter = 1:KL_prev.ctr
       im1_( KL_prev.pos(iter, 2), KL_prev.pos(iter,1), : ) = [255 0 0];
+      im1__( KL_prev.pos(iter, 2), KL_prev.pos(iter,1), : ) = 1;
     end
     for iter = 1:KL.ctr
-      if im1_( KL.pos(iter, 2), KL.pos(iter,1), 1 ) == 255
+      if im1__( KL.pos(iter, 2), KL.pos(iter,1), 1 ) == 1
         red = 255;
       else
         red = 0;
@@ -152,7 +154,7 @@ function [] = VisualizeDepthVar(KL_prev)
   global conf;
     
     im_plot = zeros(conf.imgsize);
-    q = 1./conf.S_RHO_MIN;
+    q = min(1./conf.S_RHO_MIN, 10);
     
     for iter = 1:KL_prev.ctr
       if KL_prev.matching(iter) < 0

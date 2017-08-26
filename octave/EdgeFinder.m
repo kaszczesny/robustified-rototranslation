@@ -15,6 +15,10 @@ persistent l_kl_num = 0;
 im_name = conf.im_name(frame_id);
 im_name_depth = conf.im_name_depth(frame_id);
 
+if ~im_name_depth
+  use_depth = 0;
+end  
+
 % UpdateThresh %
 thresh_grad -= conf.THRESH_GRAD_GAIN * (conf.KL_REFERENCE_NUMBER - l_kl_num);
 thresh_grad = max(conf.THRESH_GRAD_MIN, thresh_grad);
@@ -208,7 +212,7 @@ for yter = 1+win_s:size(dog, 1)-win_s
       end
     else
       %rho = conf.RHO_INIT;  
-      rho = 1./normrnd(2, 0.5);  
+      rho = 1./normrnd(conf.RHO_INIT, conf.RHO_INIT_VAR);  
     end  
     
     % local normal vector, normalized to versor after projection to z=0
