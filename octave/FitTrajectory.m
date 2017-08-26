@@ -50,5 +50,6 @@ function [scale, score, vel, rot] = FitTrajectory_( gt, Pos )
   [~, R, vel] = fit3d( scale, gt, Pos );
 
   l = logm(R);
-  rot = [-l(1,2) l(1,3) -l(2,3)]';
+  rot = [-l(1,2) l(1,3) -l(2,3)];
+  vel = vel';
 end

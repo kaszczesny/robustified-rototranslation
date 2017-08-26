@@ -161,6 +161,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       KL_prev, KL, ...
       rel_error, error_score, FrameCount ...
   );
+  fflush(stdout);
   
   Vel_save = cat(2, Vel_save, Vel);
   W0_save = cat(2, W0_save, W0);
