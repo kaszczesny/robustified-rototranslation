@@ -192,9 +192,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     Pos_save = cat(2, Pos_save, Pos);
     Pose_save = cat(3, Pose_save, Pose);
     if conf.visualize_RT  
-      gt_now = ground_truth(frame, 1:3).*scalegt;
-      gt_now([1 3]) *= Rgt;
-      
+      gt_now = ground_truth(frame, 1:3);;
       gt_save = cat(1, gt_save, gt_now);
     end
     
@@ -235,9 +233,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
         Pos_save = cat(2, Pos_save, Pos);
         Pose_save = cat(3, Pose_save, Pose);
         if conf.visualize_RT  
-          gt_now = ground_truth(frame, 1:3).*scalegt;
-          gt_now([1 3]) *= Rgt;
-          
+          gt_now = ground_truth(frame, 1:3);
           gt_save = cat(1, gt_save, gt_now);
         end
         

@@ -335,7 +335,9 @@ function [...
   end
   
   score = dot(fm, fm); %dot product
-  mean(abs(fm))
+  minimizer_residual = DResidualNew( ...
+    (DResidualNew ~= conf.MAX_R) & (DResidualNew ~= 0) );
+  minimizer_residual_mean = mean(abs(minimizer_residual))
 
   if FullScore
     score = fm;
