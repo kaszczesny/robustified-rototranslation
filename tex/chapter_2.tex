@@ -1,8 +1,25 @@
-\chapter{Pierwszy dokument}
-\label{cha:pierwszyDokument}
+\chapter{Analysis and improvements of \textit{Rebvo} algorithm}
+\label{cha:intro2}
 
-W rozdziale tym przedstawiono podstawowe informacje dotyczące struktury prostych plików \LaTeX a. Omówiono również metody kompilacji plików z zastosowaniem programów \emph{latex} oraz \emph{pdflatex}.
+This chapter contains thorough analysis of proposed algorithm. Firstly, changes to the original algorithm are listed. Then algorithm is carefully explained, step by step, using various examples. Chapter is concluded with miscellaneous remarks and experiment results.
 
+\section{Changes to the algorithm}
+\label{sec:changes}
+
+median filter
+edge detection bucketing
+rho initialization (noise instead of ones)
+
+
+\section{Other considered changes}
+\label{sec:rejected}
+
+scale from dimensions of known real-world objects, such as road signs or license plates
+initialization from classical feature matching algorithm
+keyline joining improvements: morphological operations, Y junctions
+usage of corners
+fuzzy logic
+automatic sigma choice
 
 
 \subsection{Notation (Keyline structure)}

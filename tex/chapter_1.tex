@@ -4,7 +4,7 @@
 
 In this chapter theory behind computer vision, 3D reconstruction and mathematical apparatus used in our algorithm are introduced. Following topics are briefly discussed: pinhole camera model, basics of stereo vision, egomotion and 3D image transformations. Other topics -- Difference of Gaussians edge detection, Levenberg-Marquadt algorithm -- can be found in Appendices B and C, respectively.
 
-Literature connected with this topic is overviewed. Finally, \textit{Rebvo} algorithm \cite{jose2015realtime} is thoroughly analyzed.
+Literature connected with this topic is overviewed. Finally, \textit{Rebvo} algorithm \cite{jose2015realtime} is described.
 
 %-----------------
 
@@ -29,7 +29,33 @@ where:
 	\item[$Q$] world coordinates point
 \end{eqwhere}
 
-Image plane \(\pi\) is a rectangle parallel to plane \(XOY\). Its distance from origin is equal to \(f\) (focal length). Usually it is assumed that image plane's \(z\) coordinate is positive -- otherwise formed image would be upside down. Point where axis \(OZ\) intersects \(\pi\) is called principal point. World coordinate points Q are projected onto \(\pi\) as \(Q'\), thus forming a 2D image.
+Image plane \(\pi\) is a rectangle parallel to plane \(XOY\). Its distance from origin is equal to \(f\) (focal length). Usually it is assumed that image plane's \(z\) coordinate is positive -- otherwise formed image would be upside down. Point where axis \(OZ\) intersects \(\pi\) is called principal point.
+
+World coordinate points Q are projected onto \(\pi\) as \(Q'\), thus forming a 2D image. This relationship can be concisely written using camera matrix as in Eq.~\ref{eq:camera}.
+
+\begin{equation}
+q = Q' \sim \underbrace{ \underbrace{  \begin{bmatrix}
+		f_{x} & s & c_{x} \\ 
+		0 & f_{y} & c_{y} \\ 
+		0 & 0 & 1
+	\end{bmatrix}
+}_{K} R \left [ I | -t \right ] }_{C} Q
+\label{eq:camera}
+\end{equation}
+where:
+\begin{eqwhere}[2cm]
+	\item[$q$] 2D point on image plane
+	\item[$Q'$] 2D point on image plane expressed in homogeneous coordinates (3-tuple)
+	\item[$Q$] 3D point corresponding to $q$, expressed in homogeneous coordinates (4-tuple)
+	\item[$\sim$] equality between homogeneous points
+	\item[$K$] 3x3 intrinsic camera matrix
+	\item[$C$] 3x4 extrinsic camera matrix
+	\item[$f_{k}$] focal length along axis $k$
+	\item[$s$] skew factor (usually equal to 0)
+	\item[$c_{k}$] $k$-coordinate of the principal point
+	\item[$R$] 3x3 rotation matrix between 3D world coordinates and camera coordinates
+	\item[$t$] translation vector between 3D world coordinates and camera coordinates (3-tuple)
+\end{eqwhere}
 
 todo: figure 1.4 from eng
 
@@ -46,11 +72,13 @@ todo figure eng 3.5a
 
 Most implementations of visual odometry systems use two cameras spaced by a constant baseline, that can be determined during stereo calibration. Abundance of such methods can be explained with similarity to how human visual system works \cite{cyganek}. Brain determines depth of seen features by comparing their position seen by both eyes and taking into account the baseline, i.e. spacing between eyes.
 
-Equation \ref{eq:fund} describes correspondence between matched points with the fundamental matrix. 
+todo image + reference in text
+
+Eq. \ref{eq:fund} describes correspondence between matched points with the fundamental matrix. At least 7 matches are needed to obtain $F$, but usually much more are used so as to mitigate noise \cite{determining_the_epipolar}. When cameras are calibrated, essential matrix $E$ can be calculated with Eq.~\ref{eq:ess}. Essential matrix can be decomposed into rotation and translation between 3D points registered by both cameras using SVD (1 solution out of 4 has to be chosen). $E$ has scale ambiguity, which can be resolved using baseline (Eq. \ref{eq:disparity}) \cite{improving}. It is worth mentioning that baseline can not be acquired using autocalibration alone - an object of known dimensions must be measured on images.
 
 \begin{equation}
 p_{2}^{T}Fp_{1}=0
-\label{eq:homo}
+\label{eq:fund}
 \end{equation}
 where:
 \begin{eqwhere}[2cm]
@@ -58,32 +86,87 @@ where:
 	\item[$F$] 3x3 fundamental matrix
 \end{eqwhere}
 
-\cite{improving} - schemat stero i wzory jak odzyskiwac glebie
+\begin{equation}
+K_{2}^{T}FK_{1}=E=[t]_{x}R
+\label{eq:ess}
+\end{equation}
+where:
+\begin{eqwhere}[2cm]
+	\item[$K_{i}$] $i$-th camera matrix
+	\item[$E$] 3x3 essential matrix
+	\item[$t$] translation vector $t=[t_{x}\ \ t_{y}\ \ t_{z}]^T$
+	\item[$\lbrack t \rbrack _{x}$] skew-symmetric matrix: $\begin{bmatrix}
+		0 & -t_{x} & t_{y} \\ 
+		t_{x} & 0 & -t_{z} \\ 
+		-t_{y} & t_{z} & 0
+	\end{bmatrix}$
+	\item[$R$] 3x3 rotation matrix
+\end{eqwhere}
+
+\begin{equation}
+Z = \frac{fb}{|p_{1}-p_{2}|}
+\label{eq:disparity}
+\end{equation}
+where:
+\begin{eqwhere}[2cm]
+	\item[$Z$] world $OZ$ coordinate of the point (depth)
+	\item[$f$] focal length
+	\item[$b$] baseline
+\end{eqwhere}
+
+% -----------
+
+\section{Monocular visual odometry}
+\label{sec:mono}
+
+There are three main issues in monocular visual odometry, which will be discussed in this section:
+\begin{enumerate}
+	\item scale ambiguity,
+	\item position drift over time,
+	\item egomotion.
+\end{enumerate}
+
+In case when only one camera is available, matches between consecutive frames still can be searched for. However, without knowing the 3D transformation, baseline is unknown, so scene can be reconstructed only up to a scale \cite{hartley}. Main difficulty is that this transformation is \textit{the} quantity that odometry is supposed to estimate. Information from only one camera is not sufficient to solve the ambiguity. For instance, Fig.~x depicts a situation when two objects with differing dimensions appear to be of the same size after projection to image plane. There are 2 main ways to alleviate this problem.
+
+todo: figure with bee
+
+An IMU (accelerometer \& gyroscope) -- data from this unit can be used to estimate baseline and extrinsic camera parameters \cite{tracked_vehicles}. Actually, IMU alone can be used for odometry. By combining it with video input, however, accuracy and robustness tremendously increase.
+
+Another approach is to use explicit depth data, e.g. RGB-D from Kinect \cite{an_improved_visual_odometry_optimization}. This helps in global scene scale estimation. A disadvantage is that such devices have narrow depth detection range (usually up to few meters \cite{accuracy_and_resoulution}) and are not available in consumer-grade mobile devices.
+
+In \cite{robust_scale} a novel approach is proposed: by assuming known, constant camera height above ground plane, global scale can be estimated. This step is performed between all consecutive frames, independently from main visual odometry algorithm.
+
+A very frequent problem in pure visual monocular odometry is unbounded position drift over time. Each 3D transformation that is estimated between consecutive frames is an instantaneous linear and angular velocity. To obtain accumulated position and azimuth after given frame, individual velocities have to be integrated. Each error gains significance with time. In literature two ways of mitigation are the most common.
+
+% todo: demonstration of this conjecture?
+
+First of all, information from GPS can be employed to ensure that position does not drift away \cite{accurate_global_localization}. GPS signal quality greatly depends on location, so this approach may be unsuited for indoor use cases. GPS can not help with azimuth estimation, however. Finally, GPS is, out of the discussed methods, the only way to transform relative coordinates to real word coordinates (i.e. longitude and latitude). Other possibility would be to use special markers or landmarks.
+
+In SLAM systems loops in trajectories can be used as means of correcting position drift -- knowing landmark (i.e. excellent feature points) descriptors in previous frames, such loops can be detected and system parameters can be adjusted \cite{the_application_of_kalman} \cite{monoslam}.
+
+
+egomotion \& tunnel motion
+
 
 %---------
 
-\section{Egomotion}
-\label{sec:ego}
-
-%-----------
-
-\section{3D image transformations}
+% possibly appendix
+\section{Notations of 3D rotation}
 \label{sec:3dtrans}
 
 \subsection{Notations of 3D rotation}
 
 Rodriguez, quaternion, Euler, expm
 
-\subsection{3D translation and rotation}
-
 % -----------
 
 \section{Literature}
 
 
+
 % -------------
 
-\section{The \textit{Rebvo} algorithm}
+\section{The \textit{Rebvo} algorithm outline}
 
 In this section the \textit{Rebvo} algorithm \cite{jose2015realtime} description is briefly paraphrased for needs of this thesis.
 
@@ -101,7 +184,7 @@ Then \textbf{tracking} is performed. Edges from previous frames are first projec
 \item outliers can be present (e.g. objects moving with respect to the rigid scene).
 \end{itemize}
  
-Final step -- \textbf{mapping} -- associates matching edges between frames using obtained optimal 3D transformation. Due to aforementioned problems, matching routine is needed for each edge pixel. Because depth of previous frame edges is estimated with some uncertainty, camera motion establishes a line segment defining the area where possible matches will be searched for. Once a candidate is found, it is tested for gradient correspondence and, most importantly, for model consistency -- deviation of position on the segment obtained from linear transformation equation can not exceed depth uncertainty. After matching, depth information is propagated for matched edge pixels from previous frame to the current. Depth is optionally regularized. Previous depth has to be reestimated ($OZ$ axis velocity has to be taken into account). This is achieved using Extended Kalman Filter. Scale drift, inherent problem of pure visual odometry, can be then mitigated to some degree by diving estimated depths by frame shrinking factor.
+Final step -- \textbf{mapping} -- associates matching edges between frames using obtained optimal 3D transformation. Due to aforementioned problems, matching routine is needed for each edge pixel. Because depth of previous frame edges is estimated with some uncertainty, camera motion establishes a line segment defining the area where possible matches will be searched for. Once a candidate is found, it is tested for gradient correspondence and, most importantly, for model consistency -- deviation of position on the segment obtained from linear transformation equation can not exceed depth uncertainty. After matching, depth information is propagated for matched edge pixels from previous frame to the current. Depth is optionally regularized. Previous depth has to be reestimated ($OZ$ axis velocity has to be taken into account). This is achieved using Extended Kalman Filter. Scale drift, inherent problem of pure visual odometry, can be then mitigated to some limited degree by diving estimated depths by frame shrinking factor.
 
 Accuracy of results obtained in \cite{jose2015realtime} are comparable with other state-of-the-art algorithms.
 
