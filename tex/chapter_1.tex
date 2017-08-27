@@ -2,19 +2,22 @@
 \label{cha:intro}
 
 
-In this chapter theory behind computer vision, 3D reconstruction and mathematical apparatus used in our algorithm are introduced. Following topics are briefly discussed: pinhole camera model, basics of stereo vision, egomotion and 3D image transformations. Other topics -- Difference of Gaussians edge detection, Levenberg-Marquadt algorithm and Kalman filter -- can be found in Appendices B, C and D, respectively.
+In this chapter theory behind computer vision, 3D reconstruction and mathematical apparatus used in our algorithm are introduced. Following topics are briefly discussed: pinhole camera model, basics of stereo vision, egomotion and 3D image transformations. Other topics -- Difference of Gaussians edge detection, Levenberg-Marquadt algorithm -- can be found in Appendices B and C, respectively.
 
-Literature connected with this topic is overviewed. Finally, Rebvo algorithm \cite{jose2015realtime} is thoroughly analyzed.
+Literature connected with this topic is overviewed. Finally, \textit{Rebvo} algorithm \cite{jose2015realtime} is thoroughly analyzed.
 
 %-----------------
 
 \section{Pinhole camera model}
 \label{sec:pinhole}
 
+todo: add zhang30 citation
 
 Pinhole camera model is a widely used and simple model that establishes connection between world coordinates $\Re^3$ and image-domain coordinates $\Re^2$ (i.e. projective geometry) \cite{hartley2003multiple}.
 
-Figure. Every 3D point $Q$ can be associated with a ray $QO$ that passes through camera origin $O$, usually defined as origin of the 3D coordinate system origin. Such ray can be defined with homogeneous coordinates as set of points $\{(X, Y, Z)\}$ that satisfy Eq.~\ref{eq:homo}
+todo: Figure. and reference in text
+
+Every 3D point $Q$ can be associated with a ray $QO$ that passes through camera origin $O$, usually defined as origin of the 3D coordinate system origin. Such ray can be defined with homogeneous coordinates as set of points $\{(X, Y, Z)\}$ that satisfy Eq.~\ref{eq:homo}:
 
 \begin{equation}
 (X, Y, Z) = k(Q_x, Q_y, Q_z)
@@ -26,15 +29,36 @@ where:
 	\item[$Q$] world coordinates point
 \end{eqwhere}
 
-Image plane \(\pi\) is a rectangle parallel to plane \(XOY\). Its distance from origin is equal to \(f\) (focal length). Usually it is assumed that image plane's \(z\) coordinate is positive -- otherwise formed image would be upside down. Point where \(OZ\) intersects \(\pi\) is called principal point.
+Image plane \(\pi\) is a rectangle parallel to plane \(XOY\). Its distance from origin is equal to \(f\) (focal length). Usually it is assumed that image plane's \(z\) coordinate is positive -- otherwise formed image would be upside down. Point where axis \(OZ\) intersects \(\pi\) is called principal point. World coordinate points Q are projected onto \(\pi\) as \(Q'\), thus forming a 2D image.
 
-World coordinate points Q are projected onto \(\pi\) as \(Q'\), thus forming a 2D image.
+todo: figure 1.4 from eng
+
+Real cameras do not fully conform to this model \cite{szczesny}. They contain lenses that enlarge field of view (see Figure x). Lens curve passing light rays in a nonlinear fashion (this can be observed in fish-eye cameras \cite{eng23}). Moreover, lenses themselves are imperfectly made and aligned. Finally, color aberration and CCD sensor quantization noise introduce more nonlinearity \cite{heikkla14}. All these phenomena account for geometric distortions.
+
+Conrady-Brown model \cite{brown8} is a classical approach to removing distortions. The most significant component is modeled with a radial even-ordered polynomial centered at distortion center, which is usually located in proximity of principal point. During camera calibration, coefficients of the said polynomial are measured -- they are assumed to be constant for given camera. Then each image taken by the camera can be rectified with inverse distortion field \cite{opencv}. Example of such field is depicted in Figure x.
+
+todo figure eng 3.5a
 
 %---------
 
 \section{Stereo vision}
 \label{sec:stereo}
 
+Most implementations of visual odometry systems use two cameras spaced by a constant baseline, that can be determined during stereo calibration. Abundance of such methods can be explained with similarity to how human visual system works \cite{cyganek}. Brain determines depth of seen features by comparing their position seen by both eyes and taking into account the baseline, i.e. spacing between eyes.
+
+Equation \ref{eq:fund} describes correspondence between matched points with the fundamental matrix. 
+
+\begin{equation}
+p_{2}^{T}Fp_{1}=0
+\label{eq:homo}
+\end{equation}
+where:
+\begin{eqwhere}[2cm]
+	\item[$p_{i}$] point as registered by $i$-th camera, in homogeneous coordinates
+	\item[$F$] 3x3 fundamental matrix
+\end{eqwhere}
+
+\cite{improving} - schemat stero i wzory jak odzyskiwac glebie
 
 %---------
 
@@ -61,104 +85,25 @@ Rodriguez, quaternion, Euler, expm
 
 \section{The \textit{Rebvo} algorithm}
 
-In this section the \textit{Rebvo} algorithm \cite{jose2015realtime} description is paraphrased for needs of this thesis.
+In this section the \textit{Rebvo} algorithm \cite{jose2015realtime} description is briefly paraphrased for needs of this thesis.
 
-\textit{Rebvo} is a monocular visual odometry algorithm capable of running in real time on an ARM processor \cite{jose2015realtime}. It is similar to semi-dense methods, that achieve SLAM using only extracted features (in this case - edges). It is not a full SLAM system, so only 2 consecutive frames are stored at each time and no global map is created. Information from previous frames is retained as estimated depth.
+\textit{Rebvo} is a novel approach to monocular visual odometry. The algorithm is capable of running in real time on an ARM processor \cite{jose2015realtime}. It is similar to semi-dense methods, that achieve SLAM using extracted features (in this case features are edges). It is not a full SLAM system, so only 2 consecutive frames are stored at each time and no global map is created. Information from previous frames is retained as estimated depth. Features are matched on pixel basis. This concept is compliant with argument made by Harris: TODO cytat lub parafraza XD \cite{harris}.
 
-% ---
+Algorithm consists of three main steps, similar to other visual odometry systems. First of all, \textbf{edge extraction} is performed, preferably with subpixel precision. Additionally for each pixel the edge gradient is calculated. Neighboring pixels are joined into connected edges (meaning that each edge has no gaps between neighboring pixels), using gradient information.
 
-\subsection{Notation (Keyline structure)}
+Then \textbf{tracking} is performed. Edges from previous frames are first projected into 3D space using their previously estimated depths. Then an iterative procedure (Levenberg-Marquardt algorithm) aims to find such 3D transformation that establishes consensus between frames. The projected points are rotated and transformed in 3D, then projected back onto image plane. Minimized cost function is essentially the sum of squared distances between back-projected edges from the previous frame and closest edges from the current frame. Actual cost function also takes into consideration gradient correspondence criteria. Obtained pairs of edge pixels do not constitute an exhaustive list of matches, because:
+\begin{itemize}
+\item transformation is not ideal,
+\item depth of pixels is only estimated,
+\item there is quantization noise,
+\item edges can be detected inconsistently between frames (todo cite),
+\item even for undistorted images, some residual distortion noncompliant with pinhole camera model will be present (TODO borrow cite from eng thesis),
+\item outliers can be present (e.g. objects moving with respect to the rigid scene).
+\end{itemize}
+ 
+Final step -- \textbf{mapping} -- associates matching edges between frames using obtained optimal 3D transformation. Due to aforementioned problems, matching routine is needed for each edge pixel. Because depth of previous frame edges is estimated with some uncertainty, camera motion establishes a line segment defining the area where possible matches will be searched for. Once a candidate is found, it is tested for gradient correspondence and, most importantly, for model consistency -- deviation of position on the segment obtained from linear transformation equation can not exceed depth uncertainty. After matching, depth information is propagated for matched edge pixels from previous frame to the current. Depth is optionally regularized. Previous depth has to be reestimated ($OZ$ axis velocity has to be taken into account). This is achieved using Extended Kalman Filter. Scale drift, inherent problem of pure visual odometry, can be then mitigated to some degree by diving estimated depths by frame shrinking factor.
 
-Pixels that contain subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}.
-
-\begin{table}[h]
-	\centering
-	
-	\begin{threeparttable}
-		\caption{Keyline structure}
-		\label{tab:keyline}
-		
-		\begin{tabularx}{0.6\textwidth}{C{1} C{1}}
-			\toprule
-			\thead{Structure field\tnote{a}} & \thead{Description} \\
-			\midrule
-			$q$ & subpixel position in image \\
-			$h$ & normalized $q$ (principal point moved to $(0,0)$ and coordinates divided by focal length $z_f$ \\
-			$\rho$, $\sigma_{\rho}$ & estimated inverse depth: $\frac{1}{Z}$, and its variance \\
-			$\rho_0$, $\sigma_{\rho_{0}}$ & inverse depth predicted by Kalman filter and its variance \\
-			$g$ & edge gradient obtained from DoG \\
-			$p_{id}$ & index of previous Keyline in an edge \\
-			$n_{id}$ & index of next Keyline in an edge \\
-			
-			matching/forward/historia \\
-			$h_0$ &  \\
-			$g_{0}$ & gradient of matched Keyline from previous frame \\
-			\bottomrule
-		\end{tabularx}
-		
-		\begin{tablenotes}
-			\footnotesize
-			\item[a] Jakiś komentarz\textellipsis
-		\end{tablenotes}
-		
-	\end{threeparttable}
-\end{table}
+Accuracy of results obtained in \cite{jose2015realtime} are comparable with other state-of-the-art algorithms.
 
 % ---
 
-\subsection{Edge extraction}
-
-First main step of algorithm is edge extraction with subpixel accuracy. Extracted Keylines that are estimated to lie on same edge are joined.
-
-\subsubsection{Zero crossing of DoG}
-While many edge detection algorithms could be used in this step, authors of \textit{Rebvo} have chosen Difference of Gaussians, because it provides \cite{jose2015realtime}:
-\begin{enumerate}
-	\item repetivity -- an edge is detected similarly throughout consecutive frames,
-	\item precision -- edge positions are accurate,
-	\item low time \& memory complexity.
-\end{enumerate}
-
-Another advantage of DoG is that edge gradient can be obtained directly from normal vector of the fitted local plane.
-
-\subsubsection{Keyline joining}
-
-After obtaining individual Keylines, they are joined together to form continuous (from consecutive pixels) edges. % todo footnote
-For each Keyline, its neighbors are searched among 8 bordering pixels in direction perpendicular to edge gradient.
-Most of the time, the algorithm considers only individual Keylines. Their neighbors are used only in Matching step to ... % todo
-and in Regularization step, when ... % todo
-is averaged over Keyline and its neighbors.
-
-
-%--
-
-\subsection{Edge tracking}
-
-During minimization, previous and current Keylines are initially@ matched
-
-\subsubsection{Warping function}
-
-\subsubsection{Auxiliary image}
-
-\subsubsection{Keyline matching criteria}
-
-% todo Jan: figure
-
-\subsubsection{Energy minimization}
-
-\subsubsection{Initial conditions}
-
-\subsubsection{Reweighing}
-
-%--
-
-\subsection{Mapping}
-
-\subsubsection{Forward matching}
-
-\subsubsection{Directed matching}
-
-\subsubsection{Regularization}
-
-\subsubsection{Depth estimation}
-
-\subsubsection{Scale correction}
