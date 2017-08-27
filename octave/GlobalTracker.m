@@ -705,7 +705,10 @@ function [ ...
     title('residual')
     
     figure(40)
+    subplot(2,1,1)
     hist(fm,100)
+    subplot(2,1,2)
+    hist(Residual,100)
     
     figure(41)
     imagesc(im_fm')

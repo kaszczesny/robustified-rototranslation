@@ -50,3 +50,10 @@ function [] = save_img(img, frame, figure_num)
   imwrite(img, sprintf("%s/%02d_%04d.png", conf.output_folder, ...
     figure_num, frame));
 end
+
+function [s] = vector_fname(frame, figure_num)
+  global conf;
+  
+  s = sprintf("%s/%02d_%04d.mat", conf.output_folder, ...
+    figure_num, frame);
+end

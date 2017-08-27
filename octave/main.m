@@ -208,12 +208,12 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       KL_prev = ForwardRotate( KL_prev, R' );
       
       % forward match from old edge map to new, using minimization result
-      [~, KL] = ForwardMatch(KL, KL_prev);
+      [klm_num_forward, KL] = ForwardMatch(KL, KL_prev);
       
       %Match from the new EdgeMap to the old one searching on the stereo line
       [klm_num, KL] = DirectedMatching(...
           Vel, RVel, R, KL_prev, img_mask_prev, KL);
-      klm_num
+      [klm_num_forward klm_num]
       
       if klm_num < conf.GLOBAL_MATCH_THRESHOLD
         RVel = eye(3)*1e50;
@@ -360,7 +360,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   end
   
   time_save(end+1) = toc;
-  time_save(end)
+  time_elapsed = time_save(end)
   
   if exist('stop', 'file') > 0
     soundsc(sound,44.1e3,16,[-50.0,50.0]);
