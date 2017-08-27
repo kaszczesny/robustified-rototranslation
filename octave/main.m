@@ -8,7 +8,9 @@ if ~exist('OPENCV')
   setup_opencv
   graphics_toolkit('fltk')
   OPENCV = 1;
-end  
+end
+
+randn('state',zeros(625,1))
 
 global frame;
 global conf;
