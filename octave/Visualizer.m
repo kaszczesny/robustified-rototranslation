@@ -64,11 +64,13 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
     %close
     
     im1_ = cat(3, im1, im1, im1);
+    im1__ = im1*0;
     for iter = 1:KL_prev.ctr
       im1_( KL_prev.pos(iter, 2), KL_prev.pos(iter,1), : ) = [255 0 0];
+      im1__( KL_prev.pos(iter, 2), KL_prev.pos(iter,1), : ) = 1;
     end
     for iter = 1:KL.ctr
-      if im1_( KL.pos(iter, 2), KL.pos(iter,1), 1 ) == 255
+      if im1__( KL.pos(iter, 2), KL.pos(iter,1), 1 ) == 1
         red = 255;
       else
         red = 0;
@@ -76,26 +78,32 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
       im1_( KL.pos(iter, 2), KL.pos(iter,1), : ) = [red 0 255];
     end
     
+    [y x] = meshgrid(1:conf.imgsize(1), 1:conf.imgsize(2));
+      
+    vec_y = zeros(conf.imgsize(2:-1:1));
+    vec_x = zeros(conf.imgsize(2:-1:1));
+    for iter = 1:KL.ctr
+      if KL.matching(iter) != -1
+        match = KL.matching(iter);
+        vec =  KL.pos(iter,:) - KL_prev.pos(match,:);
+        vec_y( KL_prev.pos(match,2), KL_prev.pos(match,1) ) = vec(1);
+        vec_x( KL_prev.pos(match,2), KL_prev.pos(match,1) ) = vec(2);
+      end
+    end
+    
     save_img(im1_, KL.frame_id, 11 + 2*use_m_id);
+    if use_m_id == 1
+      if conf.save_images
+        save(vector_fname(KL.frame_id, 11 + 2*use_m_id), '-float-binary', ...
+          'im1_', 'y', 'x', 'vec_y', 'vec_x');
+      end
+    end
     
     if conf.visualize_matches && use_m_id == 1
       figure(11 + 2*use_m_id)
       
       imshow(im1_);
       hold on
-      
-      [y x] = meshgrid(1:conf.imgsize(1), 1:conf.imgsize(2));
-      
-      vec_y = zeros(conf.imgsize(2:-1:1));
-      vec_x = zeros(conf.imgsize(2:-1:1));
-      for iter = 1:KL.ctr
-        if KL.matching(iter) != -1
-          match = KL.matching(iter);
-          vec =  KL.pos(iter,:) - KL_prev.pos(match,:);
-          vec_y( KL_prev.pos(match,2), KL_prev.pos(match,1) ) = vec(1);
-          vec_x( KL_prev.pos(match,2), KL_prev.pos(match,1) ) = vec(2);
-        end
-      end
       
       quiver(y, x, vec_y, vec_x, 0, 'color', [0.3 1 0.3]);
       
@@ -152,7 +160,7 @@ function [] = VisualizeDepthVar(KL_prev)
   global conf;
     
     im_plot = zeros(conf.imgsize);
-    q = 1./conf.S_RHO_MIN;
+    q = min(1./conf.S_RHO_MIN, 10);
     
     for iter = 1:KL_prev.ctr
       if KL_prev.matching(iter) < 0

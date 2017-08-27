@@ -544,16 +544,22 @@ function [KL] = UpdateInverseDepthKalman(...
     if(KL.rho(iter,1) < conf.S_RHO_MIN)
       KL.rho(iter,2) += conf.S_RHO_MIN - KL.rho(iter,1);
       KL.rho(iter,1) = conf.S_RHO_MIN;
-    elseif KL.rho(iter,1) > conf.S_RHO_MAX
+    end
+    if KL.rho(iter,1) > conf.S_RHO_MAX
       KL.rho(iter,1) = conf.S_RHO_MAX;
-    elseif sum(isnan(KL.rho(iter,:))) > 0 || ...
+    end
+    if sum(isnan(KL.rho(iter,:))) > 0 || ...
             sum(isinf(KL.rho(iter,:))) > 0
       KL.rho(iter,1) = conf.RHO_INIT;
       KL.rho(iter,2) = conf.S_RHO_MAX;
-    elseif KL.rho(iter,2) < 0 % s_rho == 0 is no good either
+    end
+    if KL.rho(iter,2) < 0 % s_rho == 0 is no good either
       %todo: why does it appear, then?
       KL.rho(iter,1) = conf.RHO_INIT;
       KL.rho(iter,2) = conf.S_RHO_MAX;
+    end
+    if KL.rho(iter,2) < conf.S_RHO_CUTOFF
+      KL.rho(iter,2) = conf.S_RHO_CUTOFF;  
     end
   
   end

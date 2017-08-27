@@ -3,7 +3,200 @@
 
 W rozdziale tym przedstawiono podstawowe informacje dotyczące struktury prostych plików \LaTeX a. Omówiono również metody kompilacji plików z zastosowaniem programów \emph{latex} oraz \emph{pdflatex}.
 
+
+
+\subsection{Notation (Keyline structure)}
+
+Pixels that contain subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}.
+
+\begin{table}[h]
+	\centering
+	
+	\begin{threeparttable}
+		\caption{Keyline structure}
+		\label{tab:keyline}
+		
+		\begin{tabularx}{0.6\textwidth}{C{1} C{1}}
+			\toprule
+			\thead{Structure field\tnote{a}} & \thead{Description} \\
+			\midrule
+			$q$ & subpixel position in image \\
+			$h$ & normalized $q$ (principal point moved to $(0,0)$ and coordinates divided by focal length $z_f$ \\
+			$\rho$, $\sigma_{\rho}$ & estimated inverse depth: $\frac{1}{Z}$, and its variance \\
+			$\rho_0$, $\sigma_{\rho_{0}}$ & inverse depth predicted by Kalman filter and its variance \\
+			$g$ & edge gradient obtained from DoG \\
+			$p_{id}$ & index of previous Keyline in an edge \\
+			$n_{id}$ & index of next Keyline in an edge \\
+			
+			matching/forward/historia \\
+			$h_0$ &  \\
+			$g_{0}$ & gradient of matched Keyline from previous frame \\
+			\bottomrule
+		\end{tabularx}
+		
+		\begin{tablenotes}
+			\footnotesize
+			\item[a] Jakiś komentarz\textellipsis
+		\end{tablenotes}
+		
+	\end{threeparttable}
+\end{table}
+
+% ---
+
+\subsection{Edge extraction}
+
+First main step of algorithm is edge extraction with subpixel accuracy. Extracted Keylines that are estimated to lie on same edge are joined.
+
+\subsubsection{Zero crossing of DoG}
+While many edge detection algorithms could be used in this step, authors of \textit{Rebvo} have chosen Difference of Gaussians, because it provides \cite{jose2015realtime}:
+\begin{enumerate}
+	\item repetivity -- an edge is detected similarly throughout consecutive frames,
+	\item precision -- edge positions are accurate,
+	\item low time \& memory complexity.
+\end{enumerate}
+
+Another advantage of DoG is that edge gradient can be obtained directly from normal vector of the fitted local plane.
+
+\subsubsection{Keyline joining}
+
+After obtaining individual Keylines, they are joined together to form continuous (from consecutive pixels) edges. % todo footnote
+For each Keyline, its neighbors are searched among 8 bordering pixels in direction perpendicular to edge gradient.
+Most of the time, the algorithm considers only individual Keylines. Their neighbors are used only in Matching step to ... % todo
+and in Regularization step, when ... % todo
+is averaged over Keyline and its neighbors.
+
+
+%--
+
+\subsection{Edge tracking}
+
+During minimization, previous and current Keylines are initially@ matched
+
+\subsubsection{Warping function}
+
+\subsubsection{Auxiliary image}
+
+\subsubsection{Keyline matching criteria}
+
+% todo Jan: figure
+
+\subsubsection{Energy minimization}
+
+\subsubsection{Initial conditions}
+
+\subsubsection{Reweighing}
+
+%--
+
+\subsection{Mapping}
+
+\subsubsection{Forward matching}
+
+\subsubsection{Directed matching}
+
+\subsubsection{Regularization}
+
+\subsubsection{Depth estimation}
+
+\subsubsection{Scale correction}
+
+
+
+% ----------------------
+% frame for rectification leftovers removal
+% DOG is performed + example
+%for every px minus windows:
+% test 1: check if gradient if sufficient (todo check if most px are discarded)
+% test2: check if plues and minues are balanced, 1px edge
+% fitting to plane
+% test 2.9: check if fitting was ok
+% test 3: zero corssing; if lies inside the pixel
+% test on dog: check if edge gradient is strong enough
+% image: quiver
+% todo: prove that noise for rho is better than ones
+
+% img_mask with KL indeces
+
+% edge joining + pruning
+% for every keyline:
+%   get direction perpendicular to gradient
+%   search in this direction among immediate neighbors in image - if such neighbor is a KL, is belongs to the same edge
+% image: joined edges
+% pruning: edge ends and 3-px edges are removed
+
+
+
+% minimizer
+% auxiliary image: a lookup table for minimizer
+% estimate quantile - its purpose is to cutoff KLs that have too high uncertainty with respect to all KLs
+% project KL_prev to 3D using previously estimated rhos
+% one iteration of LM:
+%     using jacobian, new state vector is calculated for next iteration
+
+%     apply transformation given in argument
+%     project previous points from these 3D positions to 2D
+%     for every previous KL perfoms test to check if it should take part in minimization:
+%        test1: uncertainty below previously estimated quantile
+%		 test2: (excluding minimalization for very first frame) check if KL has appeared before
+%	     estimate rewieghting
+%		 test3: check if projected KL lies within image frame
+%        test4: check if there is a KL in this pixel using auxiliary image
+%        test5: compare their gradients (escobar)
+%        we get residual (DResidual) & weighted residual (fm) projected in direction of gradient
+%      calculate jacobians using fishy equations
+%      if there was gain, use these new parameters, otherwise ...
+% double init(zeros and priors): 3 iterations with no reweighting
+% use better result, proceed for 15 iterations with reweighting
+% transformation that resulted in lowest score is considered the optimal transformation between frames
+% estimate uncertainty as inverse of final jacobian
+
+% forward rotate
+% KL pixel positions, represented in normalized homo coords, are rotated using obtained rotation
+% if they don't go to infinity, they are projected back onto image plane
+% & nasty gradient rotation
+
+% forward match
+% using information about which KLs were matched to which, following fields are propagated: rho, s_rho, gradient, history and index of the matched KL
+% todo: could new edges apprer without directed match
+
+%directed match
+% for each KL:
+%   backrotate KL and cast it onto old edge map mask
+%   using this position and backrotated velocity, obtain halfline in which this KL could have been moved (a halfline, because we only know that its rho is positive) - estimated pixel displacement
+%   estimate uncertainty using projected position and Rvel
+%   caonstrain displacement search radius & define starting point
+% todo: check if perpedicular displacement if really common
+%
+% search from starting point alternating between one direction and the other
+% check if this pixel there is a KL to match to
+% perform 3 tests to filter outliers + image (eg. 3 consecutive images where an outlier disappears):
+%  gradient angle similarity
+%  gradient modulus similarity
+%  motion consistency
+
+% if there aren't enough matched KLs (500), reset
+
+% optional regularization, performed twice
+% main assumption is that KLs neighboring on an edge ale located near each other in 3D, so their depth should be similiar
+% image: show that this isn't ALWAYS true
+% for each KL:
+%  check if 2 neighbors pass test:
+%   if depths outweight uncertainties (probabilistic uncertainty)
+%   if angle between gradients is below threshold
+%  if tests are passed, rho and s_rho are smoothened taking weighted mean of its value and its neighbors
+
+% kalman fiter
+% kill me pls
+% inverse depth is constrained between certain min and max
+
+% optional estimate rescaling
+% according to Tarrio et al, EKF is biased in rho estimation, so a global "shrinking factor" can be applied to depths and unvertainties.
+
+
 %---------------------------------------------------------------------------
+
+
 
 \section{Struktura dokumentu}
 \label{sec:strukturaDokumentu}

@@ -8,7 +8,9 @@ if ~exist('OPENCV')
   setup_opencv
   graphics_toolkit('fltk')
   OPENCV = 1;
-end  
+end
+
+randn('state',zeros(625,1))
 
 global frame;
 global conf;
@@ -48,34 +50,39 @@ if ~conf.cheat
   % else this will be done in main loop
 end  
 
-%TUM-only
-ground_truth_ = data=dlmread('../data/TUM/groundtruth_corrected.txt', ',');
-ground_truth = zeros(size(ground_truth_), 6);
+if conf.TUM
+  %TUM-only
+  ground_truth_ = dlmread('../data/TUM/groundtruth_corrected.txt', ',');
+  ground_truth = zeros(size(ground_truth_), 6);
 
-%ground truth translation
-ground_truth(:, 1:3) = ground_truth_(:, 1:3);
-ground_truth(:, [1 3 2]) = ground_truth(:, [1 2 3]);
+  %ground truth translation
+  ground_truth(:, 1:3) = ground_truth_(:, 1:3);
+  ground_truth(:, [1 3 2]) = ground_truth(:, [1 2 3]);
 
-%ground truth rotation
-quat = quaternion( ...
-  ground_truth_(:, 7), ... % ww
-  ground_truth_(:, 4), ... % wx
-  ground_truth_(:, 6), ... % wz
-  ground_truth_(:, 5));... % wy
-ground_truth(:, 4:6) = q2rot(unit(quat))';
+  %ground truth rotation
+  quat = quaternion( ...
+    ground_truth_(:, 7), ... % ww
+    ground_truth_(:, 4), ... % wx
+    ground_truth_(:, 6), ... % wz
+    ground_truth_(:, 5));... % wy
+  ground_truth(:, 4:6) = q2rot(unit(quat))';
 
-%start in zero
-ground_truth(:,:) -= ground_truth(conf.frame_start,:);
-%anglegt = 200;
-%scalegt = 4/5;
-%Rgt = [cosd(anglegt) -sind(anglegt); sind(anglegt) cosd(anglegt)];
-
-%ground_truth(:,1:3) *= -1; %empirical
-%leaving ground_truth as it is so as not to break RT plotting
-
+  %start in zero
+  ground_truth(:,1:3) -= ground_truth(conf.frame_start,1:3);
+else
+  ground_truth_ = dlmread('../../00/00.txt', ' ');
+  ground_truth = zeros(size(ground_truth_,1),6);
+  for i = 1:size(ground_truth_,1)
+    g = ground_truth_(i,:);
+    m = reshape(g', [4 3])';
+    l = logm(m(1:3,1:3));
+    ground_truth(i,:) = [m(:,4)' -l(1,2) l(1,3) -l(2,3)];
+  end
+  
+  ground_truth(:,1:3) -= ground_truth(conf.frame_start,1:3);
+end
 %make things easier
 frames = conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frames];
-gr_tr = ground_truth(frames,:);
 
 %other fluff
 Pos = zeros(3,1); %estimated position
@@ -187,9 +194,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     Pos_save = cat(2, Pos_save, Pos);
     Pose_save = cat(3, Pose_save, Pose);
     if conf.visualize_RT  
-      gt_now = ground_truth(frame, 1:3).*scalegt;
-      gt_now([1 3]) *= Rgt;
-      
+      gt_now = ground_truth(frame, 1:3);;
       gt_save = cat(1, gt_save, gt_now);
     end
     
@@ -205,12 +210,12 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       KL_prev = ForwardRotate( KL_prev, R' );
       
       % forward match from old edge map to new, using minimization result
-      [~, KL] = ForwardMatch(KL, KL_prev);
+      [klm_num_forward, KL] = ForwardMatch(KL, KL_prev);
       
       %Match from the new EdgeMap to the old one searching on the stereo line
       [klm_num, KL] = DirectedMatching(...
           Vel, RVel, R, KL_prev, img_mask_prev, KL);
-      klm_num
+      [klm_num_forward klm_num]
       
       if klm_num < conf.GLOBAL_MATCH_THRESHOLD
         RVel = eye(3)*1e50;
@@ -230,9 +235,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
         Pos_save = cat(2, Pos_save, Pos);
         Pose_save = cat(3, Pose_save, Pose);
         if conf.visualize_RT  
-          gt_now = ground_truth(frame, 1:3).*scalegt;
-          gt_now([1 3]) *= Rgt;
-          
+          gt_now = ground_truth(frame, 1:3);
           gt_save = cat(1, gt_save, gt_now);
         end
         
@@ -359,7 +362,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   end
   
   time_save(end+1) = toc;
-  time_save(end)
+  time_elapsed = time_save(end)
   
   if exist('stop', 'file') > 0
     soundsc(sound,44.1e3,16,[-50.0,50.0]);
@@ -367,7 +370,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
   end
   
   if any(KL_prev.rho(:,1) < 0)
-    disp('rho negative')  
-    keyboard("<<<")
+    printf('rho negative %d\n', sum(KL_prev.rho(:,1) < 0))  
+    %keyboard("<<<")
   end  
 end
