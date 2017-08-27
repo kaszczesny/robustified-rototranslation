@@ -149,11 +149,39 @@ for yter = -win_s:win_s
 end
 PInv = pinv( Phi );
 
+thresh_grad_mtx = ones(size(n2gI)) * thresh_grad;
+test_1_mtx = n2gI >= (thresh_grad_mtx * conf.max_img_value).^2;
+a = 7;
+y_win = round(linspace(0,size(n2gI,1),a+1));
+x_win = round(linspace(0,size(n2gI,2),a+1));
+for yter = 1:a
+  for xter = 1:a
+    d = test_1_mtx( (y_win(yter)+1):y_win(yter+1), (x_win(xter)+1):x_win(xter+1) );
+    d = sum(d(:));
+    
+    t = thresh_grad;
+    if d < 100
+      t *= 0.33;
+    elseif d > 500
+      t *= 1.67;
+    end
+    thresh_grad_mtx( ...
+      (y_win(yter)+1):y_win(yter+1), (x_win(xter)+1):x_win(xter+1) ...
+    ) = t;
+  end
+end
+thresh_grad_mtx_ = cv.GaussianBlur(
+              thresh_grad_mtx, "KSize", [31,31], 
+              "SigmaX", 15, "SigmaY", 15);
+test_1_mtx = n2gI >= (thresh_grad_mtx_ * conf.max_img_value).^2;
+   
+
 %% EDGE FINDER LOOP %%
 for yter = 1+win_s:size(dog, 1)-win_s
   for xter = 1+win_s:size(dog, 2)-win_s
     % Test 1: local gradient must be sufficiently stronk
-    if n2gI(yter,xter) < (thresh_grad*conf.max_img_value).^2;
+    %if n2gI(yter,xter) < (thresh_grad*conf.max_img_value).^2;
+    if ~test_1_mtx(yter,xter)
       edge_probability(yter,xter) = 1;
       continue
     end
@@ -276,8 +304,8 @@ end
 
 %% VISUALS %%
 save_img(besos(edge_probability', 0, 7), frame_id, 2);
+[y x] = meshgrid(1:size(dog,2), 1:size(dog,1));
 if conf.visualize_edges
-  [y x] = meshgrid(1:size(dog,2), 1:size(dog,1));
   figure(2);
   imagesc(edge_probability);
   axis equal; colormap jet; colorbar;
@@ -322,6 +350,13 @@ KL.forward = KLforward;
 KL.frames = KLframes;
 KL.matchedGrad = KLmatchedGrad(:,end:-1:1);
 KL.matchedNorm = KLmatchedNorm;
+
+if conf.save_images
+  Y = ys_im+y;
+  X = xs_im+x;
+  save(vector_fname(frame_id, 3), '-float-binary', 'keylines', ...
+    'Y', 'X', 'vec_y', 'vec_x');
+end
 
 save_img(keylines, frame_id, 3);
 if conf.visualize_edges
