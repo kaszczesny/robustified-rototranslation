@@ -1,6 +1,6 @@
 1;
 
-function [score, R, T] = fit3d(do_plot, scale, points_groundtruth, points_algo)
+function [score, R, T] = fit3d(do_plot, scale, points_groundtruth, points_algo, ret_mean)
     %global conf;
 
     p_ = points_groundtruth;
@@ -33,24 +33,47 @@ function [score, R, T] = fit3d(do_plot, scale, points_groundtruth, points_algo)
         p(1,:), p(3,:), p(2,:), 'b.-', ...
         p_(1,:), p_(3,:), p_(2,:), 'r.-');
       axis equal
+      
+      %{
+      figure(50)
+      subplot(311)
+      plot(p_(1,:));
+      hold on;
+      plot(trans(1,:)','r');
+
+      subplot(312)
+      plot(p_(2,:));
+      hold on;
+      plot(trans(2,:)','r');
+
+      subplot(313)
+      plot(p_(3,:));
+      hold on;
+      plot(trans(3,:)','r');
+      %}
     end
 
-    score = sum(sum((trans-p_).^2,1));
+    if ~ret_mean
+      score = sum(sum((trans-p_).^2,1));
+    else
+      score = mean(sum((trans-p_).^2,1));
+    end
 end
 
-function [scale, score, vel, rot] = FitTrajectory_( gt, Pos )
+function [scale, score, R, vel] = FitTrajectory_( gt, Pos )
 
 
-  f = @(s) fit3d(0, s, gt,Pos);
+  f = @(s) fit3d(0, s, gt,Pos, 0);
 
 
   [scale, score] = fminsearch(f,1);
   if isinf(score)
     scale = 1;
-  end   
-  [~, R, vel] = fit3d( 1, scale, gt, Pos );
+  end
+  score_sum = score
+  [score, R, vel] = fit3d( 1, scale, gt, Pos, 1 );
 
   l = logm(R);
-  rot = [-l(1,2) l(1,3) -l(2,3)];
+  rot = [l(2,3) -l(1,3) l(1,2)];
   vel = vel';
 end

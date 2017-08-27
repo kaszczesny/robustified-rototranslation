@@ -339,7 +339,7 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
     pause(0)
     %}
     if size(Pos_save,2) > 10
-      [scale, score, R, T]=FitTrajectory_(gt_save(5:end,:)', Pos_save(:,5:end))
+      [scale, score, R_, T_]=FitTrajectory_(gt_save(5:end,:)', Pos_save(:,5:end))
     end
   end
   
