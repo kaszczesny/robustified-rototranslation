@@ -26,7 +26,7 @@ case $yn in
 		sudo apt-get install -y octave liboctave-dev octave-image octave-io octave-statistics octave-quaternion octave-optim
 
 		# latex
-		sudo apt-get install -y texlive-base texlive-latex-recommended texlive-latex-extra texlive-binaries texlive-science texlive-lang-polish texlive-bibtex-extra texlive-fonts-recommended latexdiff texstudio
+		sudo apt-get install -y texlive-base texlive-latex-recommended texlive-latex-extra texlive-binaries texlive-science texlive-lang-polish texlive-bibtex-extra texlive-fonts-recommended latexdiff texstudio biber
 
 		# OpenCV dependencies
 		sudo apt-get install -y build-essential g++-5 curl
