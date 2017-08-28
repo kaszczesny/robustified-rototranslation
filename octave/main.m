@@ -75,8 +75,7 @@ else
   for i = 1:size(ground_truth_,1)
     g = ground_truth_(i,:);
     m = reshape(g', [4 3])';
-    l = logm(m(1:3,1:3));
-    ground_truth(i,:) = [m(:,4)' -l(1,2) l(1,3) -l(2,3)];
+    ground_truth(i,:) = [m(:,4)' cv.Rodrigues(m(1:3,1:3))'];
   end
   
   ground_truth(:,1:3) -= ground_truth(conf.frame_start,1:3);
