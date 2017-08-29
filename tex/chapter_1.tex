@@ -2,7 +2,7 @@
 \label{cha:intro}
 
 
-In this chapter theory behind computer vision, 3D reconstruction and mathematical apparatus used in our algorithm are introduced. Pinhole camera model and basics of stereo and mono vision are briefly discussed. Other topics -- Difference of Gaussians edge detection and 3D rotation conventions -- can be found in Appendices B and C, respectively. Literature connected with this topic is overviewed. Finally, \textit{Rebvo} algorithm \cite{jose2015realtime} is described.
+In this chapter theory behind computer vision, 3D reconstruction and mathematical apparatus used in our algorithm are introduced. Pinhole camera model and basics of stereo and mono vision are briefly discussed. Other topics -- Difference of Gaussians edge detection and 3D rotation conventions -- can be found in Appendices B and C, respectively. Literature connected with this topic is overviewed. Finally, \textit{Rebvo} \cite{jose2015realtime} algorithm flow  is described.
 
 %-----------------
 
@@ -158,7 +158,7 @@ A very frequent problem in pure visual monocular odometry is unbounded position 
 
 todo: demonstration of unboundedness
 
-First of all, information from GPS (Global Positioning System) can be employed to ensure that position does not drift away \cite{accurate_global_localization}. GPS signal quality greatly depends on location, so this approach may be unsuited for indoor use cases. GPS can not help with azimuth estimation, however. Finally, GPS is, out of the discussed methods, the only way to transform relative coordinates to real word coordinates (i.e. longitude and latitude). Other possibility would be to use special markers.
+First of all, information from GPS (Global Positioning System) can be employed to ensure that position does not drift away \cite{accurate_global_localization}. GPS signal quality greatly depends on location, so this approach may be unsuited for indoor use cases. GPS can not help with azimuth estimation, however. Finally, GPS is, out of the discussed methods, the only way to transform relative coordinates to real word coordinates (i.e. latitude and longitude). Other possibility would be to use special markers.
 
 % todo: SLAM term must be explained in introduction
 
@@ -198,13 +198,13 @@ todo:
 
 \section{The \textit{Rebvo} algorithm outline}
 
-In this section the \textit{Rebvo} algorithm \cite{jose2015realtime} description is briefly paraphrased for needs of this thesis.
+In this section the \textit{Rebvo} algorithm description is briefly paraphrased for needs of this thesis.
 
-\textit{Rebvo} is a novel approach to monocular visual odometry. The algorithm is capable of running in real time on an ARM processor \cite{jose2015realtime}. It is similar to semi-dense methods, that achieve SLAM using only selected features (in this case -- edges). It is not a full SLAM system, so only two consecutive frames are stored at each time and no global map is created. Information from previous frames is retained as estimated depth. Features are matched on pixel basis. This concept is compliant with argument made in \cite{harris}: TODO quote or paraphrase.
+\cite{jose2015realtime} presents new-fashioned approach to monocular visual odometry. The algorithm is reported to be capable of running in real time on an ARM processor. It is similar to semi-dense methods, that achieve SLAM using only selected features (in this case -- edges). It is not a full SLAM system, so only two consecutive frames are stored at each time and no global map is created. Information from previous frames is retained as estimated depth. Features are matched on pixel basis. This concept is compliant with argument made by Harris: ``\textit{Because of ill-conditioning, the use of parametrised curves (eg. circular arcs) cannot be expected to provide the solution, especially with real imagery.}`` \cite{harris}.
 
 Algorithm consists of three main steps, similar to other visual odometry systems. First of all, \textbf{edge extraction} is performed, preferably with subpixel precision. Moreover, edge gradient is calculated for each pixel. Neighboring pixels are joined into connected\footnote{Each edge has no gaps between neighboring pixels} edges, using gradient information.
 
-Then \textbf{tracking} is performed. Edges from previous frames are first projected into 3D space using their already estimated depths. Then an iterative procedure (Levenberg-Marquardt algorithm) aims to find such 3D transformation that establishes consensus between frames. Projected points are rotated and transformed in 3D, then projected back onto image plane. Minimized cost function is essentially the sum of squared distances between back-projected edges from the previous frame and closest edges from the current frame. Actual cost function also takes into consideration gradient correspondence criteria. Obtained pairs of edge pixels do not constitute an exhaustive list of matches, because:
+Then \textbf{tracking} is performed. Edges from previous frames are first projected into 3D space using their already estimated depths. Then an iterative procedure (Levenberg-Marquardt algorithm) aims to find such 3D transformation that establishes consensus between frames. Projected points are rotated and transformed in 3D, then projected back onto image plane. Minimized cost function is essentially the sum of squared distances between back-projected edges from the previous frame and closest edges from the current frame. Actual cost function also takes into consideration gradient correspondence criteria. Obtained pairs of edge pixels do not constitute an exhaustive list of matches, considering that:
 \begin{itemize}
 \item transformation is not ideal,
 \item depth of pixels is only estimated,
@@ -214,7 +214,7 @@ Then \textbf{tracking} is performed. Edges from previous frames are first projec
 \item outliers can be present (e.g. objects moving with respect to the otherwise rigid scene).
 \end{itemize}
  
-Final step -- \textbf{mapping} -- associates matching edges between frames using obtained optimal 3D transformation. Due to aforementioned problems, after tracking a matching routine is needed for each edge pixel. Because depth of previous frame edges is estimated with some uncertainty, camera motion establishes a line segment defining the area where possible matches will be searched for. Once a candidate has been found, it is tested for gradient correspondence and, most importantly, for model consistency~\==~deviation of position on the segment obtained from linear transformation equation can not exceed depth uncertainty. After matching, depth information is propagated for matched edge pixels from previous frame to the current, and is optionally regularized. Previous depth has to be reestimated ($OZ$ axis velocity has to be taken into account). This is achieved using Extended Kalman Filter. Scale drift, inherent problem of pure visual odometry, can be then mitigated to some limited degree by diving estimated depths by frame shrinking factor.
+Final step -- \textbf{mapping} -- associates matching edges between frames using obtained optimal 3D transformation. Due to aforementioned problems, after tracking a matching routine is needed for each edge pixel. Because depth of previous frame edges is estimated with some uncertainty, camera motion establishes a line segment defining the area where possible matches will be searched for. Once such candidate has been found, it is tested for gradient correspondence and, most importantly, for model consistency~\==~deviation of position on the segment obtained from linear transformation equation can not exceed depth uncertainty. After matching, depth information is propagated for matched edge pixels from previous frame to the current, and is optionally regularized. Previous depth has to be reestimated ($OZ$ axis velocity has to be taken into account). This is achieved using Extended Kalman Filter. Scale drift, inherent problem of pure visual odometry, can be then mitigated to some limited degree by diving estimated depths by frame shrinking factor.
 
 Accuracy of results obtained in \cite{jose2015realtime} are comparable with other state-of-the-art algorithms. todo: cite \cite{yang2017direct}
 
