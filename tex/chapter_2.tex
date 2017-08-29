@@ -1,15 +1,43 @@
-\chapter{Pierwszy dokument}
-\label{cha:pierwszyDokument}
+\chapter{Analysis and improvements of \textit{Rebvo} algorithm}
+\label{cha:intro2}
 
-W rozdziale tym przedstawiono podstawowe informacje dotyczące struktury prostych plików \LaTeX a. Omówiono również metody kompilacji plików z zastosowaniem programów \emph{latex} oraz \emph{pdflatex}.
+This chapter contains thorough analysis of proposed algorithm. Firstly, changes to the original algorithm are listed. Then algorithm is carefully explained, step by step, using various examples. Chapter is concluded with miscellaneous remarks and experiment results.
+
+\section{Changes to the algorithm}
+\label{sec:changes}
+
+TODO:
+
+edge detection bucketing
+
+median filter; regularize before and after Kalman
+
+rho initialization (noise instead of ones)
+
+small numerical improvements in LM
 
 
+\section{Other considered changes}
+\label{sec:rejected}
 
-\subsection{Notation (Keyline structure)}
+TODO:
+
+scale from dimensions of known real-world objects, such as road signs or license plates
+
+initialization from classical feature matching algorithm
+
+keyline joining improvements: morphological operations, Y junctions
+
+usage of corners
+
+automatic DoG sigma choice
+
+
+\section{Notation (Keyline structure)}
 
 Pixels that contain subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}.
 
-\begin{table}[h]
+\begin{table}[ht]
 	\centering
 	
 	\begin{threeparttable}
@@ -44,11 +72,11 @@ Pixels that contain subpixel edge positions are called Keylines and, after edge 
 
 % ---
 
-\subsection{Edge extraction}
+\section{Edge extraction}
 
 First main step of algorithm is edge extraction with subpixel accuracy. Extracted Keylines that are estimated to lie on same edge are joined.
 
-\subsubsection{Zero crossing of DoG}
+\subsection{Zero crossing of DoG}
 While many edge detection algorithms could be used in this step, authors of \textit{Rebvo} have chosen Difference of Gaussians, because it provides \cite{jose2015realtime}:
 \begin{enumerate}
 	\item repetivity -- an edge is detected similarly throughout consecutive frames,
@@ -58,252 +86,195 @@ While many edge detection algorithms could be used in this step, authors of \tex
 
 Another advantage of DoG is that edge gradient can be obtained directly from normal vector of the fitted local plane.
 
-\subsubsection{Keyline joining}
+TODO:
+frame for rectification leftovers removal
 
-After obtaining individual Keylines, they are joined together to form continuous (from consecutive pixels) edges. % todo footnote
-For each Keyline, its neighbors are searched among 8 bordering pixels in direction perpendicular to edge gradient.
-Most of the time, the algorithm considers only individual Keylines. Their neighbors are used only in Matching step to ... % todo
+DOG is performed + example
+
+for every px minus windows:
+
+test 1: check if gradient if sufficient (todo check if most px are discarded)
+
+test2: check if plues and minues are balanced, 1px edge
+
+fitting to plane, check if fitting was ok
+
+test 3: zero crossing; if lies inside the pixel
+
+test on dog: check if edge gradient is strong enough
+
+image: quiver
+
+todo: prove that noise for rho is better than ones
+
+imgmask with KL indices
+
+\subsection{Keyline joining}
+
+After obtaining individual Keylines, they are joined together to form connected edges.
+For each Keyline, its neighbors are searched among 8 bordering pixels in directions perpendicular to edge gradient.
+In most of its steps, the algorithm considers only individual Keylines. Their neighbors are used only in Matching step to ... % todo
 and in Regularization step, when ... % todo
 is averaged over Keyline and its neighbors.
 
+todo: image of joined edges; pruning of edge ends and 3-px edges are removed
+
 
 %--
 
-\subsection{Edge tracking}
+\section{Edge tracking}
 
-During minimization, previous and current Keylines are initially@ matched
 
-\subsubsection{Warping function}
+minimizer
 
-\subsubsection{Auxiliary image}
+auxiliary image: a lookup table for minimizer
 
-\subsubsection{Keyline matching criteria}
+estimate quantile - its purpose is to cutoff KLs that have too high uncertainty with respect to all KLs
 
-% todo Jan: figure
+project KL\_prev to 3D using previously estimated rhos
 
-\subsubsection{Energy minimization}
+one iteration of LM:
 
-\subsubsection{Initial conditions}
+    using jacobian, new state vector is calculated for next iteration
 
-\subsubsection{Reweighing}
+    apply transformation given in argument
+
+    project previous points from these 3D positions to 2D
+
+    for every previous KL perfoms test to check if it should take part in minimization:
+
+       test1: uncertainty below previously estimated quantile
+
+	 test2: (excluding minimalization for very first frame) check if KL has appeared before
+
+     estimate rewieghting
+
+	 test3: check if projected KL lies within image frame
+
+       test4: check if there is a KL in this pixel using auxiliary image
+
+       test5: compare their gradients (escobar)
+
+       we get residual (DResidual) \& weighted residual (fm) projected in direction of gradient
+
+     calculate jacobians using fishy equations
+
+     if there was gain, use these new parameters, otherwise ...
+
+double init(zeros and priors): 3 iterations with no reweighting
+
+use better result, proceed for 15 iterations with reweighting
+
+transformation that resulted in lowest score is considered the optimal transformation between frames
+
+estimate uncertainty as inverse of final jacobian
+
+\subsection{Warping function}
+
+\subsection{Auxiliary image}
+
+todo: a lookup table for minimizer
+
+\subsection{Keyline matching criteria}
+
+todo Jan: figure
+
+\subsection{Energy minimization}
+
+\subsection{Initial conditions}
+
+\subsection{Reweighing}
 
 %--
 
-\subsection{Mapping}
+\section{Mapping}
 
-\subsubsection{Forward matching}
+forward rotate
 
-\subsubsection{Directed matching}
+KL pixel positions, represented in normalized homo coords, are rotated using obtained rotation
 
-\subsubsection{Regularization}
+if they don't go to infinity, they are projected back onto image plane
 
-\subsubsection{Depth estimation}
+nasty gradient rotation
 
-\subsubsection{Scale correction}
+\subsection{Forward matching}
 
+forward match
+
+using information about which KLs were matched to which, following fields are propagated: rho, s\_rho, gradient, history and index of the matched KL
+
+todo: could new edges apprer without directed match
+
+\subsection{Directed matching}
+
+directed match
+
+ for each KL:
+
+   backrotate KL and cast it onto old edge map mask
+
+   using this position and backrotated velocity, obtain halfline in which this KL could have been moved (a halfline, because we only know that its rho is positive) - estimated pixel displacement
+
+   estimate uncertainty using projected position and Rvel
+
+   caonstrain displacement search radius \& define starting point
+
+ todo: check if perpedicular displacement if really common
+
+
+ search from starting point alternating between one direction and the other
+
+ check if this pixel there is a KL to match to
+
+ perform 3 tests to filter outliers + image (eg. 3 consecutive images where an outlier disappears):
+
+  gradient angle similarity
+
+  gradient modulus similarity
+
+  motion consistency
+
+ if there aren't enough matched KLs (500), reset
+
+\subsection{Regularization}
+
+ optional regularization, performed twice
+
+ main assumption is that KLs neighboring on an edge ale located near each other in 3D, so their depth should be similiar
+
+ image: show that this isn't ALWAYS true
+
+ for each KL:
+
+  check if 2 neighbors pass test:
+
+   if depths outweight uncertainties (probabilistic uncertainty)
+
+   if angle between gradients is below threshold
+
+  if tests are passed, rho and s\_rho are smoothened taking weighted mean of its value and its neighbors
+
+\subsection{Depth estimation}
+
+ kalman fiter
+
+ ...
+
+ inverse depth is constrained between certain min and max
+
+\subsection{Scale correction}
+
+
+ optional estimate rescaling
+
+ according to Tarrio et al, EKF is biased in rho estimation, so a global "shrinking factor" can be applied to depths and uncertainties.
 
 
 % ----------------------
-% frame for rectification leftovers removal
-% DOG is performed + example
-%for every px minus windows:
-% test 1: check if gradient if sufficient (todo check if most px are discarded)
-% test2: check if plues and minues are balanced, 1px edge
-% fitting to plane
-% test 2.9: check if fitting was ok
-% test 3: zero corssing; if lies inside the pixel
-% test on dog: check if edge gradient is strong enough
-% image: quiver
-% todo: prove that noise for rho is better than ones
-
-% img_mask with KL indeces
-
-% edge joining + pruning
-% for every keyline:
-%   get direction perpendicular to gradient
-%   search in this direction among immediate neighbors in image - if such neighbor is a KL, is belongs to the same edge
-% image: joined edges
-% pruning: edge ends and 3-px edges are removed
 
 
 
-% minimizer
-% auxiliary image: a lookup table for minimizer
-% estimate quantile - its purpose is to cutoff KLs that have too high uncertainty with respect to all KLs
-% project KL_prev to 3D using previously estimated rhos
-% one iteration of LM:
-%     using jacobian, new state vector is calculated for next iteration
-
-%     apply transformation given in argument
-%     project previous points from these 3D positions to 2D
-%     for every previous KL perfoms test to check if it should take part in minimization:
-%        test1: uncertainty below previously estimated quantile
-%		 test2: (excluding minimalization for very first frame) check if KL has appeared before
-%	     estimate rewieghting
-%		 test3: check if projected KL lies within image frame
-%        test4: check if there is a KL in this pixel using auxiliary image
-%        test5: compare their gradients (escobar)
-%        we get residual (DResidual) & weighted residual (fm) projected in direction of gradient
-%      calculate jacobians using fishy equations
-%      if there was gain, use these new parameters, otherwise ...
-% double init(zeros and priors): 3 iterations with no reweighting
-% use better result, proceed for 15 iterations with reweighting
-% transformation that resulted in lowest score is considered the optimal transformation between frames
-% estimate uncertainty as inverse of final jacobian
-
-% forward rotate
-% KL pixel positions, represented in normalized homo coords, are rotated using obtained rotation
-% if they don't go to infinity, they are projected back onto image plane
-% & nasty gradient rotation
-
-% forward match
-% using information about which KLs were matched to which, following fields are propagated: rho, s_rho, gradient, history and index of the matched KL
-% todo: could new edges apprer without directed match
-
-%directed match
-% for each KL:
-%   backrotate KL and cast it onto old edge map mask
-%   using this position and backrotated velocity, obtain halfline in which this KL could have been moved (a halfline, because we only know that its rho is positive) - estimated pixel displacement
-%   estimate uncertainty using projected position and Rvel
-%   caonstrain displacement search radius & define starting point
-% todo: check if perpedicular displacement if really common
-%
-% search from starting point alternating between one direction and the other
-% check if this pixel there is a KL to match to
-% perform 3 tests to filter outliers + image (eg. 3 consecutive images where an outlier disappears):
-%  gradient angle similarity
-%  gradient modulus similarity
-%  motion consistency
-
-% if there aren't enough matched KLs (500), reset
-
-% optional regularization, performed twice
-% main assumption is that KLs neighboring on an edge ale located near each other in 3D, so their depth should be similiar
-% image: show that this isn't ALWAYS true
-% for each KL:
-%  check if 2 neighbors pass test:
-%   if depths outweight uncertainties (probabilistic uncertainty)
-%   if angle between gradients is below threshold
-%  if tests are passed, rho and s_rho are smoothened taking weighted mean of its value and its neighbors
-
-% kalman fiter
-% kill me pls
-% inverse depth is constrained between certain min and max
-
-% optional estimate rescaling
-% according to Tarrio et al, EKF is biased in rho estimation, so a global "shrinking factor" can be applied to depths and unvertainties.
 
 
-%---------------------------------------------------------------------------
-
-
-
-\section{Struktura dokumentu}
-\label{sec:strukturaDokumentu}
-
-Plik \LaTeX owy jest plikiem tekstowym, który oprócz tekstu zawiera polecenia formatujące ten tekst (analogicznie do języka HTML). Plik składa się z dwóch części:
-\begin{enumerate}%[1)]
-\item Preambuły -- określającej klasę dokumentu oraz zawierającej m.in. polecenia dołączającej dodatkowe pakiety;
-
-\item Części głównej -- zawierającej zasadniczą treść dokumentu.
-\end{enumerate}
-
-
-\begin{lstlisting}
-\documentclass[a4paper,12pt]{article}      % preambuła
-\usepackage[polish]{babel}
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{times}
-
-\begin{document}                           % część główna
-
-\section{Sztuczne życie}
-
-% treść
-% ąśężźćńłóĘŚĄŻŹĆŃÓŁ
-
-\end{document}
-\end{lstlisting}
-
-Nie ma żadnych przeciwskazań do tworzenia dokumentów w~\LaTeX u w~języku polskim. Plik źródłowy jest zwykłym plikiem tekstowym i~do jego przygotowania można użyć dowolnego edytora tekstów, a~polskie znaki wprowadzać używając prawego klawisza \texttt{Alt}. Jeżeli po kompilacji dokumentu polskie znaki nie są wyświetlane poprawnie, to na 95\% źle określono sposób kodowania znaków (należy zmienić opcje wykorzystywanych pakietów).
-
-
-%---------------------------------------------------------------------------
-
-\section{Kompilacja}
-\label{sec:kompilacja}
-
-
-Załóżmy, że przygotowany przez nas dokument zapisany jest w pliku \texttt{test.tex}. Kolejno wykonane poniższe polecenia (pod warunkiem, że w pierwszym przypadku nie wykryto błędów i kompilacja zakończyła się sukcesem) pozwalają uzyskać nasz dokument w formacie pdf:
-\begin{lstlisting}
-latex test.tex
-dvips test.dvi -o test.ps
-ps2pdf test.ps
-\end{lstlisting}
-%
-lub za pomocą PDF\LaTeX:
-\begin{lstlisting}
-pdflatex test.tex
-\end{lstlisting}
-
-Przy pierwszej kompilacji po zmiane tekstu, dodaniu nowych etykiet itp., \LaTeX~tworzy sobie spis rozdziałów, obrazków, tabel itp., a dopiero przy następnej kompilacji korzysta z tych informacji.
-
-W pierwszym przypadku rysunki powinny być przygotowane w~formacie eps, a~w~drugim w~formacie pdf. Ponadto, jeżeli używamy polecenia \texttt{pdflatex test.tex} można wstawiać grafikę bitową (np. w formacie jpg).
-
-
-
-%---------------------------------------------------------------------------
-
-\section{Narzędzia}
-\label{sec:narzedzia}
-
-
-Do przygotowania pliku źródłowego może zostać wykorzystany dowolny edytor tekstowy. Niektóre edytory, np. GEdit, mają wbudowane moduły ułatwiające składanie tekstów w LaTeXu (kolorowanie składni, skrypty kompilacji, itp.).
-
-Jednym z bardziej znanych środowisk do składania dokumentów  \LaTeX a jest {\em TeXstudio}, oferujące kompletne środowisko pracy. Zobacz: \url{http://www.texstudio.org}
-
-
-Bardzo dobrym środowiskiem jest również edytor gEdit z wtyczką obsługującą \LaTeX a. Jest to standardowy edytor środowiska Gnome. Po instalacji wtyczki obsługującej \LaTeX~ zamienia się w wygodne i szybkie środowisko pracy.
-
-\textbf{Dla testu łamania stron powtórzenia powyższego tekstu.}
-
-
-Do przygotowania pliku źródłowego może zostać wykorzystany dowolny edytor tekstowy. Niektóre edytory, np. GEdit, mają wbudowane moduły ułatwiające składanie tekstów w LaTeXu (kolorowanie składni, skrypty kompilacji, itp.).
-Jednym z bardziej znanych środowisk do składania dokumentów  \LaTeX a jest {\em TeXstudio}, oferujące kompletne środowisko pracy. Zobacz: \url{http://www.texstudio.org}
-Bardzo dobrym środowiskiem jest również edytor gEdit z wtyczką obsługującą \LaTeX a. Jest to standardowy edytor środowiska Gnome. Po instalacji wtyczki obsługującej \LaTeX~ zamienia się w wygodne i szybkie środowisko pracy.
-Po instalacji wtyczki obsługującej \LaTeX~ zamienia się w wygodne i szybkie środowisko pracy.
-
-Do przygotowania pliku źródłowego może zostać wykorzystany dowolny edytor tekstowy. Niektóre edytory, np. GEdit, mają wbudowane moduły ułatwiające składanie tekstów w LaTeXu (kolorowanie składni, skrypty kompilacji, itp. itd. itp.).
-Jednym z bardziej znanych środowisk do składania dokumentów  \LaTeX a jest {\em TeXstudio}, oferujące kompletne środowisko pracy. Zobacz: \url{http://www.texstudio.org}
-Bardzo dobrym środowiskiem jest również edytor gEdit z wtyczką obsługującą \LaTeX a. Jest to standardowy edytor środowiska Gnome. Po instalacji wtyczki obsługującej \LaTeX~ zamienia się w wygodne i szybkie środowisko pracy.
-
-Do przygotowania pliku źródłowego może zostać wykorzystany dowolny edytor tekstowy. Niektóre edytory, np. GEdit, mają wbudowane moduły ułatwiające składanie tekstów w LaTeXu (kolorowanie składni, skrypty kompilacji, itp.).
-Jednym z bardziej znanych środowisk do składania dokumentów  \LaTeX a jest {\em TeXstudio}, oferujące kompletne środowisko pracy. Zobacz: \url{http://www.texstudio.org}
-Bardzo dobrym środowiskiem jest również edytor gEdit z wtyczką obsługującą \LaTeX a. Jest to standardowy edytor środowiska Gnome. Po instalacji wtyczki obsługującej \LaTeX~ zamienia się w wygodne i szybkie środowisko pracy.
-
-%---------------------------------------------------------------------------
-
-\section{Przygotowanie dokumentu}
-\label{sec:przygotowanieDokumentu}
-
-Plik źródłowy \LaTeX a jest zwykłym plikiem tekstowym. Przygotowując plik
-źródłowy warto wiedzieć o kilku szczegółach:
-
-\begin{itemize}
-\item
-Poszczególne słowa oddzielamy spacjami, przy czym ilość spacji nie ma znaczenia.
-Po kompilacji wielokrotne spacje i tak będą wyglądały jak pojedyncza spacja.
-Aby uzyskać {\em twardą spację}, zamiast znaku spacji należy użyć znaku {\em
-tyldy}.
-
-\item
-Znakiem końca akapitu jest pusta linia (ilość pusty linii nie ma znaczenia), a
-nie znaki przejścia do nowej linii.
-
-\item
-\LaTeX~sam formatuje tekst. \textbf{Nie starajmy się go poprawiać}, chyba, że
-naprawdę wiemy co robimy.
-\end{itemize} 
 
 

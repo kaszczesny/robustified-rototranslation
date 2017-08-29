@@ -1,5 +1,5 @@
 % \documentclass[11pt]{aghdpl}
-\documentclass[en,11pt]{aghdpl}  % praca w języku angielskim
+\documentclass[en]{aghdpl}  % praca w języku angielskim
 
 % Lista wszystkich języków stanowiących języki pozycji bibliograficznych użytych w pracy.
 % (Zgodnie z zasadami tworzenia bibliografii każda pozycja powinna zostać utworzona zgodnie z zasadami języka, w którym dana publikacja została napisana.)
@@ -18,10 +18,13 @@
 \usepackage{amsmath}
 \usepackage{amsthm}
 
+\usepackage{hyperref}
+
 % --- < bibliografia > ---
 
 \usepackage[
 style=numeric,
+%citestyle=numeric,
 sorting=none,
 %
 % Zastosuj styl wpisu bibliograficznego właściwy językowi publikacji. - nie
@@ -38,7 +41,7 @@ url=false,
 % Ustawienia związane z polskimi normami dla bibliografii.
 maxbibnames=3,
 % Jeżeli używamy BibTeXa:
-backend=bibtex
+backend=biber
 ]{biblatex}
 
 \usepackage{csquotes}
@@ -58,6 +61,9 @@ backend=bibtex
 \usepackage{courier}
 
 \usepackage{listings}
+
+\usepackage[shortcuts]{extdash}
+
 \lstloadlanguages{TeX}
 
 \lstset{
@@ -109,11 +115,11 @@ backend=bibtex
 \shortauthor{K. Szczęsny, J. Twardowski}
 
 \titlePL{Algorytm do wyznaczania pozycji i orientacji obiektu na podstawie sekwencji wideo.}
-\titleEN{Algorithm for visual odometry.}
+\titleEN{Algorithm for Visual Odometry.}
 
 
 \shorttitlePL{Algorytm do wyznaczania pozycji i orientacji obiektu na podstawie sekwencji wideo.} % skrócona wersja tytułu jeśli jest bardzo długi
-\shorttitleEN{Algorithm for visual odometry.}
+\shorttitleEN{Algorithm for Visual Odometry.}
 
 %\thesistype{Praca dyplomowa magisterska}
 \thesistype{Master of Science Thesis}
@@ -163,8 +169,8 @@ backend=bibtex
 % Introduction
 \include{chapter_1}
 \include{chapter_2}
-\include{chapter_3}
-\include{chapter_4_tests}
+%\include{chapter_3}
+%\include{chapter_4_tests}
 
 
 \printbibliography
