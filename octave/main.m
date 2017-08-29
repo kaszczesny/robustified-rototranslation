@@ -71,6 +71,8 @@ if conf.TUM
   ground_truth(:,1:3) -= ground_truth(conf.frame_start,1:3);
 else
   ground_truth_ = dlmread('../../00/00.txt', ' ');
+  %ground_truth_ = dlmread('../../01/01.txt', ' ');
+  %ground_truth_ = dlmread('../../02/02.txt', ' ');
   ground_truth = zeros(size(ground_truth_,1),6);
   for i = 1:size(ground_truth_,1)
     g = ground_truth_(i,:);

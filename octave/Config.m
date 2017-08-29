@@ -21,6 +21,8 @@ conf.TUM = 1;
 %KITTI
 %{
 persistent files = glob("../../00/image_0/*.png");
+%persistent files = glob("../../01/image_0/*.png");
+%persistent files = glob("../../02/image_0/*.png");
 conf.im_name = @(x) files{x};
 conf.im_name_depth = @(x) 0;
 conf.TUM = 0;
@@ -66,7 +68,7 @@ conf.imgsize = imgsize(end:-1:1);
 %{
 conf.principal_point =  [607.1928 185.2157] * conf.scale; %sort of half, xyz
 conf.zf = 718.856 * conf.scale; %todo: zf_x and zf_y?
-conf.FPS = 9.65; % todo: get actual value from dataset\
+conf.FPS = 9.65; % todo: get actual value from dataset
 %}
 %TUM fr3
 %{
