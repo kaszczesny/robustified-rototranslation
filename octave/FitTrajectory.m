@@ -34,7 +34,7 @@ function [score, R, T] = fit3d(do_plot, scale, points_groundtruth, points_algo, 
         p_(1,:), p_(3,:), p_(2,:), 'r.-');
       axis equal
       
-      %{
+      %
       figure(50)
       subplot(311)
       plot(p_(1,:));
@@ -50,7 +50,7 @@ function [score, R, T] = fit3d(do_plot, scale, points_groundtruth, points_algo, 
       plot(p_(3,:));
       hold on;
       plot(trans(3,:)','r');
-      %}
+      %
     end
 
     if ~ret_mean
