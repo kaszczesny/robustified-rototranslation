@@ -140,8 +140,10 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       KL.frames += 1;
 
       % acquire VelRot from ground truth
-      Vel = ground_truth(frame-conf.frame_interval, 1:3)';
-      W0 = ground_truth(frame-conf.frame_interval, 4:6)';
+      %Vel = ground_truth(frame-conf.frame_interval, 1:3)';
+      Vel *=0;
+      %W0 = ground_truth(frame-conf.frame_interval, 4:6)';
+      W0 *=0;
     end
   end
   
@@ -168,6 +170,8 @@ for frame=conf.frame_start+[conf.frame_interval:conf.frame_interval:conf.n_frame
       rel_error, error_score, FrameCount ...
   );
   fflush(stdout);
+  
+  norm(W0) / pi * 180
   
   Vel_save = cat(2, Vel_save, Vel);
   W0_save = cat(2, W0_save, W0);

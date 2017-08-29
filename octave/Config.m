@@ -12,9 +12,9 @@ conf.output_folder = strftime("../results/%y-%m-%d_%H-%M-%S", localtime(time()))
 
 % main() setting
 
-conf.frame_start = 1;
-conf.frame_interval = 1;
-conf.n_frames = 797;
+conf.frame_start = 1000;
+conf.frame_interval = 2;
+conf.n_frames = 100;
 
 conf.TUM = 1;
 
@@ -26,7 +26,7 @@ conf.im_name_depth = @(x) 0;
 conf.TUM = 0;
 %}
 %TUM
-%{
+%
 %persistent files = glob("../../rgbd_dataset_freiburg3_long_office_household/rgb/*.png");
 persistent files = glob("../../rgbd_dataset_freiburg3_teddy/rgb/*.png");
 conf.im_name = @(x) files{x};
@@ -34,19 +34,21 @@ conf.im_name = @(x) files{x};
 persistent files_depth = glob("../../rgbd_dataset_freiburg3_teddy/depth/*.png");
 files_depth_mapping = csvread("../data/TUM/depth_idx.txt");
 conf.im_name_depth = @(x) files_depth{files_depth_mapping(x)};
-%}
+%
 %{
 %persistent files = glob("../../rgbd_dataset_freiburg2_desk_with_person/rgb/*.png");
 %persistent files = glob("../../rgbd_dataset_freiburg2_pioneer_slam2/rgb/*.png");
-persistent files = glob("../../rgbd_dataset_freiburg2_360_kidnap/rgb/*.png");
+persistent files = glob("../../rgbd_dataset_freiburg2_desk/rgb/*.png");
+%persistent files = glob("../../rgbd_dataset_freiburg2_360_kidnap/rgb/*.png");
 conf.im_name = @(x) files{x};
 %persistent files_depth = glob("../../rgbd_dataset_freiburg2_pioneer_slam2/depth/*.png");
+persistent files_depth = glob("../../rgbd_dataset_freiburg2_desk/depth/*.png");
 %persistent files_depth = glob("../../rgbd_dataset_freiburg2_desk_with_person/depth/*.png");
-persistent files_depth = glob("../../rgbd_dataset_freiburg2_360_kidnap/depth/*.png");
+%persistent files_depth = glob("../../rgbd_dataset_freiburg2_360_kidnap/depth/*.png");
 files_depth_mapping = csvread("../data/TUM/depth_idx.txt");
 conf.im_name_depth = @(x) files_depth{files_depth_mapping(x)};
 %}
-%
+%{
 persistent files = glob("../../rgbd_dataset_freiburg1_xyz/rgb/*.png");
 %persistent files = glob("../../rgbd_dataset_freiburg1_plant/rgb/*.png");
 conf.im_name = @(x) files{x};
@@ -54,11 +56,11 @@ persistent files_depth = glob("../../rgbd_dataset_freiburg1_xyz/depth/*.png");
 %persistent files_depth = glob("../../rgbd_dataset_freiburg1_plant/depth/*.png");
 files_depth_mapping = csvread("../data/TUM/depth_idx.txt");
 conf.im_name_depth = @(x) files_depth{files_depth_mapping(x)};
-%
+%}
 
 %%%%%%%%%%%%%%%%%%%%%
 
-conf.scale = 1/4;
+conf.scale = 1;
 persistent imgsize = size(imresize(imread(conf.im_name(1)), conf.scale))(1:2);
 conf.imgsize = imgsize(end:-1:1);
 
@@ -71,11 +73,11 @@ conf.zf = 718.856 * conf.scale; %todo: zf_x and zf_y?
 conf.FPS = 9.65; % todo: get actual value from dataset\
 %}
 %TUM fr3
-%{
+%
 conf.principal_point =  [320.1 247.6] * conf.scale; %sort of half, xyz
 conf.zf = mean([535.4, 539.2]) * conf.scale; %X
 conf.FPS = 9.65; % todo: get actual value from dataset
-%}
+%
 %TUM fr2
 %{
 conf.principal_point =  [325.1 249.7] * conf.scale; %sort of half, xyz
@@ -83,11 +85,11 @@ conf.zf = mean([520.9, 521.0]) * conf.scale;
 conf.FPS = 9.65; % todo: get actual value from dataset
 %}
 %TUM fr1
-%
+%{
 conf.principal_point =  [318.6 255.3] * conf.scale; %sort of half, xyz
 conf.zf = mean([517.3, 516.5]) * conf.scale;
 conf.FPS = 9.65; % todo: get actual value from dataset
-%
+%}
 
 
   % DoG:
