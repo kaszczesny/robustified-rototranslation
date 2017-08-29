@@ -1,7 +1,9 @@
 \chapter{Analysis and improvements of \textit{Rebvo} algorithm}
 \label{cha:intro2}
 
-This chapter contains thorough analysis of proposed algorithm. Firstly, changes to the original algorithm are listed. Then algorithm is carefully explained, step by step, using various examples. Chapter is concluded with miscellaneous remarks and experiment results.
+This chapter contains thorough analysis of proposed algorithm. Firstly, changes to the original algorithm are listed. Then algorithm is carefully explained, step by step, using various examples. Chapter is concluded with miscellaneous remarks and experiment results. Figures used throughout the chapter were generated using input images from TUM \cite{tum} and KITTI \cite{kitti} datasets.
+
+Note: considerations, improvements and modifications of the original algorithm are emphasized by \underline{underlining}.
 
 \section{Changes to the algorithm}
 \label{sec:changes}
@@ -33,9 +35,56 @@ usage of corners
 automatic DoG sigma choice
 
 
-\section{Notation (Keyline structure)}
+\section{Notation (Keyline structure) and {\tt main} loop}
 
-Pixels that contain subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}.
+Pixels that contain subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}. When $n+1$-th frame of video input is being processed, only $n$-th and $(n+1)$-th Keyline arrays are available; $n-1$-th is discarded, as it is no longer needed. This is presented in Fig.~\ref{fig:flowchart_main}.
+
+\begin{figure}[hp]
+	\begin{footnotesize}
+
+	\centering\begin{tikzpicture}[node distance = 2cm, auto]
+	% Place nodes
+	
+	\node [cloud] (start) {start};
+	\node [block, below of=start] (b0) {{\tt n := 1}};
+	\node [block, below of=b0] (b05) {{\tt parameters\_initialization()}};
+	\node [block, below of=b05] (b1) {{\tt KLs\textsubscript{old} := edge\_detection(n) }};
+	
+	\node [block, below of=b1] (b2) {{\tt n++}};
+	\node [block, below of=b2] (b3) {{\tt KLs\textsubscript{new} := edge\_detection(n) }};
+	
+	\node [block, below of=b3] (b4) {{\tt edge\_tracking()}};
+	
+	\node [decision, below of=b4] (b5) {minimization successful?};
+	
+	\node [block, below of=b5, node distance=8.5em] (b6) {{\tt mapping()}};
+	
+	\node [decision, below of=b6, node distance=8.5em] (b7) {\\*$card(KLs_{new}.m_d) > 500$?};
+	
+	\node [block, right of=b5, text width=10em, xshift=10em] (b8) {{\tt KLs\textsubscript{old} := KLs\textsubscript{new}}};
+	% Draw edges
+	
+	\path [line] (start) -- (b0);
+	\path [line] (b0) -- (b05);
+	\path [line] (b05) -- (b1);
+	\path [line] (b1) -- (b2);
+	\path [line] (b2) -- (b3);
+	\path [line] (b3) -- (b4);
+	\path [line] (b4) -- (b5);
+	\path [line] (b5.west) -| node [near start] {no} ([xshift=-1cm] b05.west)
+	                       |- (b05.west);
+	\path [line] (b5.south) -- node {yes} (b6);
+	\path [line] (b6) -- (b7);
+	\path [line] (b7.west) -| node [near start] {no} ([xshift=-1cm] b05.west)
+					   	   |- (b05.west);
+	\path [line] (b7.east) -| node [near start] {yes} (b8.south);
+	\path [line] (b8.north) |- (b2.east);
+	\end{tikzpicture}
+	
+	\caption{Simplified flowchart of the algorithm. $KLs_{x}$ are arrays of Keyline structures}
+	\label{fig:flowchart_main}
+		\end{footnotesize}
+\end{figure}
 
 \begin{table}[ht]
 	\centering
@@ -44,21 +93,21 @@ Pixels that contain subpixel edge positions are called Keylines and, after edge 
 		\caption{Keyline structure}
 		\label{tab:keyline}
 		
-		\begin{tabularx}{0.6\textwidth}{C{1} C{1}}
+		\begin{tabularx}{1.0\textwidth}{C{0.25} C{0.75}}
 			\toprule
 			\thead{Structure field\tnote{a}} & \thead{Description} \\
 			\midrule
-			$q$ & subpixel position in image \\
-			$h$ & normalized $q$ (principal point moved to $(0,0)$ and coordinates divided by focal length $z_f$ \\
+			$q = [q_{x},\ q_{y}]$ & subpixel position in image \\
+			$h = [h_{x},\ h_{y}]$ & normalized $q$: $h = \frac{q - [c_{x}\ c_{y}]}{z_f}$ \\
 			$\rho$, $\sigma_{\rho}$ & estimated inverse depth: $\frac{1}{Z}$, and its variance \\
 			$\rho_0$, $\sigma_{\rho_{0}}$ & inverse depth predicted by Kalman filter and its variance \\
-			$g$ & edge gradient obtained from DoG \\
-			$p_{id}$ & index of previous Keyline in an edge \\
-			$n_{id}$ & index of next Keyline in an edge \\
-			
-			matching/forward/historia \\
-			$h_0$ &  \\
-			$g_{0}$ & gradient of matched Keyline from previous frame \\
+			$\vec{g}$ & edge gradient obtained from DoG \\
+			$p_{id}, n_{id}$ & index of previous and next Keyline in an edge \\
+			$m_f$ & index of next frame Keyline obtained during forward matching \\
+			$m_d$ & index of next frame Keyline obtained during directed matching \\
+			$k$ & number of consecutive frames that this Keyline has appeared on \\
+			%$h_0$ &  \\
+			$\vec{g_{0}}$ & gradient of matched Keyline from previous frame \\
 			\bottomrule
 		\end{tabularx}
 		
@@ -74,32 +123,117 @@ Pixels that contain subpixel edge positions are called Keylines and, after edge 
 
 \section{Edge extraction}
 
-First main step of algorithm is edge extraction with subpixel accuracy. Extracted Keylines that are estimated to lie on same edge are joined.
+Primal step of algorithm is subpixel edge extraction. Keyline structures are populated using extracted data. Keylines that are estimated to lie on same edge are joined.
 
-\subsection{Zero crossing of DoG}
-While many edge detection algorithms could be used in this step, authors of \textit{Rebvo} have chosen Difference of Gaussians, because it provides \cite{jose2015realtime}:
+\subsection{Edge detection algorithm choice}
+While many edge detection algorithms could be used in this step, authors of \textit{Rebvo} have chosen DoG (Difference of Gaussians), because it provides \cite{jose2015realtime}:
 \begin{enumerate}
 	\item repetivity -- an edge is detected similarly throughout consecutive frames,
 	\item precision -- edge positions are accurate,
 	\item low time \& memory complexity.
 \end{enumerate}
 
-Another advantage of DoG is that edge gradient can be obtained directly from normal vector of the fitted local plane.
+Another advantage of DoG, unmentioned by Tarrio and Pedre, is that \underline{edge gradient can be obtained directly} from normal vector of the fitted local plane. In this thesis DoG was used as well. Most vital property was subpixel precision, otherwise Canny detector \cite{canny} would be employed. In principle, subpixel edge detection precision is possible, because as long as Whittaker–Nyquist–Kotelnikov–Shannon theorem assumptions are satisfied, the true continuous pixel intensity function can be reconstructed from discrete image values.
 
-TODO:
-frame for rectification leftovers removal
+\subsection{Data preprocessing}
 
-DOG is performed + example
+First of all, images are converted to grayscale. Color information is not used in the algorithm.
 
-for every px minus windows:
+Before performing any edge detection technique, one critical issue has to be addressed. If input images were\footnote{If images were \textit{not} rectified, they should be.} rectified in such a way that had needed extrapolation beyond original borders, artificial edges will be present in every frame (because extrapolation procedure usually assumes 0 pixel intensity beyond the image). Gradient of these edges is almost always strong, meaning that they tend to pass all tests and to be identified as valid keylines, thus generating false positives. During later minimization step, they greatly distort the procedure, making it behave as if the space was curved. Example of such border is depicted in Fig.~\ref{fig:rectifcy_border}.
 
-test 1: check if gradient if sufficient (todo check if most px are discarded)
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1cm 1cm 1cm 1cm},clip]{img/figures/rectified_edge.png}
+	\caption{ Input image, zoomed-in near left border. Individual pixels produced by rectification can be observed on the left }
+	\label{fig:rectifcy_border}
+\end{figure}
 
-test2: check if plues and minues are balanced, 1px edge
+In case of DoG, these \underline{artificial edges need to be removed} before Gaussian blurring -- otherwise they would spread out, making it tricky to reject them later. In tested datasets, artificial borders' thickness did not exceed 1~pixel, so simply 1-pixel wide frame of outermost pixels was always discarded. In general case, \underline{width of the frame can be figured out from distortion model}, instead of being manually set. However, for highly distorted images a rectangular frame would also discard many valid pixels -- either in corners (barrel distortions), or near middle of borders (pincushion distortions).
 
-fitting to plane, check if fitting was ok
+\subsection{Difference of Gaussians strength test}
 
-test 3: zero crossing; if lies inside the pixel
+After necessary preprocessing, edge detection can be started. Generally edge detection works by finding positions in image where pixel intensity changes most rapidly. Basic idea of DoG is to approximate image second derivative (the laplacian) \cite{szeliski}. Other approaches involve curve fitting \cite{fabijanska} \cite{devernay1995non}.
+
+The zero-crossing of laplacian corresponds to such positions. In order to filter out noise, image should be first smoothed with a Gaussian filter. These operations can be combined into one operator -- Laplacian of Gaussian -- which in turn can be approximated with difference between two images smoothed with Gaussian filters using two different sigmas\footnote{LoG is best approximated by DoG when $\frac{\sigma_{1}}{\sigma_{2}} = \sqrt{2}$ \cite{sift}.} Edge detection results for initial sigma values were satisfactory in performed tests, therefore other values were not tested.
+
+Exemplary Difference of Gaussians image is depicted in Fig.~\ref{fig:dog}. \textit{Implementation insight}:~while individual smoothed images can be computed using {\tt uint8} as underlying data type (for speed), the difference has to be computed using signed data type. Otherwise obtained function will not cross zero!
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1.25cm 1.25cm 1.25cm 1cm},clip]{img/figures/dog.png}
+	\caption{ Difference of Gaussians applied to an image. Near-zero values indicate feasible edge candidates }
+	\label{fig:dog}
+\end{figure}
+
+Another parameter is window size -- it defines pixel neighborhood that will take part in later calculations of edge position. For window size $w$, $(2w+1)^2$ immediate neighbors will be considered, including the center pixel itself. For sake of this thesis, value $w = 2$ was used.
+
+Edge detection procedure is performed for every pixel that lies at least $w$ pixels from image border, so that neighborhood does not need to be extrapolated. In order to speed up computations by early identifying non-edges, first derivative of pixel intensity is calculated by applying two Sobel operators (derivatives along $x$ and $y$ axes) and taking norm of the results. This norm is then compared with a threshold (\textbf{first edge detection test}).
+
+Tarrio and Pedre use hysteresis to determine threshold value after every frame. On the one hand, presented algorithm operates offline, so abundance of keylines is not an issue. On the other, hysteresis parameters still need to be adjusted for given dataset. Invalid parameters can alter overall algorithm results significantly, so from algorithm analysis point of view, the fewer of them, the better. \underline{Thus instead simpler solution was tested out}.
+
+Image is be partitioned into $a^2$ rectangular chunks, for relatively small $a$, e.g. 7. Then for each chunk number of pixels that would pass the first derivative test for given constant threshold is counted. If this number is relatively low, threshold is locally multiplied by a constant $b_{1} < 1$, e.g. $\frac{1}{3}$. However, if the number is relatively large, then threshold is locally multiplied by $b_{2} > 1$, e.g. $\frac{5}{3}$. Local threshold array can finally be smoothed with Gaussian filter to avoid discontinuities.
+
+Proposed procedure also has parameters, but there are few advantages:
+\begin{itemize}
+	\item parameters are much simpler to interpret,
+	\item effectively only one parameter is crucial (the constant threshold) and rest of procedure serves as a refinement,
+	\item operates without delay, which is vital especially if keyline number is too low.
+\end{itemize}
+
+Fig.~\ref{fig:bucket} illustrates that additional pixels were considered further for being edges. However, edges added by this method are not very stable and tend to be nonetheless untraceable in later frames (they do not exhibit the \textit{repetivity} property).
+
+TODO: figure
+
+Neighborhood of pixels that have passed the first test is checked for ``sign balance``. Number of positive and negative DoG values has to be comparable within a defined percentage, e.g. 20\% (\textbf{second edge detection test}).
+
+TODO: figure
+
+Then DoG values are approximated by a plane using linear regression (Eq.~\ref{eq:regress} is solved for~$\theta$). Zero-crossing of the plane can be determined analytically using Eq.~\ref{eq:zerocross}. For more resilience, an additional test is performed (\textbf{third edge detection test}). If inequality~\ref{eq:test3} is not satisfied, then equation system~\ref{eq:regress} \underline{is considered to be badly conditioned} and this pixel is rejected. This was not considered in \cite{jose2015realtime}.
+
+\begin{equation}
+\bm{A}\theta = \delta
+\label{eq:regress}
+\end{equation}
+where:
+\begin{eqwhere}[2cm]
+	\item[$\bm{A}$] 3x$(2w+1)$ matrix: $[X\ Y\ 1]$,
+	\item[$X$] vector of $x$ coordinates of pixel centroids in neighborhood, assuming that central pixel's centroid is located at $x = 0$, ($(2w+1)$-tuple),
+	\item[$Y$] vector of $y$ coordinates of pixel centroids in neighborhood, assuming that central pixel's centroid is located at $y = 0$, ($(2w+1)$-tuple),
+	\item[$\delta$] DoG values corresponding to $X$ and $Y$ ($(2w+1)$-tuple),
+	\item[$\theta$] parameters defining the approximated plane: $z = \theta_{x}x + \theta_{y}y + \theta_{z}$.
+\end{eqwhere}
+
+
+
+\begin{equation}
+\begin{bmatrix}
+x_s \\
+y_s 
+\end{bmatrix} = 
+\begin{bmatrix}
+\frac{-\theta_{x} \theta{y}}{\theta_x^2 + \theta_y^2} \\
+\frac{-\theta_{y} \theta{y}}{\theta_x^2 + \theta_y^2}
+\end{bmatrix}
+\label{eq:zerocross}
+\end{equation}
+where:
+\begin{eqwhere}[2cm]
+	\item[$k_s$] estimated $k$-coordinate of the subpixel edge position (0 is the pixel center).
+\end{eqwhere}
+
+\begin{equation}
+\theta_{x}^2 + \theta_{y}^2 > 10^{-6}
+\label{eq:test3}
+\end{equation}
+
+Obtained zero-crossing marks the subpixel position of the edge. Inequality~\ref{eq:subpix_inside} tests whether it within the pixel itself. If not -- edge is not detected (\textbf{fourth edge detection test}).
+
+TODO: figure
+
+\begin{equation}
+max(|x_s|, |y_s|) < 0.5
+\label{eq:subpix_inside}
+\end{equation}
+
+@kwant: ran out of energy here
 
 test on dog: check if edge gradient is strong enough
 

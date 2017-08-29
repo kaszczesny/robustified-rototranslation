@@ -13,7 +13,7 @@ Pinhole camera model \cite{hartley2003multiple} is a widely used \cite{straight}
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.8\linewidth]{img/projective.PNG}
-	\caption{Image formation in pinhole camera model \cite{szczesny}}
+	\caption{Image formation in pinhole camera model. Source: \cite{szczesny}}
 	\label{fig:projective}
 \end{figure}
 
@@ -70,7 +70,7 @@ Conrady-Brown model \cite{brown8} \cite{Zhang_flexible} is a classical approach 
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth]{img/E90vsE9.png}
-	\caption{Example \cite{szczesny} of a distortion modeled with Conrady-Brown model. Vectors connect distorted pixel positions with their undistorted counterparts and contours mark areas with constant vector length. Tangential (non-radial) component is noticeable }
+	\caption{Example of a distortion modeled with Conrady-Brown model. Vectors connect distorted pixel positions with their undistorted counterparts and contours mark areas with constant vector length. Tangential (non-radial) component is noticeable. Source: \cite{szczesny} }
 	\label{fig:brown}
 \end{figure}
 
@@ -140,7 +140,7 @@ There are three main issues in monocular visual odometry, which will be discusse
 	\item egomotion.
 \end{enumerate}
 
-In case when only one camera is available, matches between consecutive frames still can be searched for. However, without knowing the 3D transformation, baseline is unknown, so scene can be reconstructed only up to a scale \cite{hartley2003multiple}. Main difficulty is that this transformation is \textit{the} quantity that odometry is supposed to estimate. Information from only one camera is not sufficient to solve the ambiguity. For instance, Fig.~\ref{fig:pepe} depicts a situation when two objects with differing dimensions appear to be of the same size after projection to image plane. There are 2 main ways of alleviating this problem.
+In case when only one camera is available, matches between consecutive frames still can be searched for. However, without knowing the 3D transformation, baseline is unknown, so scene can be reconstructed only up to a scale \cite{hartley2003multiple} \cite{szeliski}. Main difficulty is that this transformation is \textit{the} quantity that odometry is supposed to estimate. Information from only one camera is not sufficient to solve the ambiguity. For instance, Fig.~\ref{fig:pepe} depicts a situation when two objects with differing dimensions appear to be of the same size after projection to image plane. There are 2 main ways of alleviating this problem.
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=1.0\linewidth]{img/pepe.png}
