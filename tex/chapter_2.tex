@@ -36,6 +36,7 @@ automatic DoG sigma choice
 
 
 \section{Notation (Keyline structure) and {\tt main} loop}
+\label{sec:struct}
 
 Pixels that contain subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}. When $n+1$-th frame of video input is being processed, only $n$-th and $(n+1)$-th Keyline arrays are available; $n-1$-th is discarded, as it is no longer needed. This is presented in Fig.~\ref{fig:flowchart_main}.
 
@@ -195,7 +196,7 @@ TODO: figure
 \subsubsection{Third test}
 \label{edge_third}
 
-Then DoG values are approximated by a plane using linear regression (Eq.~\ref{eq:regress} is solved for~$\theta$). Zero-crossing of the plane can be determined analytically using Eq.~\ref{eq:zerocross}. For more resilience, an additional test is performed. If inequality~\ref{eq:test3} is not satisfied, then equation system~\ref{eq:regress} \underline{is considered to be badly conditioned} and this pixel is rejected. This was not considered in \cite{jose2015realtime}. Pixels that do not pass third test would also be rejected in fifth test (Sec.~\ref{edge_fith}), but before that they would cause division-by-zero errors in fourth test (Sec.~\ref{edge_fourth}).
+Then DoG values are approximated by a plane using linear regression (Eq.~\ref{eq:regress} is solved for~$\theta$). Zero-crossing of the plane can be determined analytically using Eq.~\ref{eq:zerocross}. For more resilience, an additional test is performed. If inequality~\ref{eq:test3} is not satisfied, then equation system~\ref{eq:regress} \underline{is considered to be badly conditioned} and this pixel is rejected. This was not considered in \cite{jose2015realtime}. The purpose of this test is to avoid divide-by-zero errors in fourth test (Sec.~\ref{edge_fourth}). All pixels that do not pass the third test would still be filtered out later -- they also do not pass the fifth test~(Sec.~\ref{edge_fith}).
 
 \begin{equation}
 \bm{A}\theta = \delta
@@ -236,9 +237,7 @@ where:
 \subsubsection{Fourth test}
 \label{edge_fourth}
 
-Obtained zero-crossing marks the subpixel position of the edge. Inequality~\ref{eq:subpix_inside} tests whether it lies within the pixel itself. If not -- edge is not detected. After this test, usually only 1-pixel wide blobs of edge candidates are left.
-
-TODO: figure
+Obtained zero-crossing marks the subpixel position of the edge. Inequality~\ref{eq:subpix_inside} tests whether it lies within the pixel itself. If not -- edge is not detected. After this test, most of Keyline candidates form 1-pixel wide edges.
 
 \begin{equation}
 max(|x_s|, |y_s|) < 0.5
@@ -248,7 +247,7 @@ max(|x_s|, |y_s|) < 0.5
 \subsubsection{Fifth test}
 \label{edge_fith}
 
-Normal vector of fitted plane is defined by Eq.~\ref{eq:planenorm}. Vector $\vec{r}$ can projected onto $z=0$ plane, creating third derivative vector: the edge gradient $\vec{g}$. If $|\vec{g}|$ is small, then $r_{z}$ component must have dominated $\vec{r}$, meaning that fitted plane was almost parallel to the $z=0$ plane. In turn this implies that edge is not sharp. Norm of $\vec{g}$ is tested -- it must exceed a threshold for edge to be finally detected.
+Normal vector of fitted plane is defined by Eq.~\ref{eq:planenorm}. Vector $\vec{r}$ can projected onto $z=0$ plane, creating third derivative vector: the edge gradient $\vec{g}$. If $|\vec{g}|$ is small, then $r_{z}$ component must have dominated $\vec{r}$, meaning that fitted plane was almost parallel to the $z=0$ plane. In turn this implies that edge was not sharp. Therefore as final test, norm of $\vec{g}$ is tested -- it must exceed a~threshold for edge to be finally detected.
 
 \begin{equation}
 \vec{r} = [\theta_{x},\ \ \theta_{y},\ \ -1]
@@ -259,9 +258,20 @@ where:
 	\item[$\vec{r}$] normal vector of plane $z = \theta_{x}x + \theta_{y}y + \theta_{z}$.
 \end{eqwhere}
 
-test on dog: check if edge gradient is strong enough
+\subsubsection{Edge detection tests summary}
 
-image: quiver
+image: quiver, @jan
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=1.0\linewidth, trim={1.5cm 2.5cm 1.5cm 2.5cm},clip]{img/figures/edge_prob.png}
+	\caption{ Edge detection tests results. Pixel colors: dark blue -- neighborhood outside image; blue, light blue (not present), cyan (not present), green and orange -- rejected by tests 1 to 5, respectively; red -- reserved for debug purposes (not present); brown -- final Keylines}
+	\label{fig:edgeprob}
+\end{figure}
+
+
+\section{Keyline initialization}
+
+After Keyline has been successfully identified, a data structure described in Section~\ref{sec:struct} is populated with obtained data. This step is crucial for the very first processed frame, because its Keylines must have some initial depth values. During first tests, 
 
 todo: prove that noise for rho is better than ones
 
@@ -270,12 +280,23 @@ imgmask with KL indices
 \subsection{Keyline joining}
 
 After obtaining individual Keylines, they are joined together to form connected edges.
-For each Keyline, its neighbors are searched among 8 bordering pixels in 2 directions perpendicular to $\vec{g}$.
-Joined Keylines are used for pruning. First of all, edges consisting of 3 pixels or less are discarded, as they are unlikely to be a good feature to track.
-In most of later steps, the algorithm considers only individual Keylines, not joined edges (as mentioned in Section~\ref{sec:rebvo_outline}). Information about neighbors is used only once after edge detection -- in Regularization step, when $\rho$ and $\sigma_{\rho}$
+For each Keyline, its neighbors are searched among 3 out of 8 bordering pixels. Search is performed in direction perpendicular to $\vec{g}$, an example is depicted in Fig.~\ref{fig:edgejoin}.
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1.25cm 1.25cm 1.25cm 1cm},clip]{img/edgejoin.png}
+	\caption{ Edge joining principle. White pixels denote Keylines, black pixels \==~non-Keylines, green x -- currently processed pixel, green arrow -- $\vec{g}$, red arrow -- $\vec{g}$ rotated by $\frac{\pi}{2}$ clockwise , red rectangle -- edge joining candidates }
+	\label{fig:edgejoin}
+\end{figure}
+
+
+Joined Keylines are used for pruning. First of all, edges consisting of 3 pixels or less are discarded, as they are unlikely to be good features to track. Secondly, outermost Keylines of every joined edge are likewise removed -- they are most likely to be affected by noise.
+
+In later steps, the algorithm considers only individual Keylines, not joined edges (as mentioned in Section~\ref{sec:rebvo_outline}). Information about neighbors is used only once after edge detection -- in Regularization step, when $\rho$ and $\sigma_{\rho}$
 are averaged over Keyline and its 2 immediate neighbors.
 
-todo: image of joined edges; pruning of edge ends and 3-px edges are removed
+Initially \underline{more edge joining strategies were considered}: morphological operations on Keylines, loop avoidance and edge segmentation (into parts with similar gradient). However, once it has been understood that edge joining takes such small part in algorithm flow, this direction was abandoned.
+
+
 
 
 %--
