@@ -1,7 +1,7 @@
 \chapter{Analysis and improvements of \textit{Rebvo} algorithm}
 \label{cha:intro2}
 
-This chapter contains thorough analysis of proposed algorithm. Firstly, changes to the original algorithm are listed. Then algorithm is carefully explained, step by step, using various examples. Chapter is concluded with miscellaneous remarks and experiment results. Figures used throughout the chapter were generated using input images from TUM \cite{tum} and KITTI \cite{kitti} datasets.
+This chapter contains thorough analysis of proposed algorithm. Firstly, changes to the original algorithm are listed. Then algorithm is carefully explained, step by step, using various examples. Much attention is paid to edge detector, because available ready-made edge detection methods did not meet algorithm requirements. Chapter is concluded with miscellaneous remarks and experiment results. Figures used throughout the chapter were generated using input images from TUM \cite{tum} and KITTI \cite{kitti} datasets.
 
 Note: considerations, improvements and modifications of the original algorithm are emphasized by \underline{underlining}.
 
@@ -149,11 +149,11 @@ Before performing any edge detection technique, one critical issue has to be add
 
 In case of DoG, these \underline{artificial edges need to be removed} before Gaussian blurring -- otherwise they would spread out, making it tricky to reject them later. In tested datasets, artificial borders' thickness did not exceed 1~pixel, so simply 1-pixel wide frame of outermost pixels was always discarded. In general case, \underline{width of the frame can be figured out from distortion model}, instead of being manually set. However, for highly distorted images a rectangular frame would also discard many valid pixels -- either in corners (barrel distortions), or near middle of borders (pincushion distortions).
 
-\subsection{Difference of Gaussians strength test}
+\subsection{Difference of Gaussians strength tests}
 
-After necessary preprocessing, edge detection can be started. Generally edge detection works by finding positions in image where pixel intensity changes most rapidly. Basic idea of DoG is to approximate image second derivative (the laplacian) \cite{szeliski}. Other approaches involve curve fitting \cite{fabijanska} \cite{devernay1995non}.
+After necessary preprocessing, edge detection can be started. Generally edge detection works by finding positions in image where pixel intensity changes most rapidly. Basic idea of DoG is to approximate image second derivative (the laplacian) \cite{szeliski}. The zero-crossing of laplacian corresponds to such positions. Other approaches to edge detection involve curve fitting \cite{fabijanska} \cite{devernay1995non}.
 
-The zero-crossing of laplacian corresponds to such positions. In order to filter out noise, image should be first smoothed with a Gaussian filter. These operations can be combined into one operator -- Laplacian of Gaussian -- which in turn can be approximated with difference between two images smoothed with Gaussian filters using two different sigmas\footnote{LoG is best approximated by DoG when $\frac{\sigma_{1}}{\sigma_{2}} = \sqrt{2}$ \cite{sift}.} Edge detection results for initial sigma values were satisfactory in performed tests, therefore other values were not tested.
+In order to filter out noise, image should be first smoothed with a Gaussian filter. These operations can be combined into one operator -- Laplacian of Gaussian -- which in turn can be approximated with difference between two images smoothed with Gaussian filters using two different sigmas\footnote{LoG is best approximated by DoG when $\frac{\sigma_{1}}{\sigma_{2}} = \sqrt{2}$ \cite{sift}.} Edge detection results for initial sigma values were satisfactory in performed tests, therefore other sigma values were not tested.
 
 Exemplary Difference of Gaussians image is depicted in Fig.~\ref{fig:dog}. \textit{Implementation insight}:~while individual smoothed images can be computed using {\tt uint8} as underlying data type (for speed), the difference has to be computed using signed data type. Otherwise obtained function will not cross zero!
 
@@ -165,7 +165,10 @@ Exemplary Difference of Gaussians image is depicted in Fig.~\ref{fig:dog}. \text
 
 Another parameter is window size -- it defines pixel neighborhood that will take part in later calculations of edge position. For window size $w$, $(2w+1)^2$ immediate neighbors will be considered, including the center pixel itself. For sake of this thesis, value $w = 2$ was used.
 
-Edge detection procedure is performed for every pixel that lies at least $w$ pixels from image border, so that neighborhood does not need to be extrapolated. In order to speed up computations by early identifying non-edges, first derivative of pixel intensity is calculated by applying two Sobel operators (derivatives along $x$ and $y$ axes) and taking norm of the results. This norm is then compared with a threshold (\textbf{first edge detection test}).
+\subsubsection{First test}
+\label{edge_first}
+
+Edge detection procedure is performed for every pixel that lies at least $w$ pixels from image border, so that neighborhood does not need to be extrapolated. In order to speed up computations by early identifying non-edges, first derivative of pixel intensity is calculated by applying two Sobel operators (derivatives along $x$ and $y$ axes) and taking norm of the results. This norm is then compared with a threshold. 
 
 Tarrio and Pedre use hysteresis to determine threshold value after every frame. On the one hand, presented algorithm operates offline, so abundance of keylines is not an issue. On the other, hysteresis parameters still need to be adjusted for given dataset. Invalid parameters can alter overall algorithm results significantly, so from algorithm analysis point of view, the fewer of them, the better. \underline{Thus instead simpler solution was tested out}.
 
@@ -182,11 +185,17 @@ Fig.~\ref{fig:bucket} illustrates that additional pixels were considered further
 
 TODO: figure
 
-Neighborhood of pixels that have passed the first test is checked for ``sign balance``. Number of positive and negative DoG values has to be comparable within a defined percentage, e.g. 20\% (\textbf{second edge detection test}).
+\subsubsection{Second test}
+\label{edge_second}
+
+Neighborhood of pixels that have passed the first test is checked for ``sign balance``. Number of positive and negative DoG values has to be comparable within a defined percentage, e.g. 20\%. It was observed that pixels very rarely fail this particular test.
 
 TODO: figure
 
-Then DoG values are approximated by a plane using linear regression (Eq.~\ref{eq:regress} is solved for~$\theta$). Zero-crossing of the plane can be determined analytically using Eq.~\ref{eq:zerocross}. For more resilience, an additional test is performed (\textbf{third edge detection test}). If inequality~\ref{eq:test3} is not satisfied, then equation system~\ref{eq:regress} \underline{is considered to be badly conditioned} and this pixel is rejected. This was not considered in \cite{jose2015realtime}.
+\subsubsection{Third test}
+\label{edge_third}
+
+Then DoG values are approximated by a plane using linear regression (Eq.~\ref{eq:regress} is solved for~$\theta$). Zero-crossing of the plane can be determined analytically using Eq.~\ref{eq:zerocross}. For more resilience, an additional test is performed. If inequality~\ref{eq:test3} is not satisfied, then equation system~\ref{eq:regress} \underline{is considered to be badly conditioned} and this pixel is rejected. This was not considered in \cite{jose2015realtime}. Pixels that do not pass third test would also be rejected in fifth test (Sec.~\ref{edge_fith}), but before that they would cause division-by-zero errors in fourth test (Sec.~\ref{edge_fourth}).
 
 \begin{equation}
 \bm{A}\theta = \delta
@@ -224,7 +233,10 @@ where:
 \label{eq:test3}
 \end{equation}
 
-Obtained zero-crossing marks the subpixel position of the edge. Inequality~\ref{eq:subpix_inside} tests whether it within the pixel itself. If not -- edge is not detected (\textbf{fourth edge detection test}).
+\subsubsection{Fourth test}
+\label{edge_fourth}
+
+Obtained zero-crossing marks the subpixel position of the edge. Inequality~\ref{eq:subpix_inside} tests whether it lies within the pixel itself. If not -- edge is not detected. After this test, usually only 1-pixel wide blobs of edge candidates are left.
 
 TODO: figure
 
@@ -233,7 +245,19 @@ max(|x_s|, |y_s|) < 0.5
 \label{eq:subpix_inside}
 \end{equation}
 
-@kwant: ran out of energy here
+\subsubsection{Fifth test}
+\label{edge_fith}
+
+Normal vector of fitted plane is defined by Eq.~\ref{eq:planenorm}. Vector $\vec{r}$ can projected onto $z=0$ plane, creating third derivative vector: the edge gradient $\vec{g}$. If $|\vec{g}|$ is small, then $r_{z}$ component must have dominated $\vec{r}$, meaning that fitted plane was almost parallel to the $z=0$ plane. In turn this implies that edge is not sharp. Norm of $\vec{g}$ is tested -- it must exceed a threshold for edge to be finally detected.
+
+\begin{equation}
+\vec{r} = [\theta_{x},\ \ \theta_{y},\ \ -1]
+\label{eq:planenorm}
+\end{equation}
+where:
+\begin{eqwhere}[2cm]
+	\item[$\vec{r}$] normal vector of plane $z = \theta_{x}x + \theta_{y}y + \theta_{z}$.
+\end{eqwhere}
 
 test on dog: check if edge gradient is strong enough
 
@@ -246,10 +270,10 @@ imgmask with KL indices
 \subsection{Keyline joining}
 
 After obtaining individual Keylines, they are joined together to form connected edges.
-For each Keyline, its neighbors are searched among 8 bordering pixels in directions perpendicular to edge gradient.
-In most of its steps, the algorithm considers only individual Keylines. Their neighbors are used only in Matching step to ... % todo
-and in Regularization step, when ... % todo
-is averaged over Keyline and its neighbors.
+For each Keyline, its neighbors are searched among 8 bordering pixels in 2 directions perpendicular to $\vec{g}$.
+Joined Keylines are used for pruning. First of all, edges consisting of 3 pixels or less are discarded, as they are unlikely to be a good feature to track.
+In most of later steps, the algorithm considers only individual Keylines, not joined edges (as mentioned in Section~\ref{sec:rebvo_outline}). Information about neighbors is used only once after edge detection -- in Regularization step, when $\rho$ and $\sigma_{\rho}$
+are averaged over Keyline and its 2 immediate neighbors.
 
 todo: image of joined edges; pruning of edge ends and 3-px edges are removed
 

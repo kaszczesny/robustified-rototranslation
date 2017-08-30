@@ -173,6 +173,7 @@ todo: egomotion \& "tunnel" motion
 
 
 \section{Literature}
+\label{sec:stateoftheart}
 
 todo:
 
@@ -197,6 +198,7 @@ todo:
 % -------------
 
 \section{The \textit{Rebvo} algorithm outline}
+\label{sec:rebvo_outline}
 
 In this section the \textit{Rebvo} algorithm description is briefly paraphrased for needs of this thesis.
 
@@ -209,14 +211,14 @@ Then \textbf{tracking} is performed. Edges from previous frames are first projec
 \item transformation is not ideal,
 \item depth of pixels is only estimated,
 \item there is quantization noise,
-\item edges can be detected inconsistently between frames (todo cite),
+\item edges can be detected inconsistently between frames,
 \item even for undistorted images, some residual distortion noncompliant with pinhole camera model will be present \cite{barreto2007non},
 \item outliers can be present (e.g. objects moving with respect to the otherwise rigid scene).
 \end{itemize}
  
 Final step -- \textbf{mapping} -- associates matching edges between frames using obtained optimal 3D transformation. Due to aforementioned problems, after tracking a matching routine is needed for each edge pixel. Because depth of previous frame edges is estimated with some uncertainty, camera motion establishes a line segment defining the area where possible matches will be searched for. Once such candidate has been found, it is tested for gradient correspondence and, most importantly, for model consistency~\==~deviation of position on the segment obtained from linear transformation equation can not exceed depth uncertainty. After matching, depth information is propagated for matched edge pixels from previous frame to the current, and is optionally regularized. Previous depth has to be reestimated ($OZ$ axis velocity has to be taken into account). This is achieved using Extended Kalman Filter. Scale drift, inherent problem of pure visual odometry, can be then mitigated to some limited degree by diving estimated depths by frame shrinking factor.
 
-Accuracy of results obtained in \cite{jose2015realtime} are comparable with other state-of-the-art algorithms. todo: cite \cite{yang2017direct}
+Accuracy of results obtained in \cite{jose2015realtime} are comparable with other state-of-the-art algorithms cite \cite{yang2017direct}.
 
 % ---
 
