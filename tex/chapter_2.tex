@@ -368,72 +368,95 @@ todo Jan: figure
 
 \section{Mapping}
 
-forward rotate
+For obtained information to be useful in the next iteration of the algorithm, it needs to be preserved. Since this is not a full SLAM system, data needs to be altered and passed on to next array of Keylines. This is achieved by a mapping step: Keylines from previous iteration are matched to Keylines currently being processed. Data that is passed on contains:
 
-KL pixel positions, represented in normalized homo coords, are rotated using obtained rotation
+\begin{itemize}
+	\item estimated depth rho
+	\item history h
+	\item gradient g
+	\item norm n
+	\item index of matching Keyline and its position
+\end{itemize}
 
-if they don't go to infinity, they are projected back onto image plane
+\subsection{Forward rotating}
 
-nasty gradient rotation
+%forward rotate
+%
+%KL pixel positions, represented in normalized homo coords, are rotated using obtained rotation
+%
+%if they don't go to infinity, they are projected back onto image plane
+%
+%nasty gradient rotation
 
 \subsection{Forward matching}
 
-forward match
-
-using information about which KLs were matched to which, following fields are propagated: rho, s\_rho, gradient, history and index of the matched KL
-
-todo: could new edges apprer without directed match
+%forward match
+%
+%using information about which KLs were matched to which, following fields are propagated: rho, s\_rho, gradient, history and index of the matched KL
+%
+% todo: could new edges apprer without directed match
+Since calculated transformation between the two frames is supposed to be the optimal one, after applying it to 3D positions of Keylines and casting them into the image plane we should obtain their positions on the next frame. This was already done at the minimization step; said Keylines were then paired with their corresponding match using property forward. Using this information, we are able to rewrite aforementioned data.
 
 \subsection{Directed matching}
 
-directed match
+%directed match
+%
+% for each KL:
+%
+%   backrotate KL and cast it onto old edge map mask
+%
+%   using this position and backrotated velocity, obtain halfline in which this KL could have been moved (a halfline, because we only know that its rho is positive) - estimated pixel displacement
+%
+%   estimate uncertainty using projected position and Rvel
+%
+%   caonstrain displacement search radius \& define starting point
+%
+% todo: check if perpedicular displacement if really common
+Considering that there might be some outliers affecting the quality of rho and the calculated transformation, it is needed to expand the list of matches to include Keylines that might not have been projected perfectly.
+To make it easier to find candidates for matching, Keylines array is again back-rotated and casted onto the old edge map mask. This decreases the distance between corresponding points and makes the problem pure translatory. Halfline starting at projected point two-dimensional position and going in the direction of camera 2D velocity is defined - possible matches should lie on that halfline, because of the assumption that rho of any Keyline should be positive. To further constrain search area, maximum and minimum pixel displacement are estimated. Keylines that lie on such defined segment are possible candidates for a match.
 
- for each KL:
+% search from starting point alternating between one direction and the other
+%
+% check if this pixel there is a KL to match to
+%
+% perform 3 tests to filter outliers + image (eg. 3 consecutive images where an outlier disappears):
+%
+%  gradient angle similarity
+%
+%  gradient modulus similarity
+%
+%  motion consistency
+Starting at the most possible point, searching is performing by alternating between one direction and the other. If currently checked pixel of the edge mask contains a Keyline, it is considered a match, however that match still needs to be evaluated. Gradient on those matching pixels needs to be similar enough in the means of gradient angle difference and gradient modulus. Also, potential match needs to conform to the motion model.
 
-   backrotate KL and cast it onto old edge map mask
+%rownanie, costam costam, ogarnialismy
 
-   using this position and backrotated velocity, obtain halfline in which this KL could have been moved (a halfline, because we only know that its rho is positive) - estimated pixel displacement
+This provides additional outlier rejection - any match that is not compatible with model is rejected. This means that any Keyline which motion is different from the most of them will most likely belong to a object moving independently from the scene, as mentioned in /rozdzial costam/ 
 
-   estimate uncertainty using projected position and Rvel
-
-   caonstrain displacement search radius \& define starting point
-
- todo: check if perpedicular displacement if really common
-
-
- search from starting point alternating between one direction and the other
-
- check if this pixel there is a KL to match to
-
- perform 3 tests to filter outliers + image (eg. 3 consecutive images where an outlier disappears):
-
-  gradient angle similarity
-
-  gradient modulus similarity
-
-  motion consistency
-
- if there aren't enough matched KLs (500), reset
+After those two matching steps, number of matches between two frames has to be greater than previously defined threshold (500 Keylines). If its less than that, algorithm is reseted, as there is not enough Keylines with established history to base future transformation calculations on.
 
 \subsection{Regularization}
 
- optional regularization, performed twice
+% optional regularization, performed twice
+%
+% main assumption is that KLs neighboring on an edge ale located near each other in 3D, so their depth should be similiar
+%
 
- main assumption is that KLs neighboring on an edge ale located near each other in 3D, so their depth should be similiar
+As edges of real-life objects are seldom very jagged, difference in depth between adjoining Keylines needs to be smoothed out, assuming that neighboring pixels belong to objects located near each other in three-dimensional space. This is done by taking weighted mean of rho and s\_rho of directly joined Keylines. Two iterations of regularization are performed. To be regularized, a Keyline needs to have two neighbors (this means excluding ends of edges).
 
- image: show that this isn't ALWAYS true
+% for each KL:
+%
+%  check if 2 neighbors pass test:
+%
+%   if depths outweight uncertainties (probabilistic uncertainty)
+%
+%   if angle between gradients is below threshold
+%
+%  if tests are passed, rho and s\_rho are smoothened taking weighted mean of its value and its neighbors
 
- for each KL:
+% image: show that assumption isn't ALWAYS true
+Having in mind previous assumption, that might not always be the case. Objects might lie on the scene in such a way, that their edges as seen by the camera might intersect and form a continuous curve. This is why additional test on neighboring pixels are needed. First, they need to lie on approximately the same distance from the camera. Because depth is estimated, uncertainty on said estimation is calculated in /gdzie to bylo?/ step. If difference between estimated depth for two neighbors outweights sum of uncertainties, it is assumed that they belong to different objects. This test is purely probabilistic. Second, angle between gradients of neighboring Keylines is checked. Again, if its greater than previously defined threshold, regularization is not performed.
 
-  check if 2 neighbors pass test:
-
-   if depths outweight uncertainties (probabilistic uncertainty)
-
-   if angle between gradients is below threshold
-
-  if tests are passed, rho and s\_rho are smoothened taking weighted mean of its value and its neighbors
-
-\subsection{Depth estimation}
+\subsection{Depth reestimation}
 
  kalman fiter
 
