@@ -267,7 +267,7 @@ todo Czy wykrywanie krawedzi jest robust na zmiany jasnosci;
 After Keyline has been successfully identified on image, a data structure described in Section~\ref{sec:struct} is populated with obtained data. This step is different for the very first processed frame, because its Keylines must have some initial depth values. During first tests, a constant $\rho = 1$ was used. Then for some time explicit Kinect depth map was used, as it was available in the TUM dataset. Finally, after other ares of algorithm have been improved, it was observed that in most cases quick convergence (5-10 frames) could be achieved by \textbf{initializing depth with random values}, even with images scaled down by 80\% (to 128 by 96 pixels). Convergence depends on speed of camera during these first frames. Overall, this is much better result than in \cite{jose2015realtime}, where 2-5 seconds needed for depth convergence were reported. Noise was generated using normal distribution with parameters chosen for each dataset: $N(2,0.5)$ for TUM and $N(10,3)$ for KITTI.
 
 
-Some \textbf{thought was given to more elaborate initialization schemes}. Feature point correspondences could be used in order to determine scene geometry in a quicker and more robust way, while rest of algorithm would still operate on edges. Feature point descriptors, such as SIFT \cite{sift}, or even simpler corner detectors \cite{harris} \cite{shi1994good}, are well suited for this task.
+Some \textbf{thought was given to more elaborate initialization schemes}. Feature point correspondences could be used in order to determine scene geometry in a quicker and more robust way, while rest of algorithm would still operate on edges. Feature point descriptors, such as the SIFT (Scale Invariant Feature Transform) \cite{sift}, or even simpler corner detectors \cite{harris} \cite{shi1994good}, are well suited for this task.
 
 Their main disadvantage is their complexity, especially in case of more robust ones, like SIFT. They need to be somehow matched -- this becomes unfeasible for real-time applications once number feature points is too large \cite{szczesny}. This in turn means that many parameters would have to be carefully chosen so that a consumer-grade mobile system would not be flooded by excessive features and remain responsive. Finally, feature point descriptors encode larger pixel neighborhood than edges, but they lack structural information, meaning that match is likely produce more outliers, that need to be dealt with (filtered).
 
@@ -306,7 +306,7 @@ Goal of edge tracking is to find a 3D transformation (translation and rotation) 
 \subsection{Warping function}
 \label{sec:warp}
 
-2D Keyline $\longleftrightarrow$ 3D point transformations are defined by Eq.~\ref{eq:gamma}~and Eq.~\ref{eq:gammainv}. They can be derived from \ref{eq:camera}, assuming $f_x = f_y = f$ and $s = 0$. These assumptions were valid for tested datasets. It should be noted, however, that in case of smartphone cameras, \textbf{full pinhole model should be considered}, complicating these formulas. Once points have been projected using $\gamma$, they can be rotated and translated in 3D space using Eq.\ref{eq:rototr}.
+2D Keyline $\longleftrightarrow$ 3D point transformations are defined by Eq.~\ref{eq:gamma}~and Eq.~\ref{eq:gammainv}. They can be derived from \ref{eq:camera}, assuming $f_x = f_y = f$ and $s = 0$. These assumptions were valid for tested datasets. It should be noted, however, that in case of smartphone cameras, \textbf{full pinhole model should be considered}, complicating these formulas. Once points have been projected using $\gamma$, they can be rotated and translated in 3D space using Eq.\ref{eq:rototr}. The rotation matrix has form $R = \mathfrak{exp} \left ( \left[ \vec{\omega} \right ]_{s} \right )$.
 
 
 \begin{equation}
@@ -401,7 +401,7 @@ where:
 	\item[$M$] matching function, $\underset{h_t}{M}(\bullet) = \begin{cases} 
 	\bullet, & \exists h_c : h_t \textrm{ matches } h_c \\
 	r_{search}, & otherwise
-	\end{cases}$
+	\end{cases}$.
 \end{eqwhere}
 
 todo wykres histogramu, wykres jak spada score, wykres że kierunek
@@ -468,45 +468,30 @@ Since calculated transformation between the two frames is supposed to be the opt
 
 \subsection{Directed matching}
 
+todo: show matching field, perphaps even two (kitti, tum)
 todo: pokazac wyfilotwane outliery
 
-%directed match
-%
-% for each KL:
-%
-%   backrotate KL and cast it onto old edge map mask
-%
-%   using this position and backrotated velocity, obtain halfline in which this KL could have been moved (a halfline, because we only know that its rho is positive) - estimated pixel displacement
-%
-%   estimate uncertainty using projected position and Rvel
-%
-%   caonstrain displacement search radius \& define starting point
-%
-% todo: check if perpedicular displacement if really common
 Considering that there might have been some outliers that affected the quality calculated transformation and that potentially valid matches with no history need a chance to pick it up, it is essential to extend the list of matches to include Keylines that have not been back-projected perfectly.
 
-So as to make finding candidates for matching easier, current Keyline array is reverse-rotated\footnote{Rotated using rotation opposite to rotation $\vec{\omega}$ that was obtained during minimization.} and casted onto the old edge map. This decreases the distance between corresponding points and reduces the problem to a pure translatory problem. Translation $\vec{v}$ calculated during minimization, along with the reverse-rotated $h_r$, defines for each current Keyline a line. (todo details)
+So as to make finding candidates for matching easier, current Keyline array is reverse-rotated\footnote{Rotated using rotation opposite to rotation $\vec{\omega}$ that was obtained during minimization.} and casted onto the old edge map. This decreases the distance between corresponding points and reduces the problem to a pure translatory problem. Translation $\vec{v}$ calculated during minimization, along with the reverse-rotated $h_r$, defines for each current Keyline a line. (todo details -- equality iff no uncertainty)
 
-Because of assumption that $\rho_r > 0$, search line is reduced to a halfline. It starts at projected point $h_r$ and goes in the direction of camera motion, projected on 2D plane. A possible match should lie on the halfline. To further constrain search area, maximum and minimum pixel displacements are estimated, leaving only a line segment. Keylines that lie within it, are possible candidates for matches.
+Because of assumption that $\rho_r > 0$, search line is reduced to a halfline. It starts at projected point $h_r$ and goes in the direction of camera motion, projected on 2D plane. A possible match should lie on the halfline. To further constrain search area, maximum and minimum pixel displacements are estimated, leaving only a line segment. Keylines that lie within it are possible candidates for matches.  \textit{Directed} refers to probing along the line segment.
 
-% search from starting point alternating between one direction and the other
-%
-% check if this pixel there is a KL to match to
-%
-% perform 3 tests to filter outliers + image (eg. 3 consecutive images where an outlier disappears):
-%
-%  gradient angle similarity
-%
-%  gradient modulus similarity
-%
-%  motion consistency
-Searching starts at a point that is estimated to be a most possible match. The procedure is performed checking pixels closer to segment ends, in an alternating manner. If an inspected pixel a previous Keyline, it is considered a possible match, that still needs to be validated. Firstly, $\vec{g_p}$ and $\vec{g_r}$ are compared, analogously to the third keyline matching test of the minimizer (see Section~\ref{sec:minim_match}). Secondly, potential match needs to conform to the motion model.
+Searching starts at a point that is estimated to be a most possible match. The procedure is performed checking pixels closer to segment ends, in an alternating manner. If an inspected pixel a previous Keyline, it is considered a possible match, that still needs to be validated. Firstly, $\vec{g_p}$ and $\vec{g_r}$ are compared, analogously to the third keyline matching test of the minimizer (see Section~\ref{sec:minim_match}). Secondly, potential match needs to conform to the motion model, defined in Inequality~\ref{eq:consistency}.
 
-todo: rownanie, costam costam, ogarnialismy  ----- so much R.I.P.
+\begin{equation}
+\abs* {\frac{\norm*{h_p - h_r}}{\norm*{fv_{r_{x,y}}-h_{r}v_{r_z}} }-\rho_{p}} < \tau(\sigma_{\rho_{p}})
+\label{eq:consistency}
+\end{equation}
+where:
+\begin{eqwhere}[2cm]
+	\item[$\vec{v_r}$] translation vector, $\vec{v_r} = \left( \mathfrak{exp} \left ( \left[ \vec{\omega} \right ]_{s} \right ) \right) ^T \vec{v}$,
+	\item[$\tau$] uncertainty estimation function that takes into account $\sigma_{\rho_{p}}$.
+\end{eqwhere}
 
-This provides additional outlier rejection - any match that is not compatible with model is rejected. This means that any Keyline which motion is different from the most of them will most likely belong to a object moving independently from the scene, as mentioned in /rozdzial costam/ 
+This provides additional outlier rejection - any match that is not compatible with model is rejected. A Keyline that moves in 3D differently than rest of the scene is most likely edge of an object that moves independently, as alluded in Section~\ref{sec:rebvo_outline}.
 
-After those two matching steps, number of matches between two frames has to be greater than previously defined threshold (500 Keylines). If its less than that, algorithm is reseted, as there is not enough Keylines with established history to base future transformation calculations on.
+After forward matching and directed matching, the number of valid matches has to be greater than previously defined threshold. Threshold value of 500 Keylines has proved to be a good figure during tests, regardless of image scale.  If threshold is not met, algorithm resets, as there is not enough Keylines with established history to base future transformation calculations on.
 
 \subsection{Regularization}
 
@@ -533,44 +518,42 @@ Having in mind previous assumption, that might not always be the case. Objects m
 \subsection{Depth reestimation}
 
  todo:
- kalman fiter
+ % kalman fiter
 
- ...
-
- inverse depth is constrained between certain min and max
+ % inverse depth is constrained between certain min and max, didn't work well if min was too low (by min I mean too close to camera)
 
 \subsection{Scale correction}
 
- zauwazylismy ze dopoki nie ma zbieznosci to shrinking factor za bardzo oscyluje, wiec jest liczony dopiero po inicjalizacji systemu, tj 20 klatek
+ %zauwazylismy ze dopoki nie ma zbieznosci to shrinking factor za bardzo oscyluje, wiec jest liczony dopiero po inicjalizacji systemu, tj 20 klatek
  
  todo:
- optional estimate rescaling
+ %optional estimate rescaling
 
- according to Tarrio and Pedre, EKF is biased in rho estimation, so a global "shrinking factor" can be applied to depths and uncertainties.
+ %according to Tarrio and Pedre, EKF is biased in rho estimation, so a global "shrinking factor" can be applied to depths and uncertainties.
 
-todo 2x depth
+ % todo 2x depth
 
-This doesn't remedy the fundamental problem of scale ambiguity in the monocular systems. To fix this problem real-life dimensions of an object present in starting frames are needed. Some objects having known, well defined shape and size that are ever-present in urban environments are traffic signs and license plates. Solution for identifying those objects are:
+This does not remedy the fundamental problem of scale ambiguity in monocular systems. To fix this issue, dimensions of real-life objects present the scene need to be known a priori. Excellent example of such objects, with well defined shape and size, are traffic signs and license plates, ever-present in urban environments that algorithm was originally envisioned for. Solutions for identifying those objects are:
 \begin{itemize}
-	\item Haar feature-based cascade classifier, then ORB
-	\item Neural Networks
-	\item SVN
-	\item morphological operations
-	\item detecting edges of an object and applying Hough transform on the edges
-	\item Robust license plate detection using image saliency /citeme/
+	\item Haar feature-based cascade classifier combined with descriptor ORB (Oriented FAST and Rotated BRIEF) \cite{opencv},
+	\item machine learning methods: SVM (Support Vector Machine) and neural networks,
+	\item rectangle detection by the means of Hough transform,
+	\item sliding window applied over image saliency \cite{lin2010robust}.
 \end{itemize}
 
-This however means additional, heavy computing cost and would not fit the designated platform and moreover no simple or easy to implement out-of-the-box implementation was found thus moving this problem out of the scope of this thesis.
+This however entails additional, heavy computing cost and would not fit the designated platform. Moreover, no out-of-the-box implementation was found. Thus moving this problem out of the scope of this thesis.
 
 % ----------------------
 \subsection{Artificial data tests}
 
-Along with data from previously mentioned datasets, some tests on generated data were performed, mainly for EdgeFinder part of the algorithm. That way we could see how difficult edges (hard angles (i.e. T,Y,L,+ shaped) or circles) are thinned, joined, fragmented and how gradient on such edges will behave.
-2D transformations are a special case of 3D ones, so it was also tested how those will be recovered, however lack of depth data generated a lot of false positives. Rendering a sequence in a computer 3D environment was also considered, but due to antialiasing, poor lighting techniques that are processor-friendly, texturing(bump-mapping) and raytracing often used by those types of environments they could falsify obtained information. Because of that datasets with well-defined ground truth were chosen instead.
+Along with data from KITTI and TUM datasets, some tests on generated data were performed, mainly for the edge detector. That way difficult edges (sharp angles, e.g shaped like letters T, Y and L; or circles) could be examined -- how they were thinned, joined, fragmented and how gradient of such edges behaved.
+
+2D transformations are a special case of 3D ones, so they were used for tests of edge tracker and the mapper -- 2D images were simply moved sideways or rotated. It was tested how these transformations would be recovered, however lack of depth data induced a lot of false positives.
+
+Rendering a full 3D sequence using e.g. a game engine was also considered, but due to antialiasing, too simple lighting techniques, texturing simplifications (bump-mapping) and lack of raytracing, obtained results could be unreliable. Therefore instead popular datasets with well-defined ground truth data were chosen.
 
 
+\subsection{Post-processing trajectory fitting}
 
 
-
-
-
+todo cite the SVD-ish paper
