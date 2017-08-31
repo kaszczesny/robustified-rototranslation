@@ -5,10 +5,12 @@ This chapter contains thorough analysis of proposed algorithm. Firstly, algorith
 
 Note: considerations, improvements and modifications of the original algorithm are \textbf{emphasized}.
 
+todo: 
+
 median filter; regularize before and after Kalman
 
 
-scale from dimensions of known real-world objects, such as road signs or license plates
+? scale from dimensions of known real-world objects, such as road signs or license plates
 
 
 
@@ -167,7 +169,7 @@ Proposed procedure also has parameters, but there are few advantages:
 
 Fig.~\ref{fig:bucket} illustrates that additional pixels were considered further for being edges. However, edges added by this method are not very stable and tend to be nonetheless untraceable in later frames (they do not exhibit the \textit{repetivity} property).
 
-TODO: figure
+todo: figure
 
 \subsubsection{Second test}
 \label{edge_second}
@@ -464,7 +466,7 @@ Since calculated transformation between the two frames is supposed to be the opt
 
 \subsection{Directed matching}
 
-pokazac wyfilotwane outliery
+todo: pokazac wyfilotwane outliery
 
 %directed match
 %
@@ -499,7 +501,7 @@ Because $\rho_c > 0$, this line is reducted to a halfline.  Halfline starting at
 %  motion consistency
 Starting at the most possible point, searching is performing by alternating between one direction and the other. If currently checked pixel of the edge mask contains a Keyline, it is considered a match, however that match still needs to be evaluated. Gradient on those matching pixels needs to be similar enough in the means of gradient angle difference and gradient modulus. Also, potential match needs to conform to the motion model.
 
-%rownanie, costam costam, ogarnialismy
+todo: rownanie, costam costam, ogarnialismy
 
 This provides additional outlier rejection - any match that is not compatible with model is rejected. This means that any Keyline which motion is different from the most of them will most likely belong to a object moving independently from the scene, as mentioned in /rozdzial costam/ 
 
@@ -529,6 +531,7 @@ Having in mind previous assumption, that might not always be the case. Objects m
 
 \subsection{Depth reestimation}
 
+ todo:
  kalman fiter
 
  ...
@@ -537,14 +540,32 @@ Having in mind previous assumption, that might not always be the case. Objects m
 
 \subsection{Scale correction}
 
-
+ zauwazylismy ze dopoki nie ma zbieznosci to shrinking factor za bardzo oscyluje, wiec jest liczony dopiero po inicjalizacji systemu, tj 20 klatek
+ 
+ todo:
  optional estimate rescaling
 
- according to Tarrio et al, EKF is biased in rho estimation, so a global "shrinking factor" can be applied to depths and uncertainties.
+ according to Tarrio and Pedre, EKF is biased in rho estimation, so a global "shrinking factor" can be applied to depths and uncertainties.
 
 todo 2x depth
 
+This doesn't remedy the fundamental problem of scale ambiguity in the monocular systems. To fix this problem real-life dimensions of an object present in starting frames are needed. Some objects having known, well defined shape and size that are ever-present in urban environments are traffic signs and license plates. Solution for identifying those objects are:
+\begin{itemize}
+	\item Haar feature-based cascade classifier, then ORB
+	\item Neural Networks
+	\item SVN
+	\item morphological operations
+	\item detecting edges of an object and applying Hough transform on the edges
+	\item Robust license plate detection using image saliency /citeme/
+\end{itemize}
+
+This however means additional, heavy computing cost and would not fit the designated platform and moreover no simple or easy to implement out-of-the-box implementation was found thus moving this problem out of the scope of this thesis.
+
 % ----------------------
+\subsection{Artificial data tests}
+
+Along with data from previously mentioned datasets, some tests on generated data were performed, mainly for EdgeFinder part of the algorithm. That way we could see how difficult edges (hard angles (i.e. T,Y,L,+ shaped) or circles) are thinned, joined, fragmented and how gradient on such edges will behave.
+2D transformations are a special case of 3D ones, so it was also tested how those will be recovered, however lack of depth data generated a lot of false positives. Rendering a sequence in a computer 3D environment was also considered, but due to antialiasing, poor lighting techniques that are processor-friendly, texturing(bump-mapping) and raytracing often used by those types of environments they could falsify obtained information. Because of that datasets with well-defined ground truth were chosen instead.
 
 
 
