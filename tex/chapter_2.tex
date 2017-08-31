@@ -7,13 +7,6 @@ Note: considerations, improvements and modifications of the original algorithm a
 
 median filter; regularize before and after Kalman
 
-rho initialization (noise instead of ones)
-
-initialization from classical feature matching algorithm
-
-usage of corners
-
-
 
 scale from dimensions of known real-world objects, such as road signs or license plates
 
@@ -269,8 +262,16 @@ Influence of all aforementioned tests to final result is depicted for an exempla
 
 After Keyline has been successfully identified on image, a data structure described in Section~\ref{sec:struct} is populated with obtained data. This step is different for the very first processed frame, because its Keylines must have some initial depth values. During first tests, a constant $\rho = 1$ was used. Then for some time explicit Kinect depth map was used, as it was available in the TUM dataset. Finally, after other ares of algorithm have been improved, it was observed that in most cases quick convergence (5-10 frames) could be achieved by \textbf{initializing depth with random values}, even with images scaled down by 80\% (to 128 by 96 pixels). Convergence depends on speed of camera during these first frames. Overall, this is much better result than in \cite{jose2015realtime}, where 2-5 seconds needed for depth convergence were reported. Noise was generated using normal distribution with parameters chosen for each dataset: $N(2,0.5)$ for TUM and $N(10,3)$ for KITTI.
 
+
+Some thought was given to more elaborate initialization schemes. For example, todo cite uses feature points during initialization in order to quicker determine scene geometry. Feature point descriptors, such as SIFT \cite{sift}, are suited 
+initialization from classical feature matching algorithm
+
+usage of corners
+
+
 todo figure
-todo 2x depth
+
+
 
 \subsection{Keyline joining}
 
@@ -332,18 +333,18 @@ where:
 	\item[$\psi$] warping function,
 	\item[$\vec{v}$] camera translation (3-tuple),
 	\item[$\vec{\omega}$] camera azimuth rotation in axis-angle notation\footnote{Axis-angle vector $\vec{\omega}$ describes right-hand rotation by $||\vec{\omega}||$ radians about $O\omega$ axis.} (3-tuple),
-	\item[$ \mathfrak{exp}$] matrix exponentiation function which can be approximated using Euler-Rodriguez formula \cite{opencv}.
+	\item[$ \mathfrak{exp}$] matrix exponentiation function which can be approximated using Euler-Rodrigues formula \cite{opencv}.
 \end{eqwhere}
 
 
 \subsection{Auxiliary image}
 \label{sec:aux}
 
-Auxiliary image is a lookup table that speeds up minimization. It is a matrix of size equal to the image. An entry in the matrix is nonzero if distance from its coordinates to closest Keyline's $q$ is lower than a search radius $r_search$, usually equal to 5 pixels. Then such entry contains a reference to the found closest Keyline.
+Auxiliary image is a lookup table that speeds up minimization. It is a matrix of size equal to the image. An entry in the matrix is nonzero if distance from its coordinates to closest Keyline's $q$ is lower than a search radius $r_{search}$, usually equal to 5 pixels. Then such entry contains a reference to the found closest Keyline.
 
 During minimization, Keylines from previous frame are projected to 3D space using depth information ($\rho$), rototranslated, and then projected back to image plane. Positions obtained from the back-projection are compared against the auxiliary image of next frame to check if such position corresponds to a~Keyline (and to which).
 
-Auxiliary image creation can be perceived as widening of an edge by ``sliding`` its pixels along $\vec{g}$. A depiction is presented in Fig.~todo. Because pixel positions are discrete, \textbf{increments of this sliding should be lower than 1}. Otherwise, when $\vec{g}$ is not perpendicular to pixel grid, creation process will occasionally skip over some pixels. This leads to discontinuities (gaps) in auxiliary image (see Fig.~todo), which can later bias the minimization by producing false local minima.
+Auxiliary image creation can be perceived as widening of an edge by ``spanning`` its pixels along $\vec{g}$. A depiction is presented in Fig.~todo. Because pixel positions are discrete, \textbf{increments of this spanning should be lower than 1 px}. Otherwise, when $\vec{g}$ is not perpendicular to pixel grid, edge widening process will occasionally skip over some pixels. This leads to discontinuities (gaps) in auxiliary image (see Fig.~todo), which can later bias the minimization by producing false local minima.
 
 Some gaps are unavoidable, however, because $\vec{g}$ is available only in places where there is a~Keyline. Even with subpixel position precision, there still is only at most one Keyline per pixel. If edge has any curvature, then at some radius auxiliary image will feature spikes. They are visible in top left corner of Fig.~todo.
 
@@ -357,9 +358,9 @@ todo: figure
 During each iteration of minimization, reprojected old Keylines and new Keylines are pre-matched, using auxiliary image. In order to determine validity and score of this match, following criteria are tested. Result of applying them on a frame is depicted in Fig.~\ref{fig:minim_why}.
 
 \begin{enumerate}
-	\item Depth uncertainty -- Keylines where $\sigma_{\rho_{p}}$ exceeds its 95. percentile are rejected.
 	\item History -- if $k_{p}$ is lower than some constant threshold $k_{thresh}$ (e.g. 2), then this Keyline is considered to be too uncertain (its history is too short) and it does not take part in minimization at all. This test is performed only after $k_{thresh}$ frames have been wholly processed by the algorithm in order to allow system to initialize.
-	\item Gradient similarity -- score based on angle between $\vec{g_p}$ and $\vec{g_c}$, as well as on their lengths, can not exceed a threshold.
+	\item Depth uncertainty -- Keylines where $\sigma_{\rho_{p}}$ exceeds its 95. percentile are rejected.
+	\item Gradient similarity -- score based on angle between $\vec{g_p}$ and $\vec{g_c}$, as well as on their magnitudes, can not exceed a threshold.
 \end{enumerate}
 
 \begin{figure}[ht]
@@ -369,14 +370,15 @@ During each iteration of minimization, reprojected old Keylines and new Keylines
 \end{figure}
 
 \subsection{Energy minimization}
+\label{sec:energyminim}
 
 Each minimization iteration executes following steps:
 \begin{itemize}
 	\item Using previously estimated Jacobian matrix $J$ and other information from previous iteration, propose new parameter vector in the 6-dimensional parameter space $\left[ \vec{v},\ \ \vec{\omega} \right]$.
 	\item For each Keyline in previous frame:
 	\begin{itemize}
-		\item Perform reprojection: $q_{t} = \left( \gamma^{-1} \circ \psi \circ \gamma \right) \left( q_p, \rho_{p} \right)$.
-		\item Find closest $q_{c}$ that conforms to similarity criteria.
+		\item Perform reprojection: $h_{t} = \left( \gamma^{-1} \circ \psi \circ \gamma \right) \left( h_p, \rho_{p} \right)$.
+		\item Find closest $h_{c}$ that conforms to similarity criteria.
 		\item Calculate the residual.
 	\end{itemize}
 	\item Calculate overall iteration score.
@@ -385,15 +387,15 @@ Each minimization iteration executes following steps:
 Minimized function takes form defined in Eq.~\ref{eq:minim}. Distance between matched points is casted onto edge gradient, because \textit{``location information is only present in direction [of the gradient]``}  \cite{jose2015realtime}. The matching function $M$ is not differentiable, making it impossible to calculate Jacobian of $\zeta$ analytically. Therefore Jacobians were calculated using the same formulas as in Tarrio and Pedre's implementation.
 
 \begin{equation}
-E = \zeta \left( \vec{v},\ \ \vec{\omega} \right) = \sum_{i}^{p} \frac{w_i}{\sigma_{\rho_{i}}^2} \left[ \underset{q_t, q_c}{M} \left( \left( q_t \right) \bullet \vec{g_c} \right) \right] ^2
+E = \zeta \left( \vec{v},\ \ \vec{\omega} \right) = \sum_{i}^{p} \frac{w_i}{\sigma_{\rho_{i}}^2} \left[ \underset{h_t, h_c}{M} \left( \left( h_t \right) \bullet \vec{g_c} \right) \right] ^2
 \label{eq:minim}
 \end{equation}
 where:
 \begin{eqwhere}[2cm]
 	\item[$w_i$] weight (square of the Huber norm \cite{huber1964robust}),
-	\item[$q_t$] transformed $q_p$, $q_{t} = \gamma^{-1}\left(\ \  \psi \left( \vec{v},\ \vec{\omega},\ \gamma \left( q_p, \rho_{p} \right) \right)\ \  \right)$,
-	\item[$M$] matching function, $\underset{q_t}{M}(\bullet) = \begin{cases} 
-	\bullet, & \exists q_c : q_t \textrm{ matches } q_c \\
+	\item[$h_t$] transformed $h_p$, $h_{t} = \gamma^{-1}\left(\ \  \psi \left( \vec{v},\ \vec{\omega},\ \gamma \left( h_p, \rho_{p} \right) \right)\ \  \right)$,
+	\item[$M$] matching function, $\underset{h_t}{M}(\bullet) = \begin{cases} 
+	\bullet, & \exists h_c : h_t \textrm{ matches } h_c \\
 	r_{search}, & otherwise
 	\end{cases}$
 \end{eqwhere}
@@ -425,37 +427,35 @@ This was tested in GNU Octave, using OpenCV \cite{opencv} linear algebra routine
 \end{table}
 
 
-Estimate uncertainty (covariance matrix) as $\left( J^T J \right) ^ {-1}$.
+After optimal transformation parameters have been found, uncertainty of the result is estimated as covariance matrix in form $\left( J^T J \right) ^ {-1}$. \textbf{If $J^T J$ is ill-conditioned, then it is assumed that minimization has failed.} For example, this can happen if no matches at all were found. Then all residuals will be equal and $\zeta$ will be completely flat locally.
+
+Moreover, after last minimization iteration, the $m_{pf}$ field of previous Keylines is populated. For every Keyline that was successfully matched to a current Keyline, reference to this current Keyline is saved in the said field.
 
 \subsection{Initial conditions}
 
-Levenberg-Marquardt algorithm is prone to falling to local minima. Generally, global minimization of arbitrary function is a challenging problem with no infallible solution. There is a plethora of heuristic methods: evolutionary algorithms, simulated annealing, physical simulations, etc. However, they are unsuitable for real-time applications.
-Two initial conditions are tested for a few (e.g. 3) iterations. Better result is then selected and minimization is continued for more 
+Levenberg-Marquardt algorithm is prone to falling to local minima. Generally, global minimization of arbitrary function is a challenging problem with no infallible solution. There is a~plethora of heuristic methods: evolutionary algorithms, simulated annealing, physical simulations, etc. However, they are unsuitable for real-time applications \cite{szeliski}.
 
+In case of LM, crucial issue is choice of initial condition vectors. Following \cite{jose2015realtime}, two initial conditions were tested, and calculations proceeded using better one. These vectors are: $\vec{0}$ and rototranslation of the previous frame. If linear and angular instantaneous velocities of the camera do not change rapidly, it is reasonable to assume that previous and current velocities are not far apart in the parameter space.
+
+One exception is the special case when too few Keylines are matched and system decides to reinitialize. This usually happens when number of detected Keylines also drops -- for instance in the ``\textit{fr2\_360\_kidnap}`` sequence. In the context of algorithm results postprocessing (i.e. fitting the estimated camera trajectory to ground truth data), it is better to assume no prior knowledge and overwrite the previous parameter vector with zeros.
+
+During some tests, the prior rototranslation vector for the first frame in sequence was obtained from ground truth data in hope of accelerating algorithm convergence (and to assess whether it could retain good information that was fed to it). However, usually ground truth data uses other reference frame, as position of the laser positioning system is different from position of the camera itself.
 
 %--
 
 \section{Mapping}
 
-For obtained information to be useful in the next iteration of the algorithm, it needs to be preserved. Since this is not a full SLAM system, data needs to be altered and passed on to next array of Keylines. This is achieved by a mapping step: Keylines from previous iteration are matched to Keylines currently being processed. Data that is passed on contains:
+For obtained information to be useful in the next iteration of the algorithm, it needs to be preserved. Since this is not a full SLAM system, data needs to be updated and passed on to next array of Keylines. This is achieved by the mapping step: Keylines from previous iteration are matched to Keylines that are currently being processed. Data that is passed between matched Keylines on contains:
 
 \begin{itemize}
-	\item estimated depth rho
-	\item history h
-	\item gradient g
-	\item norm n
-	\item index of matching Keyline and its position
+	\item estimated $\rho$ and $\sigma_{\rho}$, that need to be refined with the Kalman filter,
+	\item history ($k$),
+	\item index of matching Keyline from the previous frame.
 \end{itemize}
 
-\subsection{Forward rotating}
+Initial matching is also performed during minimization. As it was noted in Section~\ref{sec:rebvo_outline}, it is quite coarse, however. In addition, there is another reason for such elaborate match searching scheme. After system has been initialized (i.e. after $k_{thresh}$ frames have been processed), history test will become active in the minimizer. Only Keylines already having some matching history will have possibility of being matched again and propagated further. On the other hand, ``new`` Keylines with no prior history won't have opportunity of gaining it, because they will be always skipped in the very first minimizer test and not matched.
 
-%forward rotate
-%
-%KL pixel positions, represented in normalized homo coords, are rotated using obtained rotation
-%
-%if they don't go to infinity, they are projected back onto image plane
-%
-%nasty gradient rotation
+Finally, the mapping step contains depth information inter-frame processing procedures.
 
 \subsection{Forward matching}
 
@@ -464,7 +464,7 @@ For obtained information to be useful in the next iteration of the algorithm, it
 %using information about which KLs were matched to which, following fields are propagated: rho, s\_rho, gradient, history and index of the matched KL
 %
 % todo: could new edges apprer without directed match
-Since calculated transformation between the two frames is supposed to be the optimal one, after applying it to 3D positions of Keylines and casting them into the image plane we should obtain their positions on the next frame. This was already done at the minimization step; said Keylines were then paired with their corresponding match using property forward. Using this information, we are able to rewrite aforementioned data.
+Since calculated transformation between the two frames is supposed to be the optimal one, after applying it to 3D positions of previous Keylines and casting them into the image plane, their expected positions on the next frame will be obtained. This was already done at the minimization step; said Keylines were then paired with their corresponding match using property $m_pf$ (see conclusion of Section~\ref{sec:energyminim}). Forward matching simply uses this information and copies appropriate field values from previous Keylines to their new forward matched counterparts. If later a better match is found, copied data will be simply overwritten. \textit{Forward} refers to the fact that minimizer creates initial matches from previous frame to current.
 
 \subsection{Directed matching}
 
@@ -542,6 +542,7 @@ Having in mind previous assumption, that might not always be the case. Objects m
 
  according to Tarrio et al, EKF is biased in rho estimation, so a global "shrinking factor" can be applied to depths and uncertainties.
 
+todo 2x depth
 
 % ----------------------
 
