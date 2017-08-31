@@ -1,4 +1,5 @@
 \chapter{Discussion of results}
+octave opencv mex
 
 % global results for various datasets
 This section focuses on discussing algorithm results obtained from longer sequences. Tested sequences come from KITTI and TUM public datasets. Results consists mainly from sequences:
@@ -11,20 +12,21 @@ This section focuses on discussing algorithm results obtained from longer sequen
 	\item TUM fr3 teddy - slow sweep around a big plush teddy,
 	\item KITTI 00 - video taken from a camera mounted on front of a car.
 \end{itemize}
-All of the sequences mentioned above include ground truth (laser positioning system in case of TUM, DGPS in case of KITTI), which is essential for debugging purposes and validation.
+All of the sequences mentioned above include ground truth (laser positioning system in case of TUM, DGPS in case of KITTI), which is essential for debugging purposes and validation. Also, these datasets are commonly used for visual odometry systems evaluation.
 
 %trajektoria
 %	xyz, zaznaczone nok
 As the main goal of the algorithm is to estimate transformation between images, most care was put into making sure that the system correctly calculates velocity and rotation of the camera in respect to ground truth. Obtained trajectory was fitted onto ground truth trajectory using fminsearch function available in Matlab.
 /teddy/
 /long office household/
+/deskperson/
 Frames in which algorithm had to reinitialize are marked by a black circle, and are most likely a result of not having a stable supply of matched Keypoint and thus not having a reliable enough rototranslation. In case of /teddy/ sequence there are 4 cases of reinitialization: frames 271 272, 280, 386 387, 394. System recovered from three out of four of them, but the third was fatal in a sense that scale and starting rototranslation were lost, and in extension that trajectory as a whole can not be well fitted with ground truth, however partitioned sections can:
 /teddy\_full/
 /teddy\_nok/
 /teddy\_1/
 /teddy\_2/
 
-% moze cos o tym household, ja tego nie ma
+% moze cos o tym household, ja tego nie mam
 %  KITTI tez by bylo ok
 
 
@@ -34,6 +36,12 @@ Influence of scale of the image was tested; sequence fr3\_teddy was scaled by 1/
 
 %sredni blad/dryft
 %jakas tabelka moze? trzeba to w sensie sredniokwadratowym obliczyc
+
+long office ok3- 3.6038m/s
+teddy long - 1.8033m/s
+teddy short - 0.57838m/s
+desk with person outlier rej - 0.43574m/s
+				 outlier depth - 0.092159m/s
 
 %nok, figura z  edgefindera
 
