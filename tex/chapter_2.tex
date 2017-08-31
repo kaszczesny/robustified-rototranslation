@@ -15,7 +15,7 @@ scale from dimensions of known real-world objects, such as road signs or license
 \section{Notation (Keyline structure) and {\tt main} loop}
 \label{sec:struct}
 
-Pixels that contain subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}. When $(n+1)$-th frame of video input is being processed, only $n$-th and $(n+1)$-th Keyline arrays are available; $n-1$-th is discarded, as it is no longer needed. This is presented in Fig.~\ref{fig:flowchart_main}. Fields of $n$-th Keyline array will be denoted with subscript $_{p}$ (for \textit{previous}) and $_{t}$ (for \textit{transformed}). Subscript $_{c}$ (\textit{current}) will be associated with $(n+1)$-th frame.
+Pixels that contain subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}. When $(n+1)$-th frame of video input is being processed, only $n$-th and $(n+1)$-th Keyline arrays are available; $n-1$-th is discarded, as it is no longer needed. This is presented in Fig.~\ref{fig:flowchart_main}. Fields of $n$-th Keyline array will be denoted with subscript $_{p}$ (for \textit{previous}) and $_{t}$ (for \textit{transformed}). Subscripts $_{c}$ (\textit{current}) and $_{r}$ (\textit{rotated}) will be associated with $(n+1)$-th frame.
 
 \begin{figure}[hp]
 	\begin{footnotesize}
@@ -257,6 +257,8 @@ Influence of all aforementioned tests to final result is depicted for an exempla
 	\label{fig:edgeprob}
 \end{figure}
 
+todo Czy wykrywanie krawedzi jest robust na zmiany jasnosci;
+
 
 \subsection{Depth initialization}
 
@@ -340,7 +342,7 @@ where:
 \subsection{Auxiliary image}
 \label{sec:aux}
 
-Auxiliary image is a lookup table that speeds up minimization. It is a matrix of size equal to the image. An entry in the matrix is nonzero if distance from its coordinates to closest Keyline's $q$ is lower than a search radius $r_{search}$, usually equal to 5 pixels. Then such entry contains a reference to the found closest Keyline.
+Auxiliary image is a lookup table that speeds up minimization. It is a matrix of size equal to the image. An entry in the matrix is nonzero if distance from its coordinates to closest Keyline's $q$ is lower than a search radius $r_{search}$, usually equal to 5 pixels. Then such entry contains a~reference to the found closest Keyline.
 
 During minimization, Keylines from previous frame are projected to 3D space using depth information ($\rho$), rototranslated, and then projected back to image plane. Positions obtained from the back-projection are compared against the auxiliary image of next frame to check if such position corresponds to a~Keyline (and to which).
 
@@ -453,7 +455,7 @@ For obtained information to be useful in the next iteration of the algorithm, it
 	\item index of matching Keyline from the previous frame.
 \end{itemize}
 
-Initial matching is also performed during minimization. As it was noted in Section~\ref{sec:rebvo_outline}, it is quite coarse, however. In addition, there is another reason for such elaborate match searching scheme. After system has been initialized (i.e. after $k_{thresh}$ frames have been processed), history test will become active in the minimizer. Only Keylines already having some matching history will have possibility of being matched again and propagated further. On the other hand, ``new`` Keylines with no prior history won't have opportunity of gaining it, because they will be always skipped in the very first minimizer test and not matched.
+At this stage initial matching has already been performed during minimization. As it was noted in Section~\ref{sec:rebvo_outline}, it is quite coarse, however. In addition, there is another reason for such elaborate match searching scheme. After system has been initialized (i.e. after $k_{thresh}$ frames have been processed), history test will become active in the minimizer. Only Keylines already having some matching history will have possibility of being matched again and propagated further. On the other hand, ``new`` Keylines with no prior history will not have opportunity of gaining it, because they will be always skipped in the very first minimizer test and not matched.
 
 Finally, the mapping step contains depth information inter-frame processing procedures.
 
@@ -481,10 +483,9 @@ pokazac wyfilotwane outliery
 % todo: check if perpedicular displacement if really common
 Considering that there might have been some outliers that affected the quality calculated transformation and that potentially valid matches with no history need a chance to pick it up, it is essential to extend the list of matches to include Keylines that have not been back-projected perfectly.
 
-So as to make finding candidates for matching easier, current Keyline array is reverse-rotated\footnote{Rotated using rotation opposite to rotation $\vec{\omega}$ that was obtained during minimization.} and casted onto the old edge map. This decreases the distance between corresponding points and reduces the problem to a pure translatory problem. Translation $\vec{v}$ calculated during minimization, along with the reverse-rotated $h_c$, defines for each current Keyline a line. (todo details)
+So as to make finding candidates for matching easier, current Keyline array is reverse-rotated\footnote{Rotated using rotation opposite to rotation $\vec{\omega}$ that was obtained during minimization.} and casted onto the old edge map. This decreases the distance between corresponding points and reduces the problem to a pure translatory problem. Translation $\vec{v}$ calculated during minimization, along with the reverse-rotated $h_r$, defines for each current Keyline a line. (todo details)
 
-
-Because $\rho_c > 0$, this line is reducted to a halfline.  Halfline starting at projected point two-dimensional position and going in the direction of camera 2D velocity is defined - possible matches should lie on that halfline, because of the assumption that rho of any Keyline should be positive. To further constrain search area, maximum and minimum pixel displacement are estimated. Keylines that lie on such defined segment are possible candidates for a match.
+Because of assumption that $\rho_r > 0$, search line is reduced to a halfline. It starts at projected point $h_r$ and goes in the direction of camera motion, projected on 2D plane. A possible match should lie on the halfline. To further constrain search area, maximum and minimum pixel displacements are estimated, leaving only a line segment. Keylines that lie within it, are possible candidates for matches.
 
 % search from starting point alternating between one direction and the other
 %
@@ -497,9 +498,9 @@ Because $\rho_c > 0$, this line is reducted to a halfline.  Halfline starting at
 %  gradient modulus similarity
 %
 %  motion consistency
-Starting at the most possible point, searching is performing by alternating between one direction and the other. If currently checked pixel of the edge mask contains a Keyline, it is considered a match, however that match still needs to be evaluated. Gradient on those matching pixels needs to be similar enough in the means of gradient angle difference and gradient modulus. Also, potential match needs to conform to the motion model.
+Searching starts at a point that is estimated to be a most possible match. The procedure is performed checking pixels closer to segment ends, in an alternating manner. If an inspected pixel a previous Keyline, it is considered a possible match, that still needs to be validated. Firstly, $\vec{g_p}$ and $\vec{g_r}$ are compared, analogously to the third keyline matching test of the minimizer (see Section~\ref{sec:minim_match}). Secondly, potential match needs to conform to the motion model.
 
-%rownanie, costam costam, ogarnialismy
+%rownanie, costam costam, ogarnialismy ----- so much R.I.P.
 
 This provides additional outlier rejection - any match that is not compatible with model is rejected. This means that any Keyline which motion is different from the most of them will most likely belong to a object moving independently from the scene, as mentioned in /rozdzial costam/ 
 
