@@ -263,10 +263,10 @@ Influence of all aforementioned tests to final result is depicted for an exempla
 After Keyline has been successfully identified on image, a data structure described in Section~\ref{sec:struct} is populated with obtained data. This step is different for the very first processed frame, because its Keylines must have some initial depth values. During first tests, a constant $\rho = 1$ was used. Then for some time explicit Kinect depth map was used, as it was available in the TUM dataset. Finally, after other ares of algorithm have been improved, it was observed that in most cases quick convergence (5-10 frames) could be achieved by \textbf{initializing depth with random values}, even with images scaled down by 80\% (to 128 by 96 pixels). Convergence depends on speed of camera during these first frames. Overall, this is much better result than in \cite{jose2015realtime}, where 2-5 seconds needed for depth convergence were reported. Noise was generated using normal distribution with parameters chosen for each dataset: $N(2,0.5)$ for TUM and $N(10,3)$ for KITTI.
 
 
-Some \textbf{thought was given to more elaborate initialization schemes}. For example, todo cite uses feature points during initialization in order to quicker determine scene geometry. Feature point descriptors, such as SIFT \cite{sift}, are well suited for this task. Their main disadvantage is their complexity. 
-initialization from classical feature matching algorithm
+Some \textbf{thought was given to more elaborate initialization schemes}. Feature point correspondences could be used in order to determine scene geometry in a quicker and more robust way, while rest of algorithm would still operate on edges. Feature point descriptors, such as SIFT \cite{sift}, or even simpler corner detectors \cite{harris} \cite{shi1994good}, are well suited for this task.
 
-usage of corners
+Their main disadvantage is their complexity, especially in case of more robust ones, like SIFT. They need to be somehow matched -- this becomes unfeasible for real-time applications once number feature points is too large \cite{szczesny}. This in turn means that many parameters would have to be carefully chosen so that a consumer-grade mobile system would not be flooded by excessive features and remain responsive. Finally, feature point descriptors encode larger pixel neighborhood than edges, but they lack structural information, meaning that match is likely produce more outliers, that need to be dealt with (filtered).
+
 
 
 todo figure
@@ -433,7 +433,7 @@ Moreover, after last minimization iteration, the $m_{pf}$ field of previous Keyl
 
 \subsection{Initial conditions}
 
-Levenberg-Marquardt algorithm is prone to falling to local minima. Generally, global minimization of arbitrary function is a challenging problem with no infallible solution. There is a~plethora of heuristic methods: evolutionary algorithms, simulated annealing, physical simulations, etc. However, they are unsuitable for real-time applications \cite{szeliski}.
+Levenberg-Marquardt algorithm is prone to falling to local minima. Repetitive patterns, such as fences, are especially challenging (see Fig.~2 in \cite{parra2008robust}). Generally, global minimization of arbitrary function is an intricate problem with no infallible solution. There has been proposed a~plethora of heuristic methods: evolutionary algorithms, simulated annealing, physical simulations (Momentum), etc. However, they are unsuitable for real-time applications \cite{szeliski}.
 
 In case of LM, crucial issue is choice of initial condition vectors. Following \cite{jose2015realtime}, two initial conditions were tested, and calculations proceeded using better one. These vectors are: $\vec{0}$ and rototranslation of the previous frame. If linear and angular instantaneous velocities of the camera do not change rapidly, it is reasonable to assume that previous and current velocities are not far apart in the parameter space.
 
@@ -459,12 +459,8 @@ Finally, the mapping step contains depth information inter-frame processing proc
 
 \subsection{Forward matching}
 
-%forward match
-%
-%using information about which KLs were matched to which, following fields are propagated: rho, s\_rho, gradient, history and index of the matched KL
-%
-% todo: could new edges apprer without directed match
-Since calculated transformation between the two frames is supposed to be the optimal one, after applying it to 3D positions of previous Keylines and casting them into the image plane, their expected positions on the next frame will be obtained. This was already done at the minimization step; said Keylines were then paired with their corresponding match using property $m_pf$ (see conclusion of Section~\ref{sec:energyminim}). Forward matching simply uses this information and copies appropriate field values from previous Keylines to their new forward matched counterparts. If later a better match is found, copied data will be simply overwritten. \textit{Forward} refers to the fact that minimizer creates initial matches from previous frame to current.
+
+Since calculated transformation between the two frames is supposed to be the optimal one, after applying it to 3D positions of previous Keylines and casting them into the image plane, their expected positions on the next frame will be obtained. This was already done at the minimization step; said Keylines were then paired with their corresponding match using property $m_pf$ (see conclusion of Section~\ref{sec:energyminim}). Forward matching simply uses this information and copies appropriate field values from previous Keylines to their new forward matched counterparts. If later a better match is found, already copied data will be simply overwritten. \textit{Forward} refers to the fact that minimizer creates initial matches from previous frame to current.
 
 \subsection{Directed matching}
 
@@ -483,8 +479,12 @@ pokazac wyfilotwane outliery
 %   caonstrain displacement search radius \& define starting point
 %
 % todo: check if perpedicular displacement if really common
-Considering that there might be some outliers affecting the quality of rho and the calculated transformation, it is needed to expand the list of matches to include Keylines that might not have been projected perfectly.
-To make it easier to find candidates for matching, Keylines array is again back-rotated and casted onto the old edge map mask. This decreases the distance between corresponding points and makes the problem pure translatory. Halfline starting at projected point two-dimensional position and going in the direction of camera 2D velocity is defined - possible matches should lie on that halfline, because of the assumption that rho of any Keyline should be positive. To further constrain search area, maximum and minimum pixel displacement are estimated. Keylines that lie on such defined segment are possible candidates for a match.
+Considering that there might have been some outliers that affected the quality calculated transformation and that potentially valid matches with no history need a chance to pick it up, it is essential to extend the list of matches to include Keylines that have not been back-projected perfectly.
+
+So as to make finding candidates for matching easier, current Keyline array is reverse-rotated\footnote{Rotated using rotation opposite to rotation $\vec{\omega}$ that was obtained during minimization.} and casted onto the old edge map. This decreases the distance between corresponding points and reduces the problem to a pure translatory problem. Translation $\vec{v}$ calculated during minimization, along with the reverse-rotated $h_c$, defines for each current Keyline a line. (todo details)
+
+
+Because $\rho_c > 0$, this line is reducted to a halfline.  Halfline starting at projected point two-dimensional position and going in the direction of camera 2D velocity is defined - possible matches should lie on that halfline, because of the assumption that rho of any Keyline should be positive. To further constrain search area, maximum and minimum pixel displacement are estimated. Keylines that lie on such defined segment are possible candidates for a match.
 
 % search from starting point alternating between one direction and the other
 %
@@ -525,7 +525,7 @@ As edges of real-life objects are seldom very jagged, difference in depth betwee
 %  if tests are passed, rho and s\_rho are smoothened taking weighted mean of its value and its neighbors
 
 % image: show that assumption isn't ALWAYS true
-Having in mind previous assumption, that might not always be the case. Objects might lie on the scene in such a way, that their edges as seen by the camera might intersect and form a continuous curve. This is why additional test on neighboring pixels are needed. First, they need to lie on approximately the same distance from the camera. Because depth is estimated, uncertainty on said estimation is calculated in /gdzie to bylo?/ step. If difference between estimated depth for two neighbors outweights sum of uncertainties, it is assumed that they belong to different objects. This test is purely probabilistic. Second, angle between gradients of neighboring Keylines is checked. Again, if its greater than previously defined threshold, regularization is not performed.
+Having in mind previous assumption, that might not always be the case. Objects might lie on the scene in such a way, that their edges as seen by the camera might intersect and form a~continuous curve. This is why additional test on neighboring pixels are needed. First, they need to lie on approximately the same distance from the camera. Because depth is estimated, uncertainty on said estimation is calculated in /gdzie to bylo?/ step. If difference between estimated depth for two neighbors outweights sum of uncertainties, it is assumed that they belong to different objects. This test is purely probabilistic. Second, angle between gradients of neighboring Keylines is checked. Again, if its greater than previously defined threshold, regularization is not performed.
 
 \subsection{Depth reestimation}
 

@@ -152,7 +152,7 @@ One way is to use an IMU (Inertial Measurement Unit - accelerometer \& gyroscope
 
 Another approach is to use explicit depth data, e.g. RGB-D (Red, Green, Blue and Depth) from Kinect \cite{yu2013improved}. This helps in global scene scale estimation. A~disadvantage is that such devices have narrow depth detection range (usually up to few meters \cite{accuracy_and_resoulution}) and are not available in consumer-grade mobile devices.
 
-In \cite{robust_scale} a novel approach is proposed: by assuming a known, constant camera height above ground plane, global scale can be estimated. This step is performed between all consecutive frames, independently from main visual odometry algorithm.
+In \cite{robust_scale} a novel approach is proposed: by assuming a known, constant camera height above ground plane, global scale can be estimated. This step is performed between all consecutive frames, independently from main visual odometry algorithm. In \cite{xiao2015novel}, a ground-extraction scheme is presented.
 
 A very frequent problem in pure visual monocular odometry is unbounded position drift over time. Each 3D transformation that is estimated between consecutive frames is an instantaneous linear and angular velocity. To obtain accumulated position and azimuth after given frame, individual velocities have to be integrated. Each estimation error gains significance with time. In literature two ways of mitigation are the most common.
 
@@ -192,6 +192,8 @@ todo:
 \cite{semi_dense} - semi-dense method
 
 \cite{a_stereo_visual} - comparison of feature detectors, consistency check
+
+\cite{gui2015robust} - mutual information instrad of features
 
 % -------------
 
