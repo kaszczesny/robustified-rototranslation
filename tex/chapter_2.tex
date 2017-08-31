@@ -73,10 +73,10 @@ Pixels that contain subpixel edge positions are called Keylines and, after edge 
 		
 		\begin{tabularx}{1.0\textwidth}{C{0.25} C{0.75}}
 			\toprule
-			\thead{Structure field\tnote{a}} & \thead{Description} \\
+			\thead{Structure field} & \thead{Description} \\
 			\midrule
 			$q = [q_{x},\ q_{y}]$ & subpixel position in image \\
-			$h = [h_{x},\ h_{y}]$ & normalized $q$: $h = \frac{q - [c_{x}\ c_{y}]}{f}$ \\
+			$h = [h_{x},\ h_{y}]$ & normalized\tnote{a} $q$: $h = q - [c_{x},\ c_{y}]$ \\
 			$\rho$, $\sigma_{\rho}$ & estimated inverse depth: $\frac{1}{Z}$, and its variance \\
 			$\rho_0$, $\sigma_{\rho_{0}}$ & inverse depth predicted by Kalman filter and its variance \\
 			$\vec{g}$ & edge gradient obtained from DoG \\
@@ -91,7 +91,7 @@ Pixels that contain subpixel edge positions are called Keylines and, after edge 
 		
 		\begin{tablenotes}
 			\footnotesize
-			\item[a] Jakiś komentarz\textellipsis
+			\item[a] Usage of normalized coordinates is more robust \cite{hartley1997defense}. In the implementation, $h$ is often also temporarily divided by $f$, so that calculations on homogeneous coordinates are more stable.
 		\end{tablenotes}
 		
 	\end{threeparttable}
@@ -263,7 +263,7 @@ Influence of all aforementioned tests to final result is depicted for an exempla
 After Keyline has been successfully identified on image, a data structure described in Section~\ref{sec:struct} is populated with obtained data. This step is different for the very first processed frame, because its Keylines must have some initial depth values. During first tests, a constant $\rho = 1$ was used. Then for some time explicit Kinect depth map was used, as it was available in the TUM dataset. Finally, after other ares of algorithm have been improved, it was observed that in most cases quick convergence (5-10 frames) could be achieved by \textbf{initializing depth with random values}, even with images scaled down by 80\% (to 128 by 96 pixels). Convergence depends on speed of camera during these first frames. Overall, this is much better result than in \cite{jose2015realtime}, where 2-5 seconds needed for depth convergence were reported. Noise was generated using normal distribution with parameters chosen for each dataset: $N(2,0.5)$ for TUM and $N(10,3)$ for KITTI.
 
 
-Some thought was given to more elaborate initialization schemes. For example, todo cite uses feature points during initialization in order to quicker determine scene geometry. Feature point descriptors, such as SIFT \cite{sift}, are suited 
+Some \textbf{thought was given to more elaborate initialization schemes}. For example, todo cite uses feature points during initialization in order to quicker determine scene geometry. Feature point descriptors, such as SIFT \cite{sift}, are well suited for this task. Their main disadvantage is their complexity. 
 initialization from classical feature matching algorithm
 
 usage of corners
