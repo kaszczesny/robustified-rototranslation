@@ -1,6 +1,46 @@
 \chapter{Discussion of results}
 
 % global results for various datasets
+This section focuses on discussing algorithm results obtained from longer sequences. Tested sequences come from KITTI and TUM public datasets. Results consists mainly from sequences:
+\begin{itemize}
+	\item TUM fr1 xyz - only translatory motions are present here, as stated by creators of this dataset "it's mainly for debugging purposes",
+	\item TUM fr2 desk - slow sweep around an office desk,
+	\item TUM fr2 desk with person - same as above, but present person moves the objects around, creating outliers,
+	\item TUM fr2 pioneer SLAM - robot with a mounted camera is trying to self-localize and map the room,
+	\item TUM fr3 long office household - slow sweep around two desks,
+	\item TUM fr3 teddy - slow sweep around a big plush teddy,
+	\item KITTI 00 - video taken from a camera mounted on front of a car.
+\end{itemize}
+All of the sequences mentioned above include ground truth (laser positioning system in case of TUM, DGPS in case of KITTI), which is essential for debugging purposes and validation.
+
+%trajektoria
+%	xyz, zaznaczone nok
+As the main goal of the algorithm is to estimate transformation between images, most care was put into making sure that the system correctly calculates velocity and rotation of the camera in respect to ground truth. Obtained trajectory was fitted onto ground truth trajectory using fminsearch function available in Matlab.
+/teddy/
+/long office household/
+Frames in which algorithm had to reinitialize are marked by a black circle, and are most likely a result of not having a stable supply of matched Keypoint and thus not having a reliable enough rototranslation. In case of /teddy/ sequence there are 4 cases of reinitialization: frames 271 272, 280, 386 387, 394. System recovered from three out of four of them, but the third was fatal in a sense that scale and starting rototranslation were lost, and in extension that trajectory as a whole can not be well fitted with ground truth, however partitioned sections can:
+/teddy\_full/
+/teddy\_nok/
+/teddy\_1/
+/teddy\_2/
+
+% moze cos o tym household, ja tego nie ma
+%  KITTI tez by bylo ok
+
+
+
+%czas wykonania
+Influence of scale of the image was tested; sequence fr3\_teddy was scaled by 1/3th and 1/5th, respectively. 249 images from said sequence were processed and timed. Results per frame are presented on /plot/. Larger images had more Keylines and, in extension, took about 1.81 more time to process. It should be noted that between runtimes same frame is more likely to take more time to process, meaning that increase in Keyline number on the same image was more or less the same.
+
+%sredni blad/dryft
+%jakas tabelka moze? trzeba to w sensie sredniokwadratowym obliczyc
+
+%nok, figura z  edgefindera
+
+%ciekawostki
+
+
+
 
 
 \begin{lstlisting}
