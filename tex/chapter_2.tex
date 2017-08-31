@@ -301,13 +301,17 @@ Initially \underline{more edge joining strategies were considered}: morphologica
 
 \section{Edge tracking}
 
-Goal of edge tracking is to find 3D transformation (translation and rotation) that best describes transition between two consecutive frames.
+Goal of edge tracking is to find 3D transformation (translation and rotation) that best describes transition between two consecutive frames. Minimization is performed using Levenberg-Marquardt algorithm. Similarly to \cite{jose2015realtime}, implementation is based on \cite{madsen2004methods}.
+
+\subsection{Warping function}
+
+Given a 3-vector $\vec{v}$ describing 3D translation of camera 
+
+3D transformation that is 
+
+Two initial conditions are tested for a few (e.g. 3) iterations. Better result is then selected and minimization is continued for more 
 
 
-
-auxiliary image: a lookup table for minimizer
-
-estimate quantile - its purpose is to cutoff KLs that have too high uncertainty with respect to all KLs
 
 project KL\_prev to 3D using previously estimated rhos
 
@@ -347,7 +351,7 @@ transformation that resulted in lowest score is considered the optimal transform
 
 estimate uncertainty as inverse of final jacobian
 
-\subsection{Warping function}
+
 
 \subsection{Auxiliary image}
 
@@ -365,14 +369,19 @@ todo: figure
 
 \subsection{Keyline matching criteria}
 
-During each iteration of minimization, reprojected old Keylines and new Keylines are pre-matched, using auxiliary image. In order to determine validity and score of this match, following criteria are tested:
+During each iteration of minimization, reprojected old Keylines and new Keylines are pre-matched, using auxiliary image. In order to determine validity and score of this match, following criteria are tested. Result of applying them on a frame is depicted in Fig.~\ref{fig:minim_why}.
 
 \begin{enumerate}
-	\item If $k_{p}$ is lower than some constant threshold $k_{thresh}$ (e.g. 2), then this Keyline is considered to be too uncertain (its history is too short) and it does not take part in minimization at all. This test is performed only after $k_{thresh}$ frames have been wholly processed by the algorithm in order to allow system to initialize.
-	\item Uncertainty test: Keylines whose $\sigma_{\rho_{p}}$ exceeds 
+	\item Depth uncertainty -- Keylines where $\sigma_{\rho_{p}}$ exceeds its 95. percentile are rejected.
+	\item History -- if $k_{p}$ is lower than some constant threshold $k_{thresh}$ (e.g. 2), then this Keyline is considered to be too uncertain (its history is too short) and it does not take part in minimization at all. This test is performed only after $k_{thresh}$ frames have been wholly processed by the algorithm in order to allow system to initialize.
+	\item Gradient similarity -- score based on angle between $\vec{g_p}$ and $\vec{g_c}$, as well as on their lengths, can not exceed a threshold.
 \end{enumerate}
 
-todo Jan: figure
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.85\linewidth, trim={1.5cm 1.5cm 1.5cm 1cm},clip]{img/figures/minim_why.png}
+	\caption{ Minimization tests results. Pixel colors: dark blue -- not Keyline; blue~\==~ $\sigma_{\rho}$ too high; cyan -- too short history; teal -- 2D reprojection lies outside the image; orange -- no corresponding Keyline in next frame's auxiliary image; red -- gradients dissimilar; brown -- successful matching }
+	\label{fig:minim_why}
+\end{figure}
 
 \subsection{Energy minimization}
 
@@ -386,6 +395,30 @@ where:
 \begin{eqwhere}[2cm]
 	\item[$k_s$] estimated $k$-coordinate of the subpixel edge position (0 is the pixel center).
 \end{eqwhere}
+
+For any $u > 0$, $J^T J + \mu I u$ is a positive definite matrix, meaning that \underline{Cholesky factorization} can be used to solve Eq.\ref{eq:jtj}, instead of slower, but less constrictive SVD. However, the matrix is quite small (6x6), so computational gain is negligible.
+
+This was tested in GNU Octave, using OpenCV \cite{opencv} linear algebra routines, compiled to MEX files. Random values were chosen to populate variables in Eq.\ref{eq:jtj} and then it was solved $10^6$ times, first using SVD, then Cholesky factorization. Average running times per iteration have been collected in Tab.~\ref{tab:chol}.
+
+\begin{table}[ht]
+	\centering
+	
+	\begin{threeparttable}
+		\caption{SVD and Cholesky running time comparison}
+		\label{tab:chol}
+		
+		\begin{tabularx}{0.6\textwidth}{C{0.5} C{0.5}}
+			\toprule
+			\thead{Method} & \thead{Average time} \\
+			\midrule
+			SVD & $29 \mu s$ \\
+			Cholesky & $24 \mu s$ \\
+			\bottomrule
+		\end{tabularx}
+		
+	\end{threeparttable}
+\end{table}
+
 
 \subsection{Initial conditions}
 
