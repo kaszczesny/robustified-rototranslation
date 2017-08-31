@@ -1,18 +1,9 @@
 \chapter{Analysis and improvements of \textit{Rebvo} algorithm}
 \label{cha:intro2}
 
-This chapter contains thorough analysis of proposed algorithm. Firstly, algorithm is carefully explained, step by step, using various examples. Symbols used through the chapter are explained in Section~\ref{sec:struct}. Much attention is paid to edge detector, because it also had to be implemented, as available ready-made edge detection methods did not meet algorithm requirements. Chapter is concluded with miscellaneous remarks and experiment results. Figures used throughout the chapter were generated using input images from TUM \cite{tum} and KITTI \cite{kitti} datasets.
+This chapter contains thorough analysis of proposed algorithm. The algorithm is carefully explained, step by step, using various examples. Symbols used through the chapter are explained in Section~\ref{sec:struct}. Much attention is paid to edge detector, because it also had to be implemented, as available ready-made edge detection methods did not meet algorithm requirements. Figures used throughout the chapter were generated using input images from TUM \cite{tum} and KITTI \cite{kitti} datasets. Chapter is concluded with miscellaneous remark on trajectory postprocessing, used to estimate algorithm accuracy.
 
 Note: considerations, improvements and modifications of the original algorithm are \textbf{emphasized}.
-
-todo: 
-
-median filter; regularize before and after Kalman
-
-
-? scale from dimensions of known real-world objects, such as road signs or license plates
-
-
 
 \section{Notation (Keyline structure) and {\tt main} loop}
 \label{sec:struct}
@@ -500,7 +491,13 @@ After forward matching and directed matching, the number of valid matches has to
 % main assumption is that KLs neighboring on an edge ale located near each other in 3D, so their depth should be similiar
 %
 
-As edges of real-life objects are seldom very jagged, difference in depth between adjoining Keylines needs to be smoothed out, assuming that neighboring pixels belong to objects located near each other in three-dimensional space. This is done by taking weighted mean of rho and s\_rho of directly joined Keylines. Two iterations of regularization are performed. To be regularized, a Keyline needs to have two neighbors (this means excluding ends of edges).
+todo
+
+@kwant: tbd
+
+% todo: median filter; regularize before and after Kalman
+
+%As edges of real-life objects are seldom very jagged, difference in depth between adjoining Keylines needs to be smoothed out, assuming that neighboring pixels belong to objects located near each other in three-dimensional space. This is done by taking weighted mean of rho and s\_rho of directly joined Keylines. Two iterations of regularization are performed. To be regularized, a Keyline needs to have two neighbors (this means excluding ends of edges).
 
 % for each KL:
 %
@@ -513,11 +510,13 @@ As edges of real-life objects are seldom very jagged, difference in depth betwee
 %  if tests are passed, rho and s\_rho are smoothened taking weighted mean of its value and its neighbors
 
 % image: show that assumption isn't ALWAYS true
-Having in mind previous assumption, that might not always be the case. Objects might lie on the scene in such a way, that their edges as seen by the camera might intersect and form a~continuous curve. This is why additional test on neighboring pixels are needed. First, they need to lie on approximately the same distance from the camera. Because depth is estimated, uncertainty on said estimation is calculated in /gdzie to bylo?/ step. If difference between estimated depth for two neighbors outweights sum of uncertainties, it is assumed that they belong to different objects. This test is purely probabilistic. Second, angle between gradients of neighboring Keylines is checked. Again, if its greater than previously defined threshold, regularization is not performed.
+% Having in mind previous assumption, that might not always be the case. Objects might lie on the scene in such a way, that their edges as seen by the camera might intersect and form a~continuous curve. This is why additional test on neighboring pixels are needed. First, they need to lie on approximately the same distance from the camera. Because depth is estimated, uncertainty on said estimation is calculated in /gdzie to bylo?/ step. If difference between estimated depth for two neighbors outweights sum of uncertainties, it is assumed that they belong to different objects. This test is purely probabilistic. Second, angle between gradients of neighboring Keylines is checked. Again, if its greater than previously defined threshold, regularization is not performed.
 
 \subsection{Depth reestimation}
 
  todo:
+ 
+ @kwant: tbd
  % kalman fiter
 
  % inverse depth is constrained between certain min and max, didn't work well if min was too low (by min I mean too close to camera)
@@ -527,6 +526,8 @@ Having in mind previous assumption, that might not always be the case. Objects m
  %zauwazylismy ze dopoki nie ma zbieznosci to shrinking factor za bardzo oscyluje, wiec jest liczony dopiero po inicjalizacji systemu, tj 20 klatek
  
  todo:
+ 
+ @kwant: tbd
  %optional estimate rescaling
 
  %according to Tarrio and Pedre, EKF is biased in rho estimation, so a global "shrinking factor" can be applied to depths and uncertainties.
@@ -557,3 +558,5 @@ Rendering a full 3D sequence using e.g. a game engine was also considered, but d
 
 
 todo cite the SVD-ish paper
+
+@kwant: tbd

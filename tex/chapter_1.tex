@@ -2,7 +2,7 @@
 \label{cha:intro}
 
 
-In this chapter theory behind computer vision, 3D reconstruction and mathematical apparatus used in our algorithm are introduced. Pinhole camera model and basics of stereo and mono vision are briefly discussed. Other topics -- Difference of Gaussians edge detection and 3D rotation conventions -- can be found in Appendices B and C, respectively. Literature connected with this topic is overviewed. Finally, \textit{Rebvo} \cite{jose2015realtime} algorithm flow  is described.
+In this chapter theory behind computer vision, 3D reconstruction and mathematical apparatus used in our algorithm are introduced. Pinhole camera model and basics of stereo and mono vision are briefly discussed. Other topics -- Difference of Gaussians edge detection and 3D rotation conventions -- can be found in Appendices B and C, respectively. Literature connected with this topic is overviewed. Finally, \textit{Rebvo} \cite{jose2015realtime} algorithm flow is described.
 
 %-----------------
 
@@ -168,6 +168,8 @@ In SLAM systems loops in trajectories can be used as means of correcting positio
 todo: egomotion \& "tunnel" motion
 \cite{vehicle_egomotion} \cite{recovery_of_egomotion}
 
+@kwant: tbd
+
 
 %---------
 
@@ -176,6 +178,8 @@ todo: egomotion \& "tunnel" motion
 \label{sec:stateoftheart}
 
 todo:
+
+@kwant: tbd
 
 \cite{visual_odometry} - landmark paper
 
@@ -221,7 +225,7 @@ Then \textbf{tracking} is performed. Edges from previous frames are first projec
  
 Final step -- \textbf{mapping} -- associates matching edges between frames using obtained optimal 3D transformation. Due to aforementioned problems, after tracking a matching routine is needed for each edge pixel. Because depth of previous frame edges is estimated with some uncertainty, camera motion establishes a line segment defining the area where possible matches will be searched for. Once such candidate has been found, it is tested for gradient correspondence and, most importantly, for model consistency~\==~deviation of position on the segment obtained from linear transformation equation can not exceed depth uncertainty. After matching, depth information is propagated for matched edge pixels from previous frame to the current, and is optionally regularized. Previous depth has to be reestimated ($OZ$ axis velocity has to be taken into account). This is achieved using Extended Kalman Filter. Scale drift, inherent problem of pure visual odometry, can be then mitigated to some limited degree by diving estimated depths by frame shrinking factor.
 
-Accuracy of results obtained in \cite{jose2015realtime} are comparable with other state-of-the-art algorithms cite \cite{yang2017direct}.
+Accuracy of results obtained in \cite{jose2015realtime} are comparable with other state-of-the-art algorithms \cite{yang2017direct}.
 
 % ---
 
