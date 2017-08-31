@@ -14,6 +14,7 @@ This section focuses on discussing algorithm results obtained from longer sequen
 All of the sequences mentioned above include ground truth (laser positioning system in case of TUM, DGPS in case of KITTI), which is essential for debugging purposes and validation.
 
 %trajektoria
+
 %	xyz, zaznaczone nok
 As the main goal of the algorithm is to estimate transformation between images, most care was put into making sure that the system correctly calculates velocity and rotation of the camera in respect to ground truth. Obtained trajectory was fitted onto ground truth trajectory using fminsearch function available in Matlab.
 /teddy/
@@ -34,6 +35,12 @@ Influence of scale of the image was tested; sequence fr3\_teddy was scaled by 1/
 
 %sredni blad/dryft
 %jakas tabelka moze? trzeba to w sensie sredniokwadratowym obliczyc
+
+long office - 3.6038m/s
+teddy long - 1.8033m/s
+teddy short - 0.57838m/s
+desk with person - 0.43574m/s
+				 - 0.092159m/s
 
 %nok, figura z  edgefindera
 
