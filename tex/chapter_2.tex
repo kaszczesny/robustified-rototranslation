@@ -38,7 +38,7 @@ automatic DoG sigma choice
 \section{Notation (Keyline structure) and {\tt main} loop}
 \label{sec:struct}
 
-Pixels that contain subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}. When $n+1$-th frame of video input is being processed, only $n$-th and $(n+1)$-th Keyline arrays are available; $n-1$-th is discarded, as it is no longer needed. This is presented in Fig.~\ref{fig:flowchart_main}.
+Pixels that contain subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}. When $(n+1)$-th frame of video input is being processed, only $n$-th and $(n+1)$-th Keyline arrays are available; $n-1$-th is discarded, as it is no longer needed. This is presented in Fig.~\ref{fig:flowchart_main}. Quantities of $n$-th Keyline array will be denoted with subscript $_{p}$ (for \textit{previous}). Subscript $_{c}$ (\textit{current}) will be associated with $(n+1)$-th frame.
 
 \begin{figure}[hp]
 	\begin{footnotesize}
@@ -152,7 +152,7 @@ In case of DoG, these \underline{artificial edges need to be removed} before Gau
 
 \subsection{Difference of Gaussians strength tests}
 
-After necessary preprocessing, edge detection can be started. Generally edge detection works by finding positions in image where pixel intensity changes most rapidly. Basic idea of DoG is to approximate image second derivative (the laplacian) \cite{szeliski}. The zero-crossing of laplacian corresponds to such positions. Other approaches to edge detection involve curve fitting \cite{fabijanska} \cite{devernay1995non}.
+After necessary preprocessing, edge detection can be started. Generally edge detection works by finding positions in image where pixel intensity changes most rapidly. Basic idea of DoG is to approximate image second derivative (the laplacian) \cite{szeliski} \cite{jain1995machine}. The zero-crossing of laplacian corresponds to such positions. Other approaches to edge detection involve curve fitting \cite{fabijanska} \cite{devernay1995non} \cite{wei2010two}.
 
 In order to filter out noise, image should be first smoothed with a Gaussian filter. These operations can be combined into one operator -- Laplacian of Gaussian -- which in turn can be approximated with difference between two images smoothed with Gaussian filters using two different sigmas\footnote{LoG is best approximated by DoG when $\frac{\sigma_{1}}{\sigma_{2}} = \sqrt{2}$ \cite{sift}.} Edge detection results for initial sigma values were satisfactory in performed tests, therefore other sigma values were not tested.
 
@@ -173,7 +173,7 @@ Edge detection procedure is performed for every pixel that lies at least $w$ pix
 
 Tarrio and Pedre use hysteresis to determine threshold value after every frame. On the one hand, presented algorithm operates offline, so abundance of keylines is not an issue. On the other, hysteresis parameters still need to be adjusted for given dataset. Invalid parameters can alter overall algorithm results significantly, so from algorithm analysis point of view, the fewer of them, the better. \underline{Thus instead simpler solution was tested out}.
 
-Image is be partitioned into $a^2$ rectangular chunks, for relatively small $a$, e.g. 7. Then for each chunk number of pixels that would pass the first derivative test for given constant threshold is counted. If this number is relatively low, threshold is locally multiplied by a constant $b_{1} < 1$, e.g. $\frac{1}{3}$. However, if the number is relatively large, then threshold is locally multiplied by $b_{2} > 1$, e.g. $\frac{5}{3}$. Local threshold array can finally be smoothed with Gaussian filter to avoid discontinuities.
+Image is be partitioned into $a^2$ rectangular chunks, for relatively small $a$, e.g. 7. Then for each chunk number of pixels that would pass the first derivative test for given constant threshold is counted. If this number is relatively low, threshold is locally multiplied by a constant ${b_{1} < 1}$, e.g. $\frac{1}{3}$. However, if the number is relatively large, then threshold is locally multiplied by ${b_{2} > 1}$, e.g. $\frac{5}{3}$. Local threshold array can finally be smoothed with Gaussian filter to avoid discontinuities.
 
 Proposed procedure also has parameters, but there are few advantages:
 \begin{itemize}
@@ -294,17 +294,16 @@ Joined Keylines are used for pruning. First of all, edges consisting of 3 pixels
 In later steps, the algorithm considers only individual Keylines, not joined edges (as mentioned in Section~\ref{sec:rebvo_outline}). Information about neighbors is used only once after edge detection -- in Regularization step, when $\rho$ and $\sigma_{\rho}$
 are averaged over Keyline and its 2 immediate neighbors.
 
-Initially \underline{more edge joining strategies were considered}: morphological operations on Keylines, loop avoidance and edge segmentation (into parts with similar gradient). However, once it has been understood that edge joining takes such small part in algorithm flow, this direction was abandoned.
-
-
+Initially \underline{more edge joining strategies were considered}: morphological operations on Keylines, loop avoidance and edge segmentation (into parts with similar gradient). However, once it has been understood that edge joining takes such small part in algorithm flow, this direction of research was abandoned.
 
 
 %--
 
 \section{Edge tracking}
 
+Goal of edge tracking is to find 3D transformation (translation and rotation) that best describes transition between two consecutive frames.
 
-minimizer
+
 
 auxiliary image: a lookup table for minimizer
 
@@ -352,13 +351,41 @@ estimate uncertainty as inverse of final jacobian
 
 \subsection{Auxiliary image}
 
-todo: a lookup table for minimizer
+Auxiliary image is a lookup table that speeds up minimization. It is a matrix of size equal to the image. An entry in the matrix is nonzero if distance from its coordinates to closest Keyline's $q$ is lower than a search radius, usually equal to 5 pixels. Then such entry contains a reference to the found closest Keyline.
+
+During minimization, Keylines from previous frame are projected to 3D space using depth information ($\rho$), rototranslated, and then projected back to image plane. Positions obtained from the back-projection are compared against the auxiliary image of next frame to check if such position corresponds to a~Keyline (and to which).
+
+Auxiliary image creation can be perceived as widening of an edge by ``sliding`` its pixels along $\vec{g}$. A depiction is presented in Fig.~todo. Because pixel positions are discrete, \underline{increments of this sliding should be lower than 1}. Otherwise, when $\vec{g}$ is not perpendicular to pixel grid, creation process will occasionally skip over some pixels. This leads to discontinuities (gaps) in auxiliary image (see Fig.~todo), which can later bias the minimization by producing false local minima.
+
+Some gaps are unavoidable, however, because $\vec{g}$ is available only in places where there is a~Keyline. Even with subpixel position precision, there still is only at most one Keyline per pixel. If edge has any curvature, then at some radius auxiliary image will feature spikes. They are visible in top left corner of Fig.~todo.
+
+todo: figure
+
+
 
 \subsection{Keyline matching criteria}
+
+During each iteration of minimization, reprojected old Keylines and new Keylines are pre-matched, using auxiliary image. In order to determine validity and score of this match, following criteria are tested:
+
+\begin{enumerate}
+	\item If $k_{p}$ is lower than some constant threshold $k_{thresh}$ (e.g. 2), then this Keyline is considered to be too uncertain (its history is too short) and it does not take part in minimization at all. This test is performed only after $k_{thresh}$ frames have been wholly processed by the algorithm in order to allow system to initialize.
+	\item Uncertainty test: Keylines whose $\sigma_{\rho_{p}}$ exceeds 
+\end{enumerate}
 
 todo Jan: figure
 
 \subsection{Energy minimization}
+
+Increment to the input vector can be determined using calculated Jacobians and SVD, as it is performed by Tarrio and Pedre. 
+
+\begin{equation}
+(J^T J + \mu I u)b = J^T F
+\label{eq:jtj}
+\end{equation}
+where:
+\begin{eqwhere}[2cm]
+	\item[$k_s$] estimated $k$-coordinate of the subpixel edge position (0 is the pixel center).
+\end{eqwhere}
 
 \subsection{Initial conditions}
 
