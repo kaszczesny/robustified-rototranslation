@@ -1,44 +1,28 @@
 \chapter{Analysis and improvements of \textit{Rebvo} algorithm}
 \label{cha:intro2}
 
-This chapter contains thorough analysis of proposed algorithm. Firstly, changes to the original algorithm are listed. Then algorithm is carefully explained, step by step, using various examples. Much attention is paid to edge detector, because available ready-made edge detection methods did not meet algorithm requirements. Chapter is concluded with miscellaneous remarks and experiment results. Figures used throughout the chapter were generated using input images from TUM \cite{tum} and KITTI \cite{kitti} datasets.
+This chapter contains thorough analysis of proposed algorithm. Firstly, algorithm is carefully explained, step by step, using various examples. Symbols used through the chapter are explained in Section~\ref{sec:struct}. Much attention is paid to edge detector, because it also had to be implemented, as available ready-made edge detection methods did not meet algorithm requirements. Chapter is concluded with miscellaneous remarks and experiment results. Figures used throughout the chapter were generated using input images from TUM \cite{tum} and KITTI \cite{kitti} datasets.
 
-Note: considerations, improvements and modifications of the original algorithm are emphasized by \underline{underlining}.
-
-\section{Changes to the algorithm}
-\label{sec:changes}
-
-TODO:
-
-edge detection bucketing
+Note: considerations, improvements and modifications of the original algorithm are \textbf{emphasized}.
 
 median filter; regularize before and after Kalman
 
 rho initialization (noise instead of ones)
 
-small numerical improvements in LM
-
-
-\section{Other considered changes}
-\label{sec:rejected}
-
-TODO:
-
-scale from dimensions of known real-world objects, such as road signs or license plates
-
 initialization from classical feature matching algorithm
-
-keyline joining improvements: morphological operations, Y junctions
 
 usage of corners
 
-automatic DoG sigma choice
+
+
+scale from dimensions of known real-world objects, such as road signs or license plates
+
 
 
 \section{Notation (Keyline structure) and {\tt main} loop}
 \label{sec:struct}
 
-Pixels that contain subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}. When $(n+1)$-th frame of video input is being processed, only $n$-th and $(n+1)$-th Keyline arrays are available; $n-1$-th is discarded, as it is no longer needed. This is presented in Fig.~\ref{fig:flowchart_main}. Quantities of $n$-th Keyline array will be denoted with subscript $_{p}$ (for \textit{previous}). Subscript $_{c}$ (\textit{current}) will be associated with $(n+1)$-th frame.
+Pixels that contain subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}. When $(n+1)$-th frame of video input is being processed, only $n$-th and $(n+1)$-th Keyline arrays are available; $n-1$-th is discarded, as it is no longer needed. This is presented in Fig.~\ref{fig:flowchart_main}. Fields of $n$-th Keyline array will be denoted with subscript $_{p}$ (for \textit{previous}) and $_{t}$ (for \textit{transformed}). Subscript $_{c}$ (\textit{current}) will be associated with $(n+1)$-th frame.
 
 \begin{figure}[hp]
 	\begin{footnotesize}
@@ -49,10 +33,10 @@ Pixels that contain subpixel edge positions are called Keylines and, after edge 
 	\node [cloud] (start) {start};
 	\node [block, below of=start] (b0) {{\tt n := 1}};
 	\node [block, below of=b0] (b05) {{\tt parameters\_initialization()}};
-	\node [block, below of=b05] (b1) {{\tt KLs\textsubscript{old} := edge\_detection(n) }};
+	\node [block, below of=b05] (b1) {{\tt KLs\textsubscript{p} := edge\_detection(n) }};
 	
 	\node [block, below of=b1] (b2) {{\tt n++}};
-	\node [block, below of=b2] (b3) {{\tt KLs\textsubscript{new} := edge\_detection(n) }};
+	\node [block, below of=b2] (b3) {{\tt KLs\textsubscript{c} := edge\_detection(n) }};
 	
 	\node [block, below of=b3] (b4) {{\tt edge\_tracking()}};
 	
@@ -62,7 +46,7 @@ Pixels that contain subpixel edge positions are called Keylines and, after edge 
 	
 	\node [decision, below of=b6, node distance=8.5em] (b7) {\\*$card(KLs_{new}.m_d) > 500$?};
 	
-	\node [block, right of=b5, text width=10em, xshift=10em] (b8) {{\tt KLs\textsubscript{old} := KLs\textsubscript{new}}};
+	\node [block, right of=b5, text width=10em, xshift=10em] (b8) {{\tt KLs\textsubscript{p} := KLs\textsubscript{c}}};
 	% Draw edges
 	
 	\path [line] (start) -- (b0);
@@ -99,7 +83,7 @@ Pixels that contain subpixel edge positions are called Keylines and, after edge 
 			\thead{Structure field\tnote{a}} & \thead{Description} \\
 			\midrule
 			$q = [q_{x},\ q_{y}]$ & subpixel position in image \\
-			$h = [h_{x},\ h_{y}]$ & normalized $q$: $h = \frac{q - [c_{x}\ c_{y}]}{z_f}$ \\
+			$h = [h_{x},\ h_{y}]$ & normalized $q$: $h = \frac{q - [c_{x}\ c_{y}]}{f}$ \\
 			$\rho$, $\sigma_{\rho}$ & estimated inverse depth: $\frac{1}{Z}$, and its variance \\
 			$\rho_0$, $\sigma_{\rho_{0}}$ & inverse depth predicted by Kalman filter and its variance \\
 			$\vec{g}$ & edge gradient obtained from DoG \\
@@ -134,13 +118,13 @@ While many edge detection algorithms could be used in this step, authors of \tex
 	\item low time \& memory complexity.
 \end{enumerate}
 
-Another advantage of DoG, unmentioned by Tarrio and Pedre, is that \underline{edge gradient can be obtained directly} from normal vector of the fitted local plane. In this thesis DoG was used as well. Most vital property was subpixel precision, otherwise Canny detector \cite{canny} would be employed. In principle, subpixel edge detection precision is possible, because as long as Whittaker–Nyquist–Kotelnikov–Shannon theorem assumptions are satisfied, the true continuous pixel intensity function can be reconstructed from discrete image values.
+Another advantage of DoG, unmentioned by Tarrio and Pedre, is that \textbf{edge gradient can be obtained directly} from normal vector of the fitted local plane. In this thesis DoG was used as well. Most vital property was subpixel precision, otherwise Canny detector \cite{canny} would be employed. In principle, subpixel edge detection precision is possible, because as long as Whittaker–Nyquist–Kotelnikov–Shannon theorem assumptions are satisfied, the true continuous pixel intensity function can be reconstructed from discrete image values.
 
 \subsection{Data preprocessing}
 
 First of all, images are converted to grayscale. Color information is not used in the algorithm.
 
-Before performing any edge detection technique, one critical issue has to be addressed. If input images were\footnote{If images were \textit{not} rectified, they should be.} rectified in such a way that had needed extrapolation beyond original borders, artificial edges will be present in every frame (because extrapolation procedure usually assumes 0 pixel intensity beyond the image). Gradient of these edges is almost always strong, meaning that they tend to pass all tests and to be identified as valid keylines, thus generating false positives. During later minimization step, they greatly distort the procedure, making it behave as if the space was curved. Example of such border is depicted in Fig.~\ref{fig:rectifcy_border}.
+Before performing any edge detection technique, one critical issue has to be addressed. If input images were rectified\footnote{If images were \textit{not} rectified, they should be.} in such a way that extrapolation beyond original borders had been needed, artificial edges will be present in every frame (because extrapolation procedure usually assumes 0 pixel intensity beyond the image). Gradient of these edges is almost always strong, meaning that they tend to pass all tests and to be identified as valid keylines, thus generating false positives. During later minimization step, they greatly distort the procedure, making it behave as if the 3D space was curved. Example of such border is depicted in Fig.~\ref{fig:rectifcy_border}.
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth, trim={1cm 1cm 1cm 1cm},clip]{img/figures/rectified_edge.png}
@@ -148,13 +132,19 @@ Before performing any edge detection technique, one critical issue has to be add
 	\label{fig:rectifcy_border}
 \end{figure}
 
-In case of DoG, these \underline{artificial edges need to be removed} before Gaussian blurring -- otherwise they would spread out, making it tricky to reject them later. In tested datasets, artificial borders' thickness did not exceed 1~pixel, so simply 1-pixel wide frame of outermost pixels was always discarded. In general case, \underline{width of the frame can be figured out from distortion model}, instead of being manually set. However, for highly distorted images a rectangular frame would also discard many valid pixels -- either in corners (barrel distortions), or near middle of borders (pincushion distortions).
+In case of DoG, these \textbf{artificial edges need to be removed} before Gaussian blurring -- otherwise they would spread out, making it tricky to reject them later. In tested datasets, artificial borders' thickness did not exceed 1~pixel, so simply 1-pixel wide frame of outermost pixels was always discarded. In general case, \textbf{width of the frame can be figured out from distortion model}, instead of being set manually. However, for highly distorted images, a rectangular frame would also discard many valid pixels -- either in corners (barrel distortions), or near middle of borders (pincushion distortions).
 
 \subsection{Difference of Gaussians strength tests}
 
-After necessary preprocessing, edge detection can be started. Generally edge detection works by finding positions in image where pixel intensity changes most rapidly. Basic idea of DoG is to approximate image second derivative (the laplacian) \cite{szeliski} \cite{jain1995machine}. The zero-crossing of laplacian corresponds to such positions. Other approaches to edge detection involve curve fitting \cite{fabijanska} \cite{devernay1995non} \cite{wei2010two}.
+After necessary preprocessing, edge detection can be started. Generally edge detection works by finding positions in image where pixel intensity changes most rapidly. Basic idea of DoG is to approximate image second derivative (the laplacian) \cite{szeliski} \cite{jain1995machine}. The zero-crossing of laplacian corresponds to such positions. Example based on real data, reduced to one dimension for clarity, is presented on Fig.~\ref{fig:slice}. Other approaches to edge detection involve curve fitting \cite{fabijanska} \cite{devernay1995non} \cite{wei2010two}.
 
-In order to filter out noise, image should be first smoothed with a Gaussian filter. These operations can be combined into one operator -- Laplacian of Gaussian -- which in turn can be approximated with difference between two images smoothed with Gaussian filters using two different sigmas\footnote{LoG is best approximated by DoG when $\frac{\sigma_{1}}{\sigma_{2}} = \sqrt{2}$ \cite{sift}.} Edge detection results for initial sigma values were satisfactory in performed tests, therefore other sigma values were not tested.
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1.5cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/subpixelslice.png}
+	\caption{ DoG zero-crossing subpixel edge detection. Discussed method was applied to an image, then one row of pixels containing very apparent edge was extracted. Red $\times$ denotes subpixel edge position }
+	\label{fig:slice}
+\end{figure}
+
+In order to filter out noise, image should be first smoothed with a Gaussian filter. These operations can be combined into one operator -- Laplacian of Gaussian -- which in turn can be approximated with difference of two images smoothed with Gaussian filters using two different sigmas\footnote{LoG is best approximated by DoG when $\frac{\sigma_{1}}{\sigma_{2}} = \sqrt{2}$ \cite{sift}.} Edge detection results for initial sigma values were satisfactory in performed tests, therefore other sigma values (or automated sigma adjustment schemes) were not tested.
 
 Exemplary Difference of Gaussians image is depicted in Fig.~\ref{fig:dog}. \textit{Implementation insight}:~while individual smoothed images can be computed using {\tt uint8} as underlying data type (for speed), the difference has to be computed using signed data type. Otherwise obtained function will not cross zero!
 
@@ -169,9 +159,9 @@ Another parameter is window size -- it defines pixel neighborhood that will take
 \subsubsection{First test}
 \label{edge_first}
 
-Edge detection procedure is performed for every pixel that lies at least $w$ pixels from image border, so that neighborhood does not need to be extrapolated. In order to speed up computations by early identifying non-edges, first derivative of pixel intensity is calculated by applying two Sobel operators (derivatives along $x$ and $y$ axes) and taking norm of the results. This norm is then compared with a threshold. 
+Edge detection procedure is performed for every pixel that lies at least $w$ pixels from image border, so that neighborhood does not need to be extrapolated. In order to speed up computations by early identifying non-edges, first derivative of pixel intensity is calculated by applying two Sobel operators (derivatives along $x$ and $y$ axes) and taking norm of the result. This norm is then compared with a threshold. 
 
-Tarrio and Pedre use hysteresis to determine threshold value after every frame. On the one hand, presented algorithm operates offline, so abundance of keylines is not an issue. On the other, hysteresis parameters still need to be adjusted for given dataset. Invalid parameters can alter overall algorithm results significantly, so from algorithm analysis point of view, the fewer of them, the better. \underline{Thus instead simpler solution was tested out}.
+Tarrio and Pedre use hysteresis to determine threshold value after every frame. On the one hand, presented algorithm operates offline, so abundance of keylines is not an issue. On the other, hysteresis parameters still need to be adjusted for given dataset. Invalid parameters can alter overall algorithm results significantly, so from algorithm analysis point of view, the fewer of them, the better. \textbf{Thus instead simpler solution was tested out}.
 
 Image is be partitioned into $a^2$ rectangular chunks, for relatively small $a$, e.g. 7. Then for each chunk number of pixels that would pass the first derivative test for given constant threshold is counted. If this number is relatively low, threshold is locally multiplied by a constant ${b_{1} < 1}$, e.g. $\frac{1}{3}$. However, if the number is relatively large, then threshold is locally multiplied by ${b_{2} > 1}$, e.g. $\frac{5}{3}$. Local threshold array can finally be smoothed with Gaussian filter to avoid discontinuities.
 
@@ -189,14 +179,18 @@ TODO: figure
 \subsubsection{Second test}
 \label{edge_second}
 
-Neighborhood of pixels that have passed the first test is checked for ``sign balance``. Number of positive and negative DoG values has to be comparable within a defined percentage, e.g. 20\%. It was observed that pixels very rarely fail this particular test.
+Neighborhood of pixels that have passed the first test is checked for ``sign balance``. Number of positive and negative DoG values has to be comparable within a defined percentage, e.g. 20\%. Example results of the test for 2 different pixels are depicted in Fig.~\ref{fig:plusminus}. It was observed that pixels very rarely fail this particular test.
 
-TODO: figure
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1.5cm 2.5cm 1.5cm 2.5cm},clip]{img/plusminus.png}
+	\caption{ Example of the DoG sign balance test. Negative values are denoted as black pixels, postive -- as white. Green color marks neighborhood of pixel that has passed the test and is, possibly, an edge. Pixel marked with red was rejected }
+	\label{fig:plusminus}
+\end{figure}
 
 \subsubsection{Third test}
 \label{edge_third}
 
-Then DoG values are approximated by a plane using linear regression (Eq.~\ref{eq:regress} is solved for~$\theta$). Zero-crossing of the plane can be determined analytically using Eq.~\ref{eq:zerocross}. For more resilience, an additional test is performed. If inequality~\ref{eq:test3} is not satisfied, then equation system~\ref{eq:regress} \underline{is considered to be badly conditioned} and this pixel is rejected. This was not considered in \cite{jose2015realtime}. The purpose of this test is to avoid divide-by-zero errors in fourth test (Sec.~\ref{edge_fourth}). All pixels that do not pass the third test would still be filtered out later -- they also do not pass the fifth test~(Sec.~\ref{edge_fith}).
+Then DoG values are approximated by a plane using linear regression (Eq.~\ref{eq:regress} is solved for~$\theta$). Zero-crossing of the plane can be determined algebraically, resulting in Eq.~\ref{eq:zerocross}. For more resilience, an additional test is performed. If inequality~\ref{eq:test3} is not satisfied, then equation system~\ref{eq:regress} \textbf{is considered to be badly conditioned} and this pixel is rejected. This was not considered in \cite{jose2015realtime}. The purpose of this test is to avoid divide-by-zero errors in fourth test (Sec.~\ref{edge_fourth}). All pixels that do not pass the third test would still be filtered out later -- they also do not pass the fifth test~(Sec.~\ref{edge_fith}).
 
 \begin{equation}
 \bm{A}\theta = \delta
@@ -239,6 +233,8 @@ where:
 
 Obtained zero-crossing marks the subpixel position of the edge. Inequality~\ref{eq:subpix_inside} tests whether it lies within the pixel itself. If not -- edge is not detected. After this test, most of Keyline candidates form 1-pixel wide edges.
 
+todo quiver
+
 \begin{equation}
 max(|x_s|, |y_s|) < 0.5
 \label{eq:subpix_inside}
@@ -247,7 +243,7 @@ max(|x_s|, |y_s|) < 0.5
 \subsubsection{Fifth test}
 \label{edge_fith}
 
-Normal vector of fitted plane is defined by Eq.~\ref{eq:planenorm}. Vector $\vec{r}$ can projected onto $z=0$ plane, creating third derivative vector: the edge gradient $\vec{g}$. If $|\vec{g}|$ is small, then $r_{z}$ component must have dominated $\vec{r}$, meaning that fitted plane was almost parallel to the $z=0$ plane. In turn this implies that edge was not sharp. Therefore as final test, norm of $\vec{g}$ is tested -- it must exceed a~threshold for edge to be finally detected.
+Normal vector of fitted plane is defined by Eq.~\ref{eq:planenorm}. Vector $\vec{r}$ can projected onto $z=0$ plane, creating third derivative vector: the edge gradient $\vec{g}$. If $||\vec{g}||$ is small, then $r_{z}$ component must have dominated $\vec{r}$, meaning that fitted plane was almost parallel to the $z=0$ plane. In turn this implies that edge was not sharp. Therefore, as a final test, norm of $\vec{g}$ is tested -- it must exceed a~threshold for edge to be finally detected.
 
 \begin{equation}
 \vec{r} = [\theta_{x},\ \ \theta_{y},\ \ -1]
@@ -260,22 +256,21 @@ where:
 
 \subsubsection{Edge detection tests summary}
 
-image: quiver, @jan
+Influence of all aforementioned tests to final result is depicted for an exemplary frame in Fig.~\ref{fig:edgeprob}. Colored regions do resemble to some degree a probability distribution -- probability that given pixel contains an edge. Thus initially use of fuzzy logic was considered. Ultimately, as already mentioned, detected edges were deemed to be acceptable, so this idea was not pursued. Such approach would also require more processing power, making it less suitable for mobile devices.
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=1.0\linewidth, trim={1.5cm 2.5cm 1.5cm 2.5cm},clip]{img/figures/edge_prob.png}
-	\caption{ Edge detection tests results. Pixel colors: dark blue -- neighborhood outside image; blue, light blue (not present), cyan (not present), green and orange -- rejected by tests 1 to 5, respectively; red -- reserved for debug purposes (not present); brown -- final Keylines}
+	\caption{ Edge detection tests results. Pixel colors: dark blue -- neighborhood outside image; blue, light blue (not present), cyan (not present), green and orange -- rejected by tests 1 to 5, respectively; red -- reserved for debug purposes (not present); dark red -- final Keylines}
 	\label{fig:edgeprob}
 \end{figure}
 
 
-\section{Keyline initialization}
+\subsection{Depth initialization}
 
-After Keyline has been successfully identified, a data structure described in Section~\ref{sec:struct} is populated with obtained data. This step is crucial for the very first processed frame, because its Keylines must have some initial depth values. During first tests, 
+After Keyline has been successfully identified on image, a data structure described in Section~\ref{sec:struct} is populated with obtained data. This step is different for the very first processed frame, because its Keylines must have some initial depth values. During first tests, a constant $\rho = 1$ was used. Then for some time explicit Kinect depth map was used, as it was available in the TUM dataset. Finally, after other ares of algorithm have been improved, it was observed that in most cases quick convergence (5-10 frames) could be achieved by \textbf{initializing depth with random values}, even with images scaled down by 80\% (to 128 by 96 pixels). Convergence depends on speed of camera during these first frames. Overall, this is much better result than in \cite{jose2015realtime}, where 2-5 seconds needed for depth convergence were reported. Noise was generated using normal distribution with parameters chosen for each dataset: $N(2,0.5)$ for TUM and $N(10,3)$ for KITTI.
 
-todo: prove that noise for rho is better than ones
-
-imgmask with KL indices
+todo figure
+todo 2x depth
 
 \subsection{Keyline joining}
 
@@ -284,82 +279,71 @@ For each Keyline, its neighbors are searched among 3 out of 8 bordering pixels. 
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth, trim={1.25cm 1.25cm 1.25cm 1cm},clip]{img/edgejoin.png}
-	\caption{ Edge joining principle. White pixels denote Keylines, black pixels \==~non-Keylines, green x -- currently processed pixel, green arrow -- $\vec{g}$, red arrow -- $\vec{g}$ rotated by $\frac{\pi}{2}$ clockwise , red rectangle -- edge joining candidates }
+	\caption{ Edge joining principle. White pixels denote Keylines, black pixels~\==~non-Keylines, green x -- currently processed pixel, green arrow -- $\vec{g}$, red arrow -- $\vec{g}$ rotated by $\frac{\pi}{2}$ clockwise , red rectangle -- edge joining candidates }
 	\label{fig:edgejoin}
 \end{figure}
 
 
-Joined Keylines are used for pruning. First of all, edges consisting of 3 pixels or less are discarded, as they are unlikely to be good features to track. Secondly, outermost Keylines of every joined edge are likewise removed -- they are most likely to be affected by noise.
+Joined Keylines are used for pruning. First of all, edges consisting of 3 pixels or less are discarded, as they are unlikely to be good features to track. Secondly, outermost Keylines of every joined edge are likewise removed -- out of all Keylines in that edge, they are most likely to be affected by noise.
 
-In later steps, the algorithm considers only individual Keylines, not joined edges (as mentioned in Section~\ref{sec:rebvo_outline}). Information about neighbors is used only once after edge detection -- in Regularization step, when $\rho$ and $\sigma_{\rho}$
+In later steps, the algorithm considers only individual Keylines, not joined edges (as mentioned in Section~\ref{sec:rebvo_outline}). Information about neighbors is used after edge detection only once -- in Regularization step, where $\rho$ and $\sigma_{\rho}$
 are averaged over Keyline and its 2 immediate neighbors.
 
-Initially \underline{more edge joining strategies were considered}: morphological operations on Keylines, loop avoidance and edge segmentation (into parts with similar gradient). However, once it has been understood that edge joining takes such small part in algorithm flow, this direction of research was abandoned.
+Initially \textbf{more edge joining strategies were considered}: morphological operations on Keylines, loop avoidance and edge segmentation (into parts with similar gradient). However, once it has been understood that edge joining takes such small part in algorithm flow and that by-pixel approach is preferable \cite{harris}, this direction of research was abandoned.
 
 
 %--
 
 \section{Edge tracking}
 
-Goal of edge tracking is to find 3D transformation (translation and rotation) that best describes transition between two consecutive frames. Minimization is performed using Levenberg-Marquardt algorithm. Similarly to \cite{jose2015realtime}, implementation is based on \cite{madsen2004methods}.
+Goal of edge tracking is to find a 3D transformation (translation and rotation) that best describes transition between two consecutive frames. Previous frame Keylines are projected to 3D space, where they are rotated and translated; then resulting points are back-projected to image plane (transformations are elaborated upon in Section~\ref{sec:warp}). Reprojected Keylines are matched against Keylines of the next frame -- see Sections~\ref{sec:aux}~and~\ref{sec:minim_match}. Minimization of the residual is performed using Levenberg-Marquardt algorithm. Similarly to~\cite{jose2015realtime}, implementation is based on \cite{madsen2004methods}.
 
 \subsection{Warping function}
+\label{sec:warp}
 
-Given a 3-vector $\vec{v}$ describing 3D translation of camera 
-
-3D transformation that is 
-
-Two initial conditions are tested for a few (e.g. 3) iterations. Better result is then selected and minimization is continued for more 
+2D Keyline $\longleftrightarrow$ 3D point transformations are defined by Eq.~\ref{eq:gamma}~and Eq.~\ref{eq:gammainv}. They can be derived from \ref{eq:camera}, assuming $f_x = f_y = f$ and $s = 0$. These assumptions were valid for tested datasets. It should be noted, however, that in case of smartphone cameras, \textbf{full pinhole model should be considered}, complicating these formulas. Once points have been projected using $\gamma$, they can be rotated and translated in 3D space using Eq.\ref{eq:rototr}.
 
 
+\begin{equation}
+\gamma(h_{p}, \rho_{p}) = \left [\frac{h_{p_x}}{f\rho_{p}},\ \ \frac{h_{p_y}}{f\rho_{p}},\ \ \frac{1}{\rho_{p}}\right ]: \Re^2 \times \Re \rightarrow \Re^3
+\label{eq:gamma}
+\end{equation}
+where:
+\begin{eqwhere}[2cm]
+	\item[$\gamma$] projection function.
+\end{eqwhere}
 
-project KL\_prev to 3D using previously estimated rhos
+\begin{equation}
+\gamma^{-1}(Q) = \left [ \left [ \frac{fQ_x}{Q_z},\ \ \frac{fQ_y}{Q_z} \right],\ \ \frac{1}{Q_{z}}\right ]: \Re^3 \rightarrow  \Re^2 \times \Re
+\label{eq:gammainv}
+\end{equation}
+where:
+\begin{eqwhere}[2cm]
+	\item[$\gamma^{-1}$] back-projection function,
+	\item[$Q$] 3D world point (3-tuple).
+\end{eqwhere}
 
-one iteration of LM:
-
-    using jacobian, new state vector is calculated for next iteration
-
-    apply transformation given in argument
-
-    project previous points from these 3D positions to 2D
-
-    for every previous KL perfoms test to check if it should take part in minimization:
-
-       test1: uncertainty below previously estimated quantile
-
-	 test2: (excluding minimalization for very first frame) check if KL has appeared before
-
-     estimate rewieghting
-
-	 test3: check if projected KL lies within image frame
-
-       test4: check if there is a KL in this pixel using auxiliary image
-
-       test5: compare their gradients (escobar)
-
-       we get residual (DResidual) \& weighted residual (fm) projected in direction of gradient
-
-     calculate jacobians using fishy equations
-
-     if there was gain, use these new parameters, otherwise ...
-
-double init(zeros and priors): 3 iterations with no reweighting
-
-use better result, proceed for 15 iterations with reweighting
-
-transformation that resulted in lowest score is considered the optimal transformation between frames
-
-estimate uncertainty as inverse of final jacobian
-
+\begin{equation}
+\psi(\vec{v}, \vec{\omega}, Q) = \mathfrak{exp} \left ( \left[ \vec{\omega} \right ]_{s} \right ) Q + \vec{v}
+\label{eq:rototr}
+\end{equation}
+where:
+\begin{eqwhere}[2cm]
+	\item[$\psi$] warping function,
+	\item[$\vec{v}$] camera translation (3-tuple),
+	\item[$\vec{\omega}$] camera azimuth rotation in axis-angle notation\footnote{Axis-angle vector $\vec{\omega}$ describes right-hand rotation by $||\vec{\omega}||$ radians about $O\omega$ axis.} (3-tuple),
+	\item[$ \mathfrak{exp}$] matrix exponentiation function which can be approximated using Euler-Rodriguez formula \cite{opencv}.
+\end{eqwhere}
 
 
 \subsection{Auxiliary image}
+\label{sec:aux}
 
-Auxiliary image is a lookup table that speeds up minimization. It is a matrix of size equal to the image. An entry in the matrix is nonzero if distance from its coordinates to closest Keyline's $q$ is lower than a search radius, usually equal to 5 pixels. Then such entry contains a reference to the found closest Keyline.
+Auxiliary image is a lookup table that speeds up minimization. It is a matrix of size equal to the image. An entry in the matrix is nonzero if distance from its coordinates to closest Keyline's $q$ is lower than a search radius $r_search$, usually equal to 5 pixels. Then such entry contains a reference to the found closest Keyline.
 
 During minimization, Keylines from previous frame are projected to 3D space using depth information ($\rho$), rototranslated, and then projected back to image plane. Positions obtained from the back-projection are compared against the auxiliary image of next frame to check if such position corresponds to a~Keyline (and to which).
 
-Auxiliary image creation can be perceived as widening of an edge by ``sliding`` its pixels along $\vec{g}$. A depiction is presented in Fig.~todo. Because pixel positions are discrete, \underline{increments of this sliding should be lower than 1}. Otherwise, when $\vec{g}$ is not perpendicular to pixel grid, creation process will occasionally skip over some pixels. This leads to discontinuities (gaps) in auxiliary image (see Fig.~todo), which can later bias the minimization by producing false local minima.
+Auxiliary image creation can be perceived as widening of an edge by ``sliding`` its pixels along $\vec{g}$. A depiction is presented in Fig.~todo. Because pixel positions are discrete, \textbf{increments of this sliding should be lower than 1}. Otherwise, when $\vec{g}$ is not perpendicular to pixel grid, creation process will occasionally skip over some pixels. This leads to discontinuities (gaps) in auxiliary image (see Fig.~todo), which can later bias the minimization by producing false local minima.
 
 Some gaps are unavoidable, however, because $\vec{g}$ is available only in places where there is a~Keyline. Even with subpixel position precision, there still is only at most one Keyline per pixel. If edge has any curvature, then at some radius auxiliary image will feature spikes. They are visible in top left corner of Fig.~todo.
 
@@ -368,6 +352,7 @@ todo: figure
 
 
 \subsection{Keyline matching criteria}
+\label{sec:minim_match}
 
 During each iteration of minimization, reprojected old Keylines and new Keylines are pre-matched, using auxiliary image. In order to determine validity and score of this match, following criteria are tested. Result of applying them on a frame is depicted in Fig.~\ref{fig:minim_why}.
 
@@ -379,26 +364,46 @@ During each iteration of minimization, reprojected old Keylines and new Keylines
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.85\linewidth, trim={1.5cm 1.5cm 1.5cm 1cm},clip]{img/figures/minim_why.png}
-	\caption{ Minimization tests results. Pixel colors: dark blue -- not Keyline; blue~\==~ $\sigma_{\rho}$ too high; cyan -- too short history; teal -- 2D reprojection lies outside the image; orange -- no corresponding Keyline in next frame's auxiliary image; red -- gradients dissimilar; brown -- successful matching }
+	\caption{ Minimization tests results. Pixel colors: dark blue -- not Keyline; blue~\==~ $\sigma_{\rho}$ too high; cyan -- too short history; teal -- 2D reprojection lies outside the image; orange -- no corresponding Keyline in next frame's auxiliary image; red -- gradients dissimilar; dark red -- successful matching }
 	\label{fig:minim_why}
 \end{figure}
 
 \subsection{Energy minimization}
 
-Increment to the input vector can be determined using calculated Jacobians and SVD, as it is performed by Tarrio and Pedre. 
+Each minimization iteration executes following steps:
+\begin{itemize}
+	\item Using previously estimated Jacobian matrix $J$ and other information from previous iteration, propose new parameter vector in the 6-dimensional parameter space $\left[ \vec{v},\ \ \vec{\omega} \right]$.
+	\item For each Keyline in previous frame:
+	\begin{itemize}
+		\item Perform reprojection: $q_{t} = \left( \gamma^{-1} \circ \psi \circ \gamma \right) \left( q_p, \rho_{p} \right)$.
+		\item Find closest $q_{c}$ that conforms to similarity criteria.
+		\item Calculate the residual.
+	\end{itemize}
+	\item Calculate overall iteration score.
+\end{itemize}
+
+Minimized function takes form defined in Eq.~\ref{eq:minim}. Distance between matched points is casted onto edge gradient, because \textit{``location information is only present in direction [of the gradient]``}  \cite{jose2015realtime}. The matching function $M$ is not differentiable, making it impossible to calculate Jacobian of $\zeta$ analytically. Therefore Jacobians were calculated using the same formulas as in Tarrio and Pedre's implementation.
 
 \begin{equation}
-(J^T J + \mu I u)b = J^T F
-\label{eq:jtj}
+E = \zeta \left( \vec{v},\ \ \vec{\omega} \right) = \sum_{i}^{p} \frac{w_i}{\sigma_{\rho_{i}}^2} \left[ \underset{q_t, q_c}{M} \left( \left( q_t \right) \bullet \vec{g_c} \right) \right] ^2
+\label{eq:minim}
 \end{equation}
 where:
 \begin{eqwhere}[2cm]
-	\item[$k_s$] estimated $k$-coordinate of the subpixel edge position (0 is the pixel center).
+	\item[$w_i$] weight (square of the Huber norm \cite{huber1964robust}),
+	\item[$q_t$] transformed $q_p$, $q_{t} = \gamma^{-1}\left(\ \  \psi \left( \vec{v},\ \vec{\omega},\ \gamma \left( q_p, \rho_{p} \right) \right)\ \  \right)$,
+	\item[$M$] matching function, $\underset{q_t}{M}(\bullet) = \begin{cases} 
+	\bullet, & \exists q_c : q_t \textrm{ matches } q_c \\
+	r_{search}, & otherwise
+	\end{cases}$
 \end{eqwhere}
 
-For any $u > 0$, $J^T J + \mu I u$ is a positive definite matrix, meaning that \underline{Cholesky factorization} can be used to solve Eq.\ref{eq:jtj}, instead of slower, but less constrictive SVD. However, the matrix is quite small (6x6), so computational gain is negligible.
+todo wykres histogramu, wykres jak spada score, wykres że kierunek
+we get residual (DResidual) \& weighted residual (fm) projected in direction of gradient
 
-This was tested in GNU Octave, using OpenCV \cite{opencv} linear algebra routines, compiled to MEX files. Random values were chosen to populate variables in Eq.\ref{eq:jtj} and then it was solved $10^6$ times, first using SVD, then Cholesky factorization. Average running times per iteration have been collected in Tab.~\ref{tab:chol}.
+Increment of the input vector is dictated by the Levenberg–Marquardt update equation \cite{press2007numerical}. One way of determining it is to use SVD on a 6x6 matrix $\Lambda$, as it is performed by Tarrio and Pedre. However, $\Lambda$ is always a positive definite \cite{madsen2004methods}, meaning that \textbf{Cholesky factorization can be used}, instead of slower, but less constrictive SVD. However, size of the decomposed matrix is quite small, so computational gain is negligible.
+
+This was tested in GNU Octave, using OpenCV \cite{opencv} linear algebra routines, compiled to MEX files. Random values were chosen to populate variables in the LM equation and then it was solved $10^6$ times, first using SVD, then Cholesky factorization. Average running times per iteration have been collected in Tab.~\ref{tab:chol}.
 
 \begin{table}[ht]
 	\centering
@@ -420,9 +425,13 @@ This was tested in GNU Octave, using OpenCV \cite{opencv} linear algebra routine
 \end{table}
 
 
+Estimate uncertainty (covariance matrix) as $\left( J^T J \right) ^ {-1}$.
+
 \subsection{Initial conditions}
 
-\subsection{Reweighing}
+Levenberg-Marquardt algorithm is prone to falling to local minima. Generally, global minimization of arbitrary function is a challenging problem with no infallible solution. There is a plethora of heuristic methods: evolutionary algorithms, simulated annealing, physical simulations, etc. However, they are unsuitable for real-time applications.
+Two initial conditions are tested for a few (e.g. 3) iterations. Better result is then selected and minimization is continued for more 
+
 
 %--
 
@@ -458,6 +467,8 @@ For obtained information to be useful in the next iteration of the algorithm, it
 Since calculated transformation between the two frames is supposed to be the optimal one, after applying it to 3D positions of Keylines and casting them into the image plane we should obtain their positions on the next frame. This was already done at the minimization step; said Keylines were then paired with their corresponding match using property forward. Using this information, we are able to rewrite aforementioned data.
 
 \subsection{Directed matching}
+
+pokazac wyfilotwane outliery
 
 %directed match
 %
