@@ -2,8 +2,22 @@
 
 \chapter*{Introduction}
 
+% ludwin.jpg odometria to pomiar odleglosci, mozna to ribic na przyklad liczac obroty kol pojazdu ale to jest dobre tylko jak sie ruszamy ze stalym vel
 
-aaaa
+Odometry is a term describing any measurement of distance, for example knowing the size of a cars' wheel and how many times they spun over time, we can calculate distance traveled. Visual odometry focuses on pure visual means of calculating distance.
 
+% to proste i tanie rozwiazanie dla lokalizacji kamery w porownaniu do gpsow, zyroskopow etc, a do tego kazdy ma durzo kamer bo sa wszedzie. jest wykorzystywana do stabilizacji obrazu, augmented reality albo po prostu w systemach SLAM(Self LOcalization And Mapping) wykorzystywanego w robotach/dronach do pomocy w autonomicznym poruszaniu sie czegos takiego lub mapowania pomieszczen. w tym paperze zajmujemy sie jednak tylko pozycja kamery ale nie jako system slam, bo nie trzymamy historii.
+% POKEMON GO TO THE MAGISTERKA
+
+This relatively easy and cheap approach to odometry takes advantage of a fact, that cameras are embedded into almost every mobile device we own, no matter how expensive they are - game consoles, phones, even smartwatches. Not every of those devices has a gyroscope, and even if they use GPS, its accuracy is relatively low. This technology is most commonly used for AR (augmented reality), stabilize a video or in the SLAM (Self Localization And Mapping) systems.
+
+This paper focuses on the latter - self localization is particularly important on autonomous devices, such as drones, robots or even self-driving cars (Mars Rover used that technology /jak to napisac ladnie/). In this case, algorithm is not a full SLAM one - no global map or keypoint history are generated.
+% byl sobie landmark paper, czeste podejscie to slam ale niewydajny bo i7, slam w Roverze, a mysmy chcieli cos embedded na telefony komorkowe w normalnej cenie a nie z zyroskopem. strona odjarka z androidem zacytowac (?) moze cos o state of the art?, 
+Full SLAM systems are often computationally demanding and are best suited for dedicated devices, which smartphones are not. Instead we looked for a lightweight solution for increasing accuracy of GPS data for better navigation, for example on roundabouts.
+
+%nasz paper zawiera analize zmodyfkowanej wersji REBWO, nie jest na telefonie bo jestesmy slabiaki (cieniasy?), nasza implementacja to tylko prototyp bo mialo byc na telefony ale nie jest szypkie ale tez bylo niby realtime wiec to bylby rozwoj programu, analiza tego algorytmu obejmuje wszystkie kroki po akwizycji obrazu bo po chuj nam drona a z drugiej strony chcemy zaczac od obrazu stricte
+We chose Rebvo algorithm, created by Tarrio and Pedre, since they presented a quick, accurate, and most importantly unique algorithm for visual odometry. This paper contains detailed analysis of Rebvo algorithm which is a prototype for smartphone application. Their implementation is supposed to be real-time on low-end processors (ARM).
+Each step of the algorithm flow from image capture was analyzed and tested on video sequences from publicly available datasets containing ground truth for validating results. Our results were comparable to those achieved from state-of-the-art algorithms, which ensures that this implementation would make a good basis for aforementioned application.
+%podsumujemy sobie ze testowalismy a sekwencjach z dwoch datasetow a wyniki sa spoko jak sa spoko, bo jak sie zepsuje to nie XD
 
 \clearpage 
