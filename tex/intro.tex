@@ -25,4 +25,23 @@ Each step of the algorithm flow from image capture was analyzed and tested on vi
 
 PODZIAL PRACY
 %proponuje edgefinder razem, joiner ja, minimizer ty, matcher ja, kalman ty :S
+
+ABSTRAKT
+
+%Uzasadnienie podjęcia tematu – musimy odpowiedzieć na pytanie, jak i dlaczego ważne jest to, o czym napisaliśmy.
+Egomotion is an underlying problem behind SLAM systems and in some cases can be more accurate than GPS systems.
+
+%Problem badawczy – napiszmy jasno, jaki był cel badania, co badaliśmy, jaki problem intelektualny/praktyczny staraliśmy się rozwiązać.
+There is a problem present in most GPS applications, and that is accuracy of the reading while making sharp turns, for example on roundabouts. To increase this accuracy, Visual Odometry could be used. Rebvo algorithm was tested for that routine, as creators of said algorithm point out its real-time capabilities.
+
+%Metodologia – należy opisać jak staraliśmy się odpowiedzieć na pytanie z poprzedniego punktu. Perspektywa, metody, techniki.
+Rebvo algorithm was implemented in Octave/OpenCV/mex to test how it behaves under specific conditions and whether it will suit aforementioned environment.
+
+%Wyniki – streszczamy to, co nasze badanie wykazało.
+%Implikacje – abstrakt zamykamy wnioskami, które płyną z naszej pracy.
+Tests show convergence with algorithm authors' publication, and conclude that said algorithm would work well under conditions mentioned before, making it useful in implementation of GPSs' preformance increasing system.
+
+%Słowa kluczowe – dla porządku i ułatwienia sklasyfikowania naszej pracy opisujemy ją słowami kluczowymi.
+Keywords: Visual odometry, egomotion, motion estimation, SLAM
+
 \clearpage 
