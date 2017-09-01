@@ -112,7 +112,7 @@ Before performing any edge detection technique, one critical issue has to be add
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth, trim={1cm 1cm 1cm 1cm},clip]{img/figures/rectified_edge.png}
-	\caption{ Input image, zoomed-in near left border. Individual pixels produced by rectification can be observed on the left }
+	\caption{ Input image, zoomed-in near left border. Individual pixels produced by rectification can be observed on the right }
 	\label{fig:rectifcy_border}
 \end{figure}
 
@@ -147,7 +147,7 @@ Edge detection procedure is performed for every pixel that lies at least $w$ pix
 
 Tarrio and Pedre use hysteresis to determine threshold value after every frame. On the one hand, presented algorithm operates offline, so abundance of keylines is not an issue. On the other, hysteresis parameters still need to be adjusted for given dataset. Invalid parameters can alter overall algorithm results significantly, so from algorithm analysis point of view, the fewer of them, the better. \textbf{Thus instead simpler solution was tested out}.
 
-Image is be partitioned into $a^2$ rectangular chunks, for relatively small $a$, e.g. 7. Then for each chunk number of pixels that would pass the first derivative test for given constant threshold is counted. If this number is relatively low, threshold is locally multiplied by a constant ${b_{1} < 1}$, e.g. $\frac{1}{3}$. However, if the number is relatively large, then threshold is locally multiplied by ${b_{2} > 1}$, e.g. $\frac{5}{3}$. Local threshold array can finally be smoothed with Gaussian filter to avoid discontinuities.
+Image is partitioned into $a^2$ rectangular chunks, for relatively small $a$, e.g. 7. Then for each chunk number of pixels that would pass the first derivative test for given constant threshold is counted. If this number is relatively low, threshold is locally multiplied by a constant ${b_{1} < 1}$, e.g.~$\frac{1}{3}$. However, if the number is relatively large, then threshold is locally multiplied by ${b_{2} > 1}$,~e.g.~$\frac{5}{3}$. Local threshold array can finally be smoothed with Gaussian filter to avoid discontinuities.
 
 Proposed procedure also has parameters, but there are few advantages:
 \begin{itemize}
@@ -156,7 +156,7 @@ Proposed procedure also has parameters, but there are few advantages:
 	\item operates without delay, which is vital especially if keyline number is too low.
 \end{itemize}
 
-Fig.~\ref{fig:bucket} illustrates that additional pixels were considered further for being edges. However, edges added by this method are not very stable and tend to be nonetheless untraceable in later frames (they do not exhibit the \textit{repetivity} property).
+In Fig.~\ref{fig:bucket} some pixels on the right half of the image were considered further for being edges, although ultimately they were also rejected. On the other hand, more non-edge pixels have been rejected by the first test on the left half (green regions are a bit thinner). However, if any edges \textit{are} added by this method, they are not very stable and tend to be nonetheless untraceable in later frames (they do not exhibit the \textit{repetivity} property).
 
 \begin{figure}[ht]
 	\centering
@@ -170,7 +170,8 @@ Fig.~\ref{fig:bucket} illustrates that additional pixels were considered further
 		\centering\includegraphics[width=0.8\linewidth]{img/figures/02_0013_bucket.png}
 		\subcaption{\label{fig:bucket_b}}
 	\end{subfigure}
-	\caption{\label{fig:bucket} Edge detection in 4 consecutive KITTI \cite{kitti} frames under lighting conditions changes~\==~input images}
+	\caption{\label{fig:bucket} Edge detection tests results. Pixel colors: dark blue -- neighborhood outside image; blue, light blue (not present), cyan (not present), green and orange -- rejected by tests 1 to 5, respectively; red -- reserved for debug purposes (not present); dark red -- final Keylines. \protect\subref{fig:bucket_a} Constant first test threshold,
+		\protect\subref{fig:bucket_b} Chunked first test threshold}
 \end{figure}
 
 \subsubsection{Second test}
@@ -187,7 +188,13 @@ Neighborhood of pixels that have passed the first test is checked for ``sign bal
 \subsubsection{Third test}
 \label{edge_third}
 
-Then DoG values are approximated by a plane using linear regression -- Eq.~\ref{eq:regress} is solved for~$\theta$. Pseudo-inverse of $\tmmathbf{A}$, needed to solve it, needs to be computed only once for the whole algorithm. Zero-crossing of the plane can be determined algebraically, resulting in Eq.~\ref{eq:zerocross}. These closed-form formulas are the main reason for DoG not being computationally demanding, as curve-fitting approaches are usually iterative.
+Then DoG values are approximated by a plane using linear regression -- Eq.~\ref{eq:regress} is solved for~$\theta$. Pseudo-inverse of $\tmmathbf{A}$, needed to solve it, has to be computed only once for the whole algorithm. Zero-crossing of the plane can be determined algebraically, resulting in Eq.~\ref{eq:zerocross}. This has been visualized in Fig.~\ref{fig:zeroc}. These closed-form formulas are the main reason for DoG not being computationally demanding, as curve-fitting approaches are usually iterative.
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 0.5cm 1.0cm 0.5cm},clip]{img/figures/zeroc.png}
+	\caption{ Zero-crossing search. DoG values have been depicted with a mesh. Two planes are present: approximation of the DoG and the $z=0$ plane }
+	\label{fig:zeroc}
+\end{figure}
 
 For more resilience, an additional test is performed. If inequality~\ref{eq:test3} is not satisfied, then equation system~\ref{eq:regress} \textbf{is considered to be badly conditioned} and this pixel is rejected. This was not considered in \cite{jose2015realtime}. The purpose of this test is to avoid divide-by-zero errors in fourth test (Section~\ref{edge_fourth}). All pixels that do not pass the third test would still be filtered out later -- they also do not pass the fifth test~(Section~\ref{edge_fith}).
 
@@ -327,11 +334,9 @@ Presented edge detection algorithm has proved to be quite robust under lighting 
 After Keyline has been successfully identified on image, a data structure described in Section~\ref{sec:struct} is populated with obtained data. This step is different for the very first processed frame, because its Keylines must have some initial depth values. During first tests, a constant $\rho = 1$ was used. Then for some time explicit Kinect depth map was used, as it was available in the TUM dataset. Finally, after other ares of algorithm have been improved, it was observed that in most cases quick convergence (5-10 frames) could be achieved by \textbf{initializing depth with random values}, even with images scaled down by 80\% (to 128 by 96 pixels). Convergence depends on speed of camera during these first frames. Overall, this is much better result than in~\cite{jose2015realtime}, where 2-5 seconds needed for depth convergence were reported. Noise was generated using normal distribution with parameters chosen for each dataset: $N(2,0.5)$ for TUM and $N(10,3)$ for KITTI.
 
 
-Some \textbf{thought was given to more elaborate initialization schemes}. Feature point correspondences could be used in order to determine first frames scene geometry \cite{semi_dense} in a quicker and more robust way, while rest of algorithm would still operate on edges. Feature point descriptors, such as the SIFT (Scale Invariant Feature Transform) \cite{sift}, or even simpler corner detectors \cite{harris} \cite{shi1994good}, are well suited for this task.
+\textbf{Some thought was given to more elaborate initialization schemes}. Feature point correspondences could be used in order to determine first frames scene geometry \cite{semi_dense} in a quicker and more robust way, while rest of algorithm would still operate on edges. Feature point descriptors, such as the SIFT (Scale Invariant Feature Transform) \cite{sift}, or even simpler corner detectors \cite{harris} \cite{shi1994good}, are well suited for this task.
 
 Their main disadvantage is their complexity, especially in case of more robust ones, like SIFT. They need to be somehow matched -- this becomes unfeasible for real-time applications once number feature points is too large \cite{szczesny}. This in turn means that many parameters would have to be carefully chosen so that a consumer-grade mobile system would not be flooded by excessive features and remain responsive. Finally, feature point descriptors encode larger pixel neighborhood than edges, but they lack structural information, meaning that match is likely produce more outliers, that need to be dealt with (filtered).
-
-todo: figure
 
 
 \subsection{Keyline joining}
@@ -358,7 +363,7 @@ Initially \textbf{more edge joining strategies were considered}: morphological o
 
 \section{Edge tracking}
 
-Goal of edge tracking is to find a 3D transformation (translation and rotation) that best describes transition between two consecutive frames. Previous frame Keylines are projected to 3D space, where they are rotated and translated; then resulting points are back-projected to image plane (transformations are elaborated upon in Section~\ref{sec:warp}). Reprojected Keylines are matched against Keylines of the next frame -- see Sections~\ref{sec:aux}~and~\ref{sec:minim_match}. Minimization of the residual is performed using Levenberg-Marquardt algorithm. Similarly to~\cite{jose2015realtime}, implementation is based on \cite{madsen2004methods}.
+Goal of edge tracking is to find a 3D transformation (translation and rotation) that best describes transition between two consecutive frames. Previous frame Keylines are projected to 3D space, where they are rototranslated (rotated and translated); then resulting points are back-projected to image plane (transformations are elaborated upon in Section~\ref{sec:warp}). Reprojected Keylines are matched against Keylines of the next frame -- see Sections~\ref{sec:aux}~and~\ref{sec:minim_match}. Minimization of the residual is performed using Levenberg-Marquardt algorithm. Similarly to~\cite{jose2015realtime}, implementation is based on \cite{madsen2004methods}.
 
 \subsection{Warping function}
 \label{sec:warp}
@@ -407,7 +412,7 @@ During minimization, Keylines from previous frame are projected to 3D space usin
 
 Auxiliary image creation can be perceived as widening of an edge by ``spanning`` its pixels along $\vec{g}$. A depiction is presented in Fig.~\ref{fig:aux1}. Because pixel positions are discrete, \textbf{increments of this spanning should be lower than 1 px}. Otherwise, when $\vec{g}$ is not perpendicular to pixel grid, edge widening process will occasionally skip over some pixels. This leads to discontinuities (gaps) in auxiliary image (see Fig.~\ref{fig:aux2}), which can later bias the minimization by producing false local minima.
 
-Some gaps are unavoidable, however, because $\vec{g}$ is available only in places where there is a~Keyline. Even with subpixel position precision, there still is only at most one Keyline per pixel. If edge has any curvature, then at some radius auxiliary image will feature spikes. They are visible in both Fig.~\ref{fig:aux1} and Fig.~\ref{fig:aux2}.
+Some gaps are unavoidable, however, because $\vec{g}$ is available only in places where there is a~Keyline. Even with subpixel position precision, there still is at most only one Keyline per pixel. If edge has any curvature, then at some radius auxiliary image will feature spikes. They are visible in both Fig.~\ref{fig:aux1} and Fig.~\ref{fig:aux2}.
 
 \begin{figure}[hp]
 	\centering\includegraphics[width=0.85\linewidth, trim={1.5cm 1.5cm 1.5cm 1cm},clip]{img/aux05.png}
@@ -508,7 +513,7 @@ Levenberg-Marquardt algorithm is prone to falling to local minima. Repetitive pa
 
 In case of LM, crucial issue is choice of initial condition vectors. Following \cite{jose2015realtime}, two initial conditions were tested, and calculations proceeded using better one. These vectors are: $\vec{0}$ and rototranslation of the previous frame. If linear and angular instantaneous velocities of the camera do not change rapidly, it is reasonable to assume that previous and current velocities are not far apart in the parameter space.
 
-One exception is the special case when too few Keylines are matched and system decides to reinitialize. This usually happens when number of detected Keylines also drops -- for instance in the ``\textit{fr2\_360\_kidnap}`` sequence. In the context of algorithm results postprocessing (i.e. fitting the estimated camera trajectory to ground truth data), it is better to assume no prior knowledge and overwrite the previous parameter vector with zeros.
+One exception is the special case when too few Keylines are matched and system decides to reinitialize. This usually happens when number of detected Keylines also drops -- for instance in the fr2\_360\_kidnap sequence (TUM \cite{tum}). In the context of algorithm results postprocessing (i.e. fitting the estimated camera trajectory to ground truth data), it is better to assume no prior knowledge and overwrite the previous parameter vector with zeros.
 
 During some tests, the prior rototranslation vector for the first frame in sequence was obtained from ground truth data in hope of accelerating algorithm convergence (and to assess whether it could retain good information that was fed to it). However, usually ground truth data uses other reference frame, as position of the laser positioning system is different from position of the camera itself.
 
@@ -516,7 +521,7 @@ During some tests, the prior rototranslation vector for the first frame in seque
 
 \section{Mapping}
 
-For obtained information to be useful in the next iteration of the algorithm, it needs to be preserved. Since this is not a full SLAM system, data needs to be updated and passed on to next array of Keylines. This is achieved by the mapping step: Keylines from previous iteration are matched to Keylines that are currently being processed. Data that is passed between matched Keylines on contains:
+For obtained information to be useful in the next iteration of the algorithm, it needs to be preserved. Since this is not a full SLAM system, data needs to be updated and passed on to next array of Keylines. This is achieved by the mapping step: Keylines from previous iteration are matched to Keylines that are currently being processed. Data that is passed on between matched Keylines contains:
 
 \begin{itemize}
 	\item estimated $\rho$ and $\sigma_{\rho}$, that need to be refined with the Kalman filter,
@@ -620,7 +625,7 @@ This does not remedy the fundamental problem of scale ambiguity in monocular sys
 
 This however entails additional, heavy computing cost and would not fit the designated platform. Moreover, no out-of-the-box implementation was found. Thus moving this problem out of the scope of this thesis.
 
-Tests conclude that estimated rescaling factor oscillates too much while the system is initializing, so depth rescalling is only present after system is fully initialized and depth is more or less stable (usually after 20 frames).
+Tests have concluded that estimated rescaling factor oscillates too much while the system is initializing -- therefore depth rescalling is only allowed after system has fully initialized and depth is more or less stable (usually after 20 frames).
 
 % ----------------------
 \subsection{Tests on artificial data}
