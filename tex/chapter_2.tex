@@ -327,8 +327,8 @@ where:
 \begin{eqwhere}[2cm]
 	\item[$\psi$] warping function,
 	\item[$\vec{v}$] camera translation (3-tuple),
-	\item[$\vec{\omega}$] camera azimuth rotation in axis-angle notation\footnote{Axis-angle vector $\vec{\omega}$ describes right-hand rotation by $||\vec{\omega}||$ radians about $O\omega$ axis.} (3-tuple),
-	\item[$ \mathfrak{exp}$] matrix exponentiation function which can be approximated using Euler-Rodrigues formula \cite{opencv}.
+	\item[$\vec{\omega}$] camera azimuth rotation in axis-angle notation\footnote{Axis-angle vector $\vec{\omega}$ describes right-hand rotation by $||\vec{\omega}||$ radians about $O\omega$ axis \cite{hartley2003multiple} \cite{blanco2010tutorial}.} (3-tuple),
+	\item[$ \mathfrak{exp}$] matrix exponentiation function, which can be approximated using Euler-Rodrigues formula \cite{opencv}.
 \end{eqwhere}
 
 
@@ -534,7 +534,7 @@ todo
 
  % todo 2x depth
 
-This does not remedy the fundamental problem of scale ambiguity in monocular systems. To fix this issue, dimensions of real-life objects present the scene need to be known a priori. Excellent example of such objects, with well defined shape and size, are traffic signs and license plates, ever-present in urban environments that algorithm was originally envisioned for. Solutions for identifying those objects are:
+This does not remedy the fundamental problem of scale ambiguity in monocular systems. To fix this issue, dimensions of real-life objects present the scene need to be known a priori. Excellent example of such objects, with well defined shape and size, are \textbf{traffic signs and license plates}, ever-present in urban environments that algorithm was originally envisioned for. Solutions for identifying those objects are:
 \begin{itemize}
 	\item Haar feature-based cascade classifier combined with descriptor ORB (Oriented FAST and Rotated BRIEF) \cite{opencv},
 	\item machine learning methods: SVM (Support Vector Machine) and neural networks,
@@ -545,9 +545,9 @@ This does not remedy the fundamental problem of scale ambiguity in monocular sys
 This however entails additional, heavy computing cost and would not fit the designated platform. Moreover, no out-of-the-box implementation was found. Thus moving this problem out of the scope of this thesis.
 
 % ----------------------
-\subsection{Artificial data tests}
+\subsection{Tests on artificial data}
 
-Along with data from KITTI and TUM datasets, some tests on generated data were performed, mainly for the edge detector. That way difficult edges (sharp angles, e.g shaped like letters T, Y and L; or circles) could be examined -- how they were thinned, joined, fragmented and how gradient of such edges behaved.
+Along with data from KITTI and TUM datasets, some tests on generated data were performed, mainly for the edge detector. That way difficult edges (circles or sharp angles shaped like letters \texttt{T}, \texttt{Y} and \texttt{L}) could be examined -- how they were thinned, joined, fragmented and how gradient of such edges behaved.
 
 2D transformations are a special case of 3D ones, so they were used for tests of edge tracker and the mapper -- 2D images were simply moved sideways or rotated. It was tested how these transformations would be recovered, however lack of depth data induced a lot of false positives.
 
@@ -557,6 +557,7 @@ Rendering a full 3D sequence using e.g. a game engine was also considered, but d
 \subsection{Post-processing trajectory fitting}
 
 
-todo cite the SVD-ish paper
+todo \cite{arun1987least}
 
 @kwant: tbd
+

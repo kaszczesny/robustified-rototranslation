@@ -9,7 +9,7 @@ In this chapter theory behind computer vision, 3D reconstruction and mathematica
 \section{Pinhole camera model}
 \label{sec:pinhole}
 
-Pinhole camera model \cite{hartley2003multiple} is a widely used \cite{straight} and simple model that establishes connection between world coordinates $\Re^3$ and image-domain coordinates $\Re^2$ (i.e. projective geometry).
+Pinhole camera model \cite{hartley2003multiple} is a widely used and simple model that establishes connection between world coordinates $\Re^3$ and image-domain coordinates $\Re^2$ (i.e. projective geometry).
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.8\linewidth]{img/projective.PNG}
@@ -213,7 +213,7 @@ In this section the \textit{Rebvo} algorithm description is briefly paraphrased 
 
 Algorithm consists of three main steps, similar to other visual odometry systems. First of all, \textbf{edge extraction} is performed, preferably with subpixel precision. Moreover, edge gradient is calculated for each pixel. Neighboring pixels are joined into connected\footnote{Each edge has no gaps between neighboring pixels} edges, using gradient information.
 
-Then \textbf{tracking} is performed. Edges from previous frames are first projected into 3D space using their already estimated depths. Then an iterative procedure (Levenberg-Marquardt algorithm) aims to find such 3D transformation that establishes consensus between frames. Projected points are rotated and transformed in 3D, then projected back onto image plane. Minimized cost function is essentially the sum of squared distances between back-projected edges from the previous frame and closest edges from the current frame. Actual cost function also takes into consideration gradient correspondence criteria. Obtained pairs of edge pixels do not constitute an exhaustive list of matches, considering that:
+Then \textbf{tracking} is performed. Edges from previous frames are first projected into 3D space using their already estimated depths. Then an iterative procedure (Levenberg-Marquardt algorithm) aims to find such 3D transformation that establishes consensus between frames (i.e. minimizes the geometric re-projection error). Projected points are rotated and transformed in 3D, then projected back onto image plane. Minimized cost function is essentially the sum of squared distances between back-projected edges from the previous frame and closest edges from the current frame. Actual cost function also takes into consideration gradient correspondence criteria. Obtained pairs of edge pixels do not constitute an exhaustive list of matches, considering that:
 \begin{itemize}
 \item transformation is not ideal,
 \item depth of pixels is only estimated,

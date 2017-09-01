@@ -11,6 +11,10 @@ This relatively easy and cheap approach to odometry takes advantage of a fact, t
 
 This paper focuses on the latter - self localization is particularly important on autonomous devices, such as drones, robots or even self-driving cars (Mars Rover used that technology /jak to napisac ladnie/). In this case, algorithm is not a full SLAM one - no global map or keypoint history are generated.
 % byl sobie landmark paper, czeste podejscie to slam ale niewydajny bo i7, slam w Roverze, a mysmy chcieli cos embedded na telefony komorkowe w normalnej cenie a nie z zyroskopem. strona odjarka z androidem zacytowac (?) moze cos o state of the art?, 
+
+\cite{pineco}
+\cite{androidvr} 
+
 Full SLAM systems are often computationally demanding and are best suited for dedicated devices, which smartphones are not. Instead we looked for a lightweight solution for increasing accuracy of GPS data for better navigation, for example on roundabouts.
 
 %nasz paper zawiera analize zmodyfkowanej wersji REBWO, nie jest na telefonie bo jestesmy slabiaki (cieniasy?), nasza implementacja to tylko prototyp bo mialo byc na telefony ale nie jest szypkie ale tez bylo niby realtime wiec to bylby rozwoj programu, analiza tego algorytmu obejmuje wszystkie kroki po akwizycji obrazu bo po chuj nam drona a z drugiej strony chcemy zaczac od obrazu stricte
