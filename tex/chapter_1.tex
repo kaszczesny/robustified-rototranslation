@@ -2,9 +2,7 @@
 \label{cha:intro}
 
 
-In this chapter theory behind computer vision, 3D reconstruction and mathematical apparatus used in our algorithm are introduced. Pinhole camera model and basics of stereo and mono vision are briefly discussed. Other topics -- Difference of Gaussians edge detection and 3D rotation conventions -- can be found in Appendices B and C, respectively. Literature connected with this topic is overviewed. Finally, \textit{Rebvo} \cite{jose2015realtime} algorithm flow is described.
-
-todo: nieprawda, nie ma APENDIKSOW
+In this chapter theory behind computer vision, 3D reconstruction and mathematical apparatus used in our algorithm are introduced. Pinhole camera model and basics of stereo and mono vision are briefly discussed. Literature connected with this topic is overviewed. Finally, \textit{Rebvo}~\cite{jose2015realtime} algorithm flow is described.
 
 %-----------------
 
@@ -36,7 +34,6 @@ Image plane \(\pi\) is a rectangle parallel to plane \(XOY\). Its distance from 
 
 World coordinate points Q are projected onto \(\pi\) as \(Q'\), thus forming a 2D image. This relationship can be concisely written using camera matrix as in Eq.~\ref{eq:camera}.
 
-todo: bold all matrices
 
 \begin{equation}
 q = Q' \sim \underbrace{ \underbrace{  \begin{bmatrix}
@@ -44,7 +41,7 @@ q = Q' \sim \underbrace{ \underbrace{  \begin{bmatrix}
 		0 & f_{y} & c_{y} \\ 
 		0 & 0 & 1
 	\end{bmatrix}
-}_{K} R \left [ I | -t \right ] }_{C} Q
+}_{\tmmathbf{K}} \tmmathbf{R} \left [ \tmmathbf{I} | -t \right ] }_{\tmmathbf{C}} Q
 \label{eq:camera}
 \end{equation}
 where:
@@ -53,12 +50,12 @@ where:
 	\item[$Q'$] 2D point on image plane expressed in homogeneous coordinates (3-tuple),
 	\item[$Q$] 3D point corresponding to $q$, expressed in homogeneous coordinates (4-tuple),
 	\item[$\sim$] equality between homogeneous points,
-	\item[$K$] 3x3 intrinsic camera parameters,
-	\item[$C$] 3x4 camera matrix,
+	\item[$\tmmathbf{K}$] 3x3 camera intrinsic parameters matrix,
+	\item[$\tmmathbf{C}$] 3x4 camera matrix,
 	\item[$f_{k}$] focal length along axis $k$ ($f_{x} \neq f_{y}$ if pixels are not square, but rectangular),
 	\item[$s$] skew factor (usually equal to 0),
 	\item[$c_{k}$] $k$-coordinate of the principal point,
-	\item[$R$] 3x3 rotation matrix between 3D world coordinates and camera coordinates,
+	\item[$\tmmathbf{R}$] 3x3 rotation matrix between 3D world coordinates and camera coordinates,
 	\item[$t$] translation vector between 3D world coordinates and camera coordinates (3-tuple).
 \end{eqwhere}
 
@@ -74,7 +71,7 @@ Conrady-Brown model \cite{brown8} \cite{Zhang_flexible} is a classical approach 
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth]{img/E90vsE9.png}
-	\caption{Example of a distortion modeled with Conrady-Brown model. Vectors connect distorted pixel positions with their undistorted counterparts and contours mark areas with constant vector length. Tangential (non-radial) component is noticeable. Source: \cite{szczesny} }
+	\caption{Example of a distortion modeled with Conrady-Brown model. Vectors connect distorted pixel positions with their undistorted counterparts and contours mark areas with constant vector length. Tangential (non-radial) component is noticeable in this particular field. Source: \cite{szczesny} }
 	\label{fig:brown}
 \end{figure}
 
@@ -92,33 +89,33 @@ Most implementations of visual odometry systems use two cameras spaced by a cons
 	\label{fig:stereo}
 \end{figure}
 
-Eq. \ref{eq:fund} describes correspondence between matched points with the fundamental matrix. At least 7 matches are needed to obtain $F$, but usually much more are used so as to mitigate noise \cite{zhang1998determining}. When cameras are calibrated, essential matrix $E$ can be calculated with Eq.~\ref{eq:ess}. Essential matrix can be then decomposed into rotation and translation between 3D points registered by both cameras using Singular Value Decomposition (1 solution out of 4 has to be chosen). $E$ has scale ambiguity, which can be resolved using baseline in Eq. \ref{eq:disparity} \cite{improving}. It is worth mentioning that baseline can not be determined using autocalibration alone - an object of known dimensions must be measured on images.
+Eq. \ref{eq:fund} describes correspondence between matched points with the fundamental matrix. At least 7 matches are needed to obtain $\tmmathbf{F}$, but usually much more are used so as to mitigate noise \cite{zhang1998determining}. When cameras are calibrated, essential matrix $\tmmathbf{E}$ can be calculated with Eq.~\ref{eq:ess}. Essential matrix can be then decomposed into rotation and translation between 3D points registered by both cameras using Singular Value Decomposition (1 solution out of 4 has to be chosen). $\tmmathbf{E}$ has scale ambiguity, which can be resolved using baseline in Eq. \ref{eq:disparity} \cite{improving}. It is worth mentioning that baseline can not be determined using autocalibration alone - an object of known dimensions must be measured on images.
 
 \begin{equation}
-p_{2}^{T}Fp_{1}=0
+p_{2}^{T}\tmmathbf{F}p_{1}=0
 \label{eq:fund}
 \end{equation}
 where:
 \begin{eqwhere}[2cm]
 	\item[$p_{i}$] point as registered by $i$-th camera, in homogeneous coordinates,
-	\item[$F$] 3x3 fundamental matrix.
+	\item[$\tmmathbf{F}$] 3x3 fundamental matrix.
 \end{eqwhere}
 
 \begin{equation}
-K_{2}^{T}FK_{1}=E=[t]_{s}R
+\tmmathbf{K}_{2}^{T}\tmmathbf{F}\tmmathbf{K}_{1}=\tmmathbf{E}=[t]_{s}R
 \label{eq:ess}
 \end{equation}
 where:
 \begin{eqwhere}[2cm]
-	\item[$K_{i}$] $i$-th camera intrinsic parameters matrix,
-	\item[$E$] 3x3 essential matrix,
+	\item[$\tmmathbf{K}_{i}$] $i$-th camera intrinsic parameters matrix,
+	\item[$\tmmathbf{E}$] 3x3 essential matrix,
 	\item[$t$] translation vector $t=[t_{x}\ \ t_{y}\ \ t_{z}]^T$
 	\item[$\lbrack t \rbrack _{s}$] skew-symmetric matrix: $\begin{bmatrix}
 		0 & -t_{z} & t_{y} \\ 
 		t_{z} & 0 & -t_{x} \\ 
 		-t_{y} & t_{x} & 0
 	\end{bmatrix}$,
-	\item[$R$] 3x3 rotation matrix.
+	\item[$\tmmathbf{R}$] 3x3 rotation matrix.
 \end{eqwhere}
 
 \begin{equation}
@@ -137,12 +134,7 @@ where:
 \section{Monocular visual odometry}
 \label{sec:mono}
 
-There are three main issues in monocular visual odometry, which will be discussed in this section:
-\begin{enumerate}
-	\item scale ambiguity,
-	\item position drift over time,
-	\item egomotion.
-\end{enumerate}
+There are two main issues in monocular visual odometry, which will be discussed in this section: scale ambiguity and position drift over time.
 
 In case when only one camera is available, matches between consecutive frames still can be searched for. However, without knowing the 3D transformation, baseline is unknown, so scene can be reconstructed only up to a scale \cite{hartley2003multiple} \cite{szeliski}. Main difficulty is that this transformation is \textit{the} quantity that odometry is supposed to estimate. Information from only one camera is not sufficient to solve the ambiguity. For instance, Fig.~\ref{fig:pepe} depicts a situation when two objects with differing dimensions appear to be of the same size after projection to image plane. There are 2 main ways of alleviating this problem.
 
@@ -156,20 +148,11 @@ One way is to use an IMU (Inertial Measurement Unit - accelerometer \& gyroscope
 
 Another approach is to use explicit depth data, e.g. RGB-D (Red, Green, Blue and Depth) from Kinect \cite{yu2013improved}. This helps in global scene scale estimation. A~disadvantage is that such devices have narrow depth detection range (usually up to few meters \cite{accuracy_and_resoulution}) and are not available in consumer-grade mobile devices.
 
-In \cite{robust_scale} a novel approach is proposed: by assuming a known, constant camera height above ground plane, global scale can be estimated. This step is performed between all consecutive frames, independently from main visual odometry algorithm. In \cite{xiao2015novel}, a ground-extraction scheme is presented.
-
 A very frequent problem in pure visual monocular odometry is unbounded position drift over time. Each 3D transformation that is estimated between consecutive frames is an instantaneous linear and angular velocity. To obtain accumulated position and azimuth after given frame, individual velocities have to be integrated. Each estimation error gains significance with time. In literature two ways of mitigation are the most common.
 
 First of all, information from GPS can be employed to ensure that position does not drift away \cite{accurate_global_localization}. GPS signal quality greatly depends on location, so this approach may be unsuited for indoor use cases. GPS can not help with azimuth estimation, however. Finally, GPS is, out of the discussed methods, the only way to transform relative coordinates to real word coordinates (i.e. latitude and longitude). Other possibility would be to use special markers.
 
 In SLAM systems loops in trajectories can be used as means of correcting position drift -- knowing landmark\footnote{Landmark is an excellent feature point, observable from many frames.}) descriptors in past frames, such loops can be detected and system parameters can be adjusted to close them \cite{the_application_of_kalman} \cite{monoslam}.
-
-
-todo: egomotion \& "tunnel" motion
-\cite{vehicle_egomotion} \cite{recovery_of_egomotion}
-
-@kwant: tbd
-
 
 %---------
 
@@ -177,66 +160,51 @@ todo: egomotion \& "tunnel" motion
 \section{Literature}
 \label{sec:stateoftheart}
 
-todo:
 
-@kwant: tbd
+``\textit{The term VO was introduced by Nister in his landmark paper \cite{visual_odometry}, and he provided the first real-time and long-run VO implementation with a robust outlier rejection scheme, which is still widely used up to now}`` \cite{a_stereo_visual}. Solution proposed by Nister supported both mono and stereo vision, and used additional data from IMU. Real-time operation was accomplished on then-popular 1~GHz Pentium III processor.
 
-\cite{visual_odometry} - landmark paper
+Many papers focus alone on the problem of detection of independently moving objects (visual odometry outliers). In \cite{fast_monocular} such objects are identified using particle filter and probabilistic approach. \cite{costeira1998multibody} focuses more on a related, but more difficult task -- estimation of individual objects velocities. 
 
-%?
-%“Moravec’s work at Stanford in the 1970s (Moravec, 1980).” TAK
+In \cite{vehicle_egomotion} a neural network-based classifier is utilized for separating the road from rest of objects registered. Then optical flow of the road is calculated. This flow has a special mathematical structure \cite{recovery_of_egomotion}, making it easier to infer the camera egomotion from it.
 
-\cite{fast_monocular} \cite{costeira1998multibody} - outlier removal
+Well known and efficient feature detector is described in \cite{shi1994good}. \cite{spatiotemporal} refers to it, by introducing features that are especially good from the SLAM point of view. Classic approaches monitor only temporal properties (i.e. how they appear in a single image). However, spatial properties (i.e.~how features appear in the 3D space) should be taken into account in systems that preserve feature history.
 
-%Bayes trochę onieśmiela, ale może coś się przyda (do ew. przejrzenia).
+\cite{a_stereo_visual} contains a comparison of most popular feature detectors. Moreover, a~consistency check step for feature matching is proposed, ensuring that features are best matched not only between frames $n$ and $n+1$, but also in the reverse direction.
 
-\cite{spatiotemporal} - good for full SLAM
+In \cite{robust_scale} a novel approach is monocular systems scale ambiguity proposed: by assuming a~known, constant camera height above ground plane, global scale can be estimated. This step is performed between all consecutive frames, independently from main visual odometry algorithm.
 
-%Ulepszenie (?) do GoodFeaturesToTrack
-%Nie, raczej alternatywa. Nie zdążymy zaimplementować, a szkoda, bo dzięki informacji czasoprzestrzennej jest to system inteligentny, ale też wydajny
+Similarly in \cite{a_kalman}, scale is estimated on the basis of known camera height and pitch angle (downward tilt). Moreover, this is a full system that estimates camera velocity using optical flow. As long as speed does not exceed a couple of m/s, only 20\% coverage between consecutive frames is needed.
 
-\cite{a_kalman} - By having a camera mounted on the same height and knowing the angle of said camera relative to the ground (pointed slightly down), scale can be estimated.
 
-%Użyto filtru Kalmana do estymacji przepływów optycznych – wymagane pokrycie kolejnych obrazów to tylko 20%; maksymalna wykrywalna szybkość: kilka m/s. KF pozwala przewidzieć transformację obrazu, co redukuje feature space area.
+Other approach to scale estimation is presented in \cite{xiao2015novel}, where a ground-extraction scheme and modified Kalman filter is used.
 
-\cite{monoslam} - SLAM using only camera, new approach (camera is not on a robot, but independent)
+The celebrated MonoSLAM \cite{monoslam} system has introduced a shift to the paradigm of visual odometry -- ``\textit{from mobile robotics to the 'pure vision' domain of a single uncontrolled camera}``. Instead of full map, only 100 best feature points are remembered. They are used for loop closure that remedies the position drift. MonoSLAM achieves real-time on a low-end 1.6~GHz Pentium~M processor.
 
-%Nie tworzy calej mapy, tylko zostawia garsc punktow o bardzo dobrej jakosci wg ktorych mozna sie orientowac (jak napotka drugi raz to samo, to wie ze tu byl i moze poprawic dryf skali)
 
-\cite{mouragnon2006real}
+Authors of \cite{mouragnon2006real} aim to fully reconstruct the 3D scene by using bundle adjustment. Method is proved to be both fast and robust.
 
-%
+\cite{gui2015robust} presents an unusual approach to visual inertial odometry -- instead of feature points, mutual information between visual and intertial input is used to determine camera motion.
 
-\cite{robust_visual_odometry_estimation} - dense method
+A dense method is proposed in \cite{robust_visual_odometry_estimation}. It operates not on features, but on all of image pixels, making it somewhat more robust on the one hand, but inadequate for mobile devices on the other.
 
-%Metody z dopasowywaniem ficzer pointów to metody indirect, poza tym są metody direct - taką przedstawiono w tym artykule. Jest: gęsta (wykorzystuje wszystkie piksele - przez to pewnie odpada na komórce)
+A semi-dense method presented in \cite{semi_dense} uses probabilistic inverse depth maps. Real-time is achieved, but only on a quad-core i7~processor.
 
-\cite{semi_dense} - semi-dense method
-
-%“In the last years, dense approaches to these challenges have become increasingly popular: Instead of operating solely on visual feature positions, they reconstruct and track on the whole image using a surface-based map and thereby are fundamentally different from feature-based approaches. Yet, these methods are to date either not real-time capable on standard CPU“
-
-\cite{a_stereo_visual} - comparison of feature detectors, consistency check
-
-%Dobry pomysł do feature matchingu: mutual consistency check - feature(t) pasuje najlepiej do feature(t-1), ale również na odwrót
-%“To reduce drift of estimation, Bundle Adjustment is a commonly used approach, which optimizes camera poses and the position of features over the past frames. However, the computation cost increases rapidly with the number of frames”
-
-\cite{gui2015robust} - mutual information instrad of features
-
-%
 
 % -------------
 
 \section{The \textit{Rebvo} algorithm outline}
 \label{sec:rebvo_outline}
 
-In this section the \textit{Rebvo} algorithm description is briefly paraphrased for needs of this thesis.
+In this section the \textit{Rebvo} algorithm description is briefly paraphrased for the needs of this thesis.
 
-\cite{jose2015realtime} presents new-fashioned approach to monocular visual odometry. The algorithm is reported to be capable of running in real time on an ARM processor. It is similar to semi-dense methods, that achieve SLAM using only selected features (in this case -- edges). It is not a~full SLAM system, so only two consecutive frames are stored at each time and no global map is created. Information from previous frames is retained as estimated depth. Features are matched on pixel basis. This concept is compliant with argument made by Harris: ``\textit{Because of ill-conditioning, the use of parametrized curves (eg. circular arcs) cannot be expected to provide the solution, especially with real imagery.}`` \cite{harris}. Similarly to many other state-of-the-art systems, depth information is stored as inverse. It is worth mentioning, however, that inverse depth is most useful in full SLAM systems, where the ``\textit{ray from the first camera position from which the feature was observed}`` \cite{civera2008inverse} can be stored along with that feature.
+\cite{jose2015realtime} presents new-fashioned approach to monocular visual odometry. The algorithm is reported to be capable of running in real time on an ARM processor. This sets it apart from numerous other state-of-the-art methods whose authors claim to achieve real time, but do not stress out that it is only possible on high-end personal computers.
+
+It is similar to semi-dense methods, that achieve SLAM using only selected features (in this case -- edges). It is not a~full SLAM system, so only two consecutive frames are stored at each time and no global map is created. Information from previous frames is retained as estimated depth. Features are matched on pixel basis. This concept is compliant with argument made by Harris: ``\textit{Because of ill-conditioning, the use of parametrized curves (eg. circular arcs) cannot be expected to provide the solution, especially with real imagery.}`` \cite{harris}. Similarly to many other state-of-the-art systems, depth information is stored as inverse. It is worth mentioning, however, that inverse depth is most useful in full SLAM systems, where the ``\textit{ray from the first camera position from which the feature was observed}`` \cite{civera2008inverse} can be stored along with that feature.
 
 
 Algorithm consists of three main steps, similar to other visual odometry systems. First of all, \textbf{edge extraction} is performed, preferably with subpixel precision. Moreover, edge gradient is calculated for each pixel. Neighboring pixels are joined into connected\footnote{Each edge has no gaps between neighboring pixels} edges, using gradient information.
 
-Then \textbf{tracking} is performed. Edges from previous frames are first projected into 3D space using their already estimated depths. Then an iterative procedure (Levenberg-Marquardt algorithm) aims to find such 3D transformation that establishes consensus between frames (i.e. minimizes the geometric re-projection error). Projected points are rotated and transformed in 3D, then projected back onto image plane. Minimized cost function is essentially the sum of squared distances between back-projected edges from the previous frame and closest edges from the current frame. Actual cost function also takes into consideration gradient correspondence criteria. Obtained pairs of edge pixels do not constitute an exhaustive list of matches, considering that:
+Then \textbf{tracking} is performed. Edges from previous frames are first projected into 3D space using their already estimated depths. Then an iterative procedure (Levenberg-Marquardt algorithm) aims to find such 3D transformation that establishes consensus between frames (i.e.~minimizes the geometric re-projection error). Projected points are rotated and transformed in 3D, then projected back onto image plane. Minimized cost function is essentially the sum of squared distances between back-projected edges from the previous frame and closest edges from the current frame. Actual cost function also takes into consideration gradient correspondence criteria. Obtained pairs of edge pixels do not constitute an exhaustive list of matches, considering that:
 \begin{itemize}
 \item transformation is not ideal,
 \item depth of pixels is only estimated,
