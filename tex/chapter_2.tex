@@ -188,7 +188,7 @@ Neighborhood of pixels that have passed the first test is checked for ``sign bal
 \subsubsection{Third test}
 \label{edge_third}
 
-Then DoG values are approximated by a plane using linear regression -- Eq.~\ref{eq:regress} is solved for~$\theta$. Pseudo-inverse of $\tmmathbf{A}$, needed to solve it, has to be computed only once for the whole algorithm. Zero-crossing of the plane can be determined algebraically, resulting in Eq.~\ref{eq:zerocross}. This has been visualized in Fig.~\ref{fig:zeroc}. These closed-form formulas are the main reason for DoG not being computationally demanding, as curve-fitting approaches are usually iterative.
+Then DoG values are approximated by a plane using linear regression -- (\ref{eq:regress}) is solved for~$\theta$. Pseudo-inverse of $\tmmathbf{A}$, needed to solve it, has to be computed only once for the whole algorithm. Zero-crossing of the plane can be determined algebraically, resulting in (\ref{eq:zerocross}). This has been visualized in Fig.~\ref{fig:zeroc}. These closed-form formulas are the main reason for DoG not being computationally demanding, as curve-fitting approaches are usually iterative.
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 0.5cm 1.0cm 0.5cm},clip]{img/figures/zeroc.png}
@@ -196,7 +196,7 @@ Then DoG values are approximated by a plane using linear regression -- Eq.~\ref{
 	\label{fig:zeroc}
 \end{figure}
 
-For more resilience, an additional test is performed. If inequality~\ref{eq:test3} is not satisfied, then equation system~\ref{eq:regress} \textbf{is considered to be badly conditioned} and this pixel is rejected. This was not considered in \cite{jose2015realtime}. The purpose of this test is to avoid divide-by-zero errors in fourth test (Section~\ref{edge_fourth}). All pixels that do not pass the third test would still be filtered out later -- they also do not pass the fifth test~(Section~\ref{edge_fith}).
+For more resilience, an additional test is performed. If (\ref{eq:test3}) is not satisfied, then equation system~\ref{eq:regress} \textbf{is considered to be badly conditioned} and this pixel is rejected. This was not considered in \cite{jose2015realtime}. The purpose of this test is to avoid divide-by-zero errors in fourth test (Section~\ref{edge_fourth}). All pixels that do not pass the third test would still be filtered out later -- they also do not pass the fifth test~(Section~\ref{edge_fith}).
 
 \begin{equation}
 \tmmathbf{A}\theta = \delta
@@ -205,9 +205,9 @@ For more resilience, an additional test is performed. If inequality~\ref{eq:test
 where:
 \begin{eqwhere}[2cm]
 	\item[$\tmmathbf{A}$] 3x$(2w+1)$ matrix of pixel positions: $[X\ Y\ 1]$,
-	\item[$X$] column vector of $x$ coordinates of pixel centroids in neighborhood, assuming that central pixel's centroid is located at $x = 0$, ($(2w+1)$-tuple),
-	\item[$Y$] column vector of $y$ coordinates of pixel centroids in neighborhood, assuming that central pixel's centroid is located at $y = 0$, ($(2w+1)$-tuple),
-	\item[$\delta$] DoG values corresponding to $X$ and $Y$ ($(2w+1)$-tuple),
+	\item[$X$] column vector of $x$ coordinates of pixel centroids in neighborhood, assuming that central pixel's centroid is located at $x = 0$, ($(2w+1)$-vector),
+	\item[$Y$] column vector of $y$ coordinates of pixel centroids in neighborhood, assuming that central pixel's centroid is located at $y = 0$, ($(2w+1)$-vector),
+	\item[$\delta$] DoG values corresponding to $X$ and $Y$ ($(2w+1)$-vector),
 	\item[$\theta$] parameters defining the approximated plane: $z = \theta_{x}x + \theta_{y}y + \theta_{z}$.
 \end{eqwhere}
 
@@ -237,7 +237,7 @@ where:
 \subsubsection{Fourth test}
 \label{edge_fourth}
 
-Obtained zero-crossing marks the subpixel position of the edge; an example of a few subpixel positions along an edge is presented in Fig.~\ref{fig:quiv}. Inequality~\ref{eq:subpix_inside} tests whether it lies within the pixel itself. If not -- edge is not detected. After this test, most of Keyline candidates form 1-pixel wide edges.
+Obtained zero-crossing marks the subpixel position of the edge; an example of a few subpixel positions along an edge is presented in Fig.~\ref{fig:quiv}. (\ref{eq:subpix_inside}) tests whether it lies within the pixel itself. If not -- edge is not detected. After this test, most of Keyline candidates form 1-pixel wide edges.
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=1.0\linewidth, trim={1.5cm 5.5cm 1.5cm 5cm},clip]{img/figures/quiv.png}
@@ -253,7 +253,7 @@ max(|x_s|, |y_s|) < 0.5
 \subsubsection{Fifth test}
 \label{edge_fith}
 
-Normal vector of fitted plane is defined by Eq.~\ref{eq:planenorm}. Vector $\vec{r}$ can projected onto $z=0$ plane, creating third derivative vector: the edge gradient $\vec{g}$. If $||\vec{g}||$ is small, then $r_{z}$ component must have dominated $\vec{r}$, meaning that fitted plane was almost parallel to the $z=0$ plane. In turn this implies that edge was not sharp. Therefore, as a final test, norm of $\vec{g}$ is tested -- it must exceed a~threshold for edge to be finally detected.
+Normal vector of fitted plane is defined by (\ref{eq:planenorm}). Vector $\vec{r}$ can projected onto $z=0$ plane, creating third derivative vector: the edge gradient $\vec{g}$. If $||\vec{g}||$ is small, then $r_{z}$ component must have dominated $\vec{r}$, meaning that fitted plane was almost parallel to the $z=0$ plane. In turn this implies that edge was not sharp. Therefore, as a final test, norm of $\vec{g}$ is tested -- it must exceed a~threshold for edge to be finally detected.
 
 \begin{equation}
 \vec{r} = [\theta_{x},\ \ \theta_{y},\ \ -1]^T
@@ -374,7 +374,7 @@ Goal of edge tracking is to find a 3D transformation (translation and rotation) 
 \subsection{Warping function}
 \label{sec:warp}
 
-2D Keyline $\longleftrightarrow$ 3D point transformations are defined by Eq.~\ref{eq:gamma}~and Eq.~\ref{eq:gammainv}. They can be derived from \ref{eq:camera}, assuming $f_x = f_y = f$ and $s = 0$. These assumptions were valid for tested datasets. It should be noted, however, that in case of smartphone cameras, \textbf{full pinhole model should be considered}, complicating these formulas. Once points have been projected using~$\gamma$, they can be rotated and translated in 3D space using Eq.\ref{eq:rototr}. The rotation matrix has form $\tmmathbf{R} = \mathfrak{exp} \left ( \left[ \vec{\omega} \right ]_{s} \right )$.
+2D Keyline $\longleftrightarrow$ 3D point transformations are defined by (\ref{eq:gamma})~and (\ref{eq:gammainv}). They can be derived from \ref{eq:camera}, assuming $f_x = f_y = f$ and $s = 0$. These assumptions were valid for tested datasets. It should be noted, however, that in case of smartphone cameras, \textbf{full pinhole model should be considered}, complicating these formulas. Once points have been projected using~$\gamma$, they can be rotated and translated in 3D space using (\ref{eq:rototr}). The rotation matrix has form $\tmmathbf{R} = \mathfrak{exp} \left ( \left[ \vec{\omega} \right ]_{s} \right )$.
 
 
 \begin{equation}
@@ -393,7 +393,7 @@ where:
 where:
 \begin{eqwhere}[2cm]
 	\item[$\gamma^{-1}$] back-projection function,
-	\item[$Q$] 3D world point (3-tuple).
+	\item[$Q$] 3D world point (3-vector).
 \end{eqwhere}
 
 \begin{equation}
@@ -403,8 +403,8 @@ where:
 where:
 \begin{eqwhere}[2cm]
 	\item[$\psi$] warping function,
-	\item[$\vec{v}$] camera translation (3-tuple),
-	\item[$\vec{\omega}$] camera azimuth rotation in axis-angle notation\footnote{Axis-angle vector $\vec{\omega}$ describes right-hand rotation by $||\vec{\omega}||$ radians about $O\omega$ axis \cite{hartley2003multiple} \cite{blanco2010tutorial}.} (3-tuple),
+	\item[$\vec{v}$] camera translation (3-vector),
+	\item[$\vec{\omega}$] camera azimuth rotation in axis-angle notation\footnote{Axis-angle vector $\vec{\omega}$ describes right-hand rotation by $||\vec{\omega}||$ radians about $O\omega$ axis \cite{hartley2003multiple} \cite{blanco2010tutorial}.} (3-vector),
 	\item[$ \mathfrak{exp}$] matrix exponentiation function, which can be approximated using Euler-Rodrigues formula \cite{opencv}.
 \end{eqwhere}
 
@@ -443,7 +443,7 @@ During each iteration of minimization, reprojected old Keylines and new Keylines
 
 \begin{enumerate}
 	\item History -- if $k_{p}$ is lower than some constant threshold $k_{thresh}$ (e.g. 2), then this Keyline is considered to be too uncertain (its history is too short) and it does not take part in minimization at all. This test is performed only after $k_{thresh}$ frames have been wholly processed by the algorithm in order to allow system to initialize.
-	\item Depth uncertainty -- Keylines where $\sigma_{\rho_{p}}$ exceeds its 95. percentile are rejected.
+	\item Depth uncertainty -- Keylines where $\sigma_{\rho_{p}}$ exceeds its 95. percentile are rejected. This parameter is estimated by Kalman filter during the mapping step.
 	\item Gradient similarity -- score based on angle between $\vec{g_p}$ and $\vec{g_c}$, as well as on their magnitudes, can not exceed a threshold.
 \end{enumerate}
 
@@ -468,7 +468,7 @@ Each minimization iteration executes following steps:
 	\item Calculate overall iteration score.
 \end{itemize}
 
-Minimized function takes form defined in Eq.~\ref{eq:minim}. Distance between matched points is casted onto edge gradient, because \textit{``location information is only present in direction [of the gradient]``}  \cite{jose2015realtime}. Sample residuals are depicted in Fig.~\ref{fig:minim_hist} and Fig.~\ref{fig:minim_res}. The matching function $M$ is not differentiable, making it impossible to calculate Jacobian of $\zeta$ analytically. Therefore Jacobians were calculated using the same formulas as in Tarrio and Pedre's implementation.
+Minimized function takes form defined in (\ref{eq:minim}). Distance between matched points is casted onto edge gradient, because \textit{``location information is only present in direction [of the gradient]``}~\cite{jose2015realtime}. Sample residuals are depicted in Fig.~\ref{fig:minim_hist} and Fig.~\ref{fig:minim_res}. The matching function $M$ is not differentiable, making it impossible to calculate Jacobian of $\zeta$ analytically. Therefore Jacobians were calculated using the same formulas as in Tarrio and Pedre's implementation.
 
 \begin{equation}
 E = \zeta \left( \vec{v},\ \ \vec{\omega} \right) = \sum_{i}^{p} \frac{w_i}{\sigma_{\rho_{i}}^2} \left[ \underset{h_t, h_c}{M} \left( \left( h_t \right) \bullet \vec{g_c} \right) \right] ^2
@@ -480,7 +480,7 @@ where:
 	\item[$h_t$] transformed $h_p$, $h_{t} = \gamma^{-1}\left(\ \  \psi \left( \vec{v},\ \vec{\omega},\ \gamma \left( h_p, \rho_{p} \right) \right)\ \  \right)$,
 	\item[$M$] matching function, $\underset{h_t}{M}(\bullet) = \begin{cases} 
 	\bullet, & \exists h_c : h_t \textrm{ matches } h_c \\
-	r_{search}, & otherwise
+	r_{search}, & \textrm{ otherwise }
 	\end{cases}$.
 \end{eqwhere}
 
@@ -578,7 +578,7 @@ So as to make finding candidates for matching easier, current Keyline array is r
 
 Because of assumption that $\rho_r > 0$, search line is reduced to a halfline. It starts at projected point $h_r$ and goes in the direction of camera motion, projected on 2D plane. A possible match should lie on the halfline. To further constrain search area, maximum and minimum pixel displacements are estimated, leaving only a line segment. Keylines that lie within it are possible candidates for matches.  \textit{Directed} refers to probing along the line segment.
 
-Searching starts at a point that is estimated to be a most possible match. The procedure is performed checking pixels closer to segment ends, in an alternating manner. If an inspected pixel a previous Keyline, it is considered a possible match, that still needs to be validated. Firstly, $\vec{g_p}$ and $\vec{g_r}$ are compared, analogously to the third keyline matching test of the minimizer (see Section~\ref{sec:minim_match}). Secondly, potential match needs to conform to the motion model, defined in Inequality~\ref{eq:consistency}.
+Searching starts at a point that is estimated to be a most possible match. The procedure is performed checking pixels closer to segment ends, in an alternating manner. If an inspected pixel a previous Keyline, it is considered a possible match, that still needs to be validated. Firstly, $\vec{g_p}$ and $\vec{g_r}$ are compared, analogously to the third keyline matching test of the minimizer (see Section~\ref{sec:minim_match}). Secondly, potential match needs to conform to the motion model, defined in (\ref{eq:consistency}).
 
 \begin{equation}
 \abs* {\frac{\norm*{h_p - h_r}}{\norm*{fv_{r_{x,y}}-h_{r}v_{r_z}} }-\rho_{p}} < \tau(\sigma_{\rho_{p}})

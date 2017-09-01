@@ -2,7 +2,7 @@
 \label{cha:intro}
 
 
-In this chapter theory behind computer vision, 3D reconstruction and mathematical apparatus used in our algorithm are introduced. Pinhole camera model and basics of stereo and mono vision are briefly discussed. Literature connected with this topic is overviewed. Finally, \textit{Rebvo}~\cite{jose2015realtime} algorithm flow is described.
+In this chapter theory behind computer vision, 3D reconstruction and mathematical apparatus used in our algorithm are introduced. Pinhole camera model and basics of stereo and mono vision are briefly discussed. Literature related with this topic is overviewed. Finally, \textit{Rebvo}~\cite{jose2015realtime} algorithm flow is described.
 
 %-----------------
 
@@ -17,7 +17,7 @@ Pinhole camera model \cite{hartley2003multiple} is a widely used and simple mode
 	\label{fig:projective}
 \end{figure}
 
-Operation of pinhole camera is depicted in Fig.~\ref{fig:projective}. Every 3D point $Q$ can be associated with a ray $QO$ that passes through camera origin $O$, which in the simplest case can be defined as origin of the 3D coordinate system origin. Such ray can be defined with homogeneous coordinates as set of points $\{(X, Y, Z)\}$ that satisfy Eq.~\ref{eq:homo}:
+Operation of pinhole camera is depicted in Fig.~\ref{fig:projective}. Every 3D point $Q$ can be associated with a ray $QO$ that passes through camera origin $O$, which in the simplest case can be defined as origin of the 3D coordinate system. Such ray can be defined with homogeneous coordinates as set of points $\{(X, Y, Z)\}$ that satisfy (\ref{eq:homo}):
 
 
 \begin{equation}
@@ -32,7 +32,7 @@ where:
 
 Image plane \(\pi\) is a rectangle parallel to plane \(XOY\). Its distance from origin is equal to \(f\) (focal length). Usually it is assumed that image plane's \(z\) coordinate is positive -- otherwise formed image would be upside down. Point where axis \(OZ\) intersects \(\pi\) is called principal point.
 
-World coordinate points Q are projected onto \(\pi\) as \(Q'\), thus forming a 2D image. This relationship can be concisely written using camera matrix as in Eq.~\ref{eq:camera}.
+World coordinate points Q are projected onto \(\pi\) as \(Q'\), thus forming a 2D image. This relationship can be concisely written using camera matrix as in (\ref{eq:camera}).
 
 
 \begin{equation}
@@ -47,8 +47,8 @@ q = Q' \sim \underbrace{ \underbrace{  \begin{bmatrix}
 where:
 \begin{eqwhere}[2cm]
 	\item[$q$] 2D point on image plane,
-	\item[$Q'$] 2D point on image plane expressed in homogeneous coordinates (3-tuple),
-	\item[$Q$] 3D point corresponding to $q$, expressed in homogeneous coordinates (4-tuple),
+	\item[$Q'$] 2D point on image plane expressed in homogeneous coordinates (3-vector),
+	\item[$Q$] 3D point corresponding to $q$, expressed in homogeneous coordinates (4-vector),
 	\item[$\sim$] equality between homogeneous points,
 	\item[$\tmmathbf{K}$] 3x3 camera intrinsic parameters matrix,
 	\item[$\tmmathbf{C}$] 3x4 camera matrix,
@@ -56,10 +56,12 @@ where:
 	\item[$s$] skew factor (usually equal to 0),
 	\item[$c_{k}$] $k$-coordinate of the principal point,
 	\item[$\tmmathbf{R}$] 3x3 rotation matrix between 3D world coordinates and camera coordinates,
-	\item[$t$] translation vector between 3D world coordinates and camera coordinates (3-tuple).
+	\item[$t$] translation vector between 3D world coordinates and camera coordinates (3-vector).
 \end{eqwhere}
 
 Real cameras do not fully conform to this model \cite{szczesny}. They contain lenses that enlarge field of view (see Fig.~\ref{fig:analogue}). Lens curve passing light rays in a nonlinear fashion (this can be observed in fish-eye cameras \cite{fisheye_endoscopy}). Moreover, lenses themselves are imperfectly made and aligned. Finally, color aberration and CCD (Charge Coupled Device) sensor quantization noise introduce more nonlinearity \cite{heikkla14}. All these phenomena account for distortions.
+
+todo: Krzysztof, jest ich wiecej a tu wymienione sa tylko niektore
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.6\linewidth]{img/camera2.png}
@@ -81,7 +83,7 @@ Conrady-Brown model \cite{brown8} \cite{Zhang_flexible} is a classical approach 
 \section{Stereo vision}
 \label{sec:stereo}
 
-Most implementations of visual odometry systems use two cameras spaced by a constant baseline, that can be determined during stereo calibration. Abundance of such methods can be explained with similarity to how human visual system works \cite{cyganek}. Brain determines depth of seen features by comparing their positions seen by both eyes and by taking into account the baseline, i.e. spacing between eyes. This is illustrated in Fig.~\ref{fig:stereo}.
+Most implementations of visual odometry systems use two cameras spaced by a constant baseline, that can be determined during stereo calibration. Abundance of such methods can be explained with similarity to how human visual system works \cite{cyganek}. Stereopsis (perception of depth) is a result of binocular vision determined by comparing object position seen by both eyes and by taking into account the baseline, i.e. spacing between eyes. This is illustrated in Fig.~\ref{fig:stereo}.
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.8\linewidth]{img/Binocular_disparity.png}
@@ -89,7 +91,7 @@ Most implementations of visual odometry systems use two cameras spaced by a cons
 	\label{fig:stereo}
 \end{figure}
 
-Eq. \ref{eq:fund} describes correspondence between matched points with the fundamental matrix. At least 7 matches are needed to obtain $\tmmathbf{F}$, but usually much more are used so as to mitigate noise \cite{zhang1998determining}. When cameras are calibrated, essential matrix $\tmmathbf{E}$ can be calculated with Eq.~\ref{eq:ess}. Essential matrix can be then decomposed into rotation and translation between 3D points registered by both cameras using Singular Value Decomposition (1 solution out of 4 has to be chosen). $\tmmathbf{E}$ has scale ambiguity, which can be resolved using baseline in Eq. \ref{eq:disparity} \cite{improving}. It is worth mentioning that baseline can not be determined using autocalibration alone - an object of known dimensions must be measured on images.
+(\ref{eq:fund}) describes correspondence between matched points with the fundamental matrix. At least 7 matching feature points (points with well defined surroundings) are needed to obtain $\tmmathbf{F}$, but usually much more are used so as to mitigate noise \cite{zhang1998determining}. When cameras are calibrated, essential matrix $\tmmathbf{E}$ can be calculated with (\ref{eq:ess}). Essential matrix can be then decomposed into rotation and translation between 3D points registered by both cameras using Singular Value Decomposition (1 solution out of 4 has to be chosen). $\tmmathbf{E}$ has scale ambiguity, which can be resolved using baseline in (\ref{eq:disparity}) \cite{improving}. It is worth mentioning that baseline can not be determined using autocalibration (calibration without using known a priori objects) alone - an object of known dimensions must be measured on images.
 
 \begin{equation}
 p_{2}^{T}\tmmathbf{F}p_{1}=0
@@ -146,7 +148,7 @@ In case when only one camera is available, matches between consecutive frames st
 
 One way is to use an IMU (Inertial Measurement Unit - accelerometer \& gyroscope). Data from this unit can be used to estimate baseline and extrinsic camera parameters \cite{tracked_vehicles}. Actually, IMU alone can be used for odometry. By combining it with video input, however, accuracy and robustness can tremendously increase.
 
-Another approach is to use explicit depth data, e.g. RGB-D (Red, Green, Blue and Depth) from Kinect \cite{yu2013improved}. This helps in global scene scale estimation. A~disadvantage is that such devices have narrow depth detection range (usually up to few meters \cite{accuracy_and_resoulution}) and are not available in consumer-grade mobile devices.
+Another approach is to use explicit depth data, e.g. RGB-D (Red, Green, Blue and Depth) from Kinect \cite{yu2013improved}. This helps in global scene scale estimation. A~disadvantage is that such devices have narrow depth detection range (usually up to few meters \cite{accuracy_and_resoulution}) and are not available in most consumer-grade mobile devices.
 
 A very frequent problem in pure visual monocular odometry is unbounded position drift over time. Each 3D transformation that is estimated between consecutive frames is an instantaneous linear and angular velocity. To obtain accumulated position and azimuth after given frame, individual velocities have to be integrated. Each estimation error gains significance with time. In literature two ways of mitigation are the most common.
 
