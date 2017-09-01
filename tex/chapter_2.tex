@@ -540,7 +540,13 @@ Since calculated transformation between the two frames is supposed to be the opt
 
 \subsection{Directed matching}
 
-todo: show matching field, perphaps even two (kitti, tum)
+\begin{figure}[ht]
+	\centering\includegraphics[width=1.0\linewidth, trim={1.5cm 1.5cm 1.5cm 1cm},clip]{img/figures/match_.png}
+	\caption{ Matches laid over an image from the TUM~\cite{tum} dataset. Red pixels denote Keylines in this frame; blue~\==~Keylines in next frame (not transformed in any way); pink~\==~positions occupied by a Keyline in both frames, regardless if these Keylines are related; green vectors~\==~directed matches between Keylines. Not matched Keylines are still visible }
+	\label{fig:match}
+\end{figure}
+
+
 todo: pokazac wyfilotwane outliery
 
 Considering that there might have been some outliers that affected the quality calculated transformation and that potentially valid matches with no history need a chance to pick it up, it is essential to extend the list of matches to include Keylines that have not been back-projected perfectly.
