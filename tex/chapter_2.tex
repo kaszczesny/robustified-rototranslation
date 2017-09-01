@@ -351,12 +351,18 @@ For each Keyline, its neighbors are searched among 3 out of 8 bordering pixels. 
 \end{figure}
 
 
-Joined Keylines are used for pruning. First of all, edges consisting of 3 pixels or less are discarded, as they are unlikely to be good features to track. Secondly, outermost Keylines of every joined edge are likewise removed -- out of all Keylines in that edge, they are most likely to be affected by noise. Pruned Keylines can be seen in Fig.~\ref{fig:light2}.
+Joined Keylines are used for pruning. First of all, edges consisting of 3 pixels or less are discarded, as they are unlikely to be good features to track. Secondly, outermost Keylines of every joined edge are likewise removed -- out of all Keylines in that edge, they are most likely to be affected by noise. Pruned Keylines can be seen in Fig.~\ref{fig:pruning}, as well as in Fig.~\ref{fig:light2}.
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1.25cm 1.25cm 1.25cm 1cm},clip]{img/figures/edges_pruning.png}
+	\caption{ Edge pruning result. Gray pixels~\==~background; black~\==~valid Keylines; white~\==~pruned Keylines }
+	\label{fig:pruning}
+\end{figure}
 
 In later steps, the algorithm considers only individual Keylines, not joined edges (as mentioned in Section~\ref{sec:rebvo_outline}). Information about neighbors is used after edge detection only once -- in Regularization step, where $\rho$ and $\sigma_{\rho}$
 are averaged over Keyline and its 2 immediate neighbors.
 
-Initially \textbf{more edge joining strategies were considered}: morphological operations on Keylines, loop avoidance and edge segmentation (into parts with similar gradient). However, once it has been understood that edge joining takes such small part in algorithm flow and that by-pixel approach is preferable \cite{harris}, this direction of research was abandoned.
+Initially \textbf{more edge joining strategies had been considered}: morphological operations on Keylines, loop avoidance and edge segmentation (into parts with similar gradient). However, once it was understood that edge joining takes such small part in algorithm flow and that by-pixel approach is preferable \cite{harris}, this direction of research was abandoned.
 
 
 %--
@@ -410,20 +416,22 @@ Auxiliary image is a lookup table that speeds up minimization. It is a matrix of
 
 During minimization, Keylines from previous frame are projected to 3D space using depth information ($\rho$), rototranslated, and then projected back to image plane. Positions obtained from the back-projection are compared against the auxiliary image of next frame to check if such position corresponds to a~Keyline (and to which).
 
-Auxiliary image creation can be perceived as widening of an edge by ``spanning`` its pixels along $\vec{g}$. A depiction is presented in Fig.~\ref{fig:aux1}. Because pixel positions are discrete, \textbf{increments of this spanning should be lower than 1 px}. Otherwise, when $\vec{g}$ is not perpendicular to pixel grid, edge widening process will occasionally skip over some pixels. This leads to discontinuities (gaps) in auxiliary image (see Fig.~\ref{fig:aux2}), which can later bias the minimization by producing false local minima.
+Auxiliary image creation can be perceived as widening of an edge by ``spanning`` its pixels along $\vec{g}$. A depiction is presented in Fig.~\ref{fig:aux1}. Because pixel positions are discrete, \textbf{increments of this spanning should be lower than 1 px}. Otherwise, when $\vec{g}$ is not perpendicular to pixel grid, edge widening process will occasionally skip over some pixels. This leads to coarseness and discontinuities (gaps) in auxiliary image (see Fig.~\ref{fig:aux2}), which can later bias the minimization by producing false local minima.
 
 Some gaps are unavoidable, however, because $\vec{g}$ is available only in places where there is a~Keyline. Even with subpixel position precision, there still is at most only one Keyline per pixel. If edge has any curvature, then at some radius auxiliary image will feature spikes. They are visible in both Fig.~\ref{fig:aux1} and Fig.~\ref{fig:aux2}.
 
-\begin{figure}[hp]
-	\centering\includegraphics[width=0.85\linewidth, trim={1.5cm 1.5cm 1.5cm 1cm},clip]{img/aux05.png}
-	\caption{ The auxiliary image created with step $0.5$. Pixel color encodes distance to nearest Keyline (the redder, the closer) }
-	\label{fig:aux1}
-\end{figure}
-
 \begin{figure}[ht]
-	\centering\includegraphics[width=0.85\linewidth, trim={1.5cm 1.5cm 1.5cm 1cm},clip]{img/aux1.png}
-	\caption{ The auxiliary image created with step $1$. Pixel color encodes distance to nearest Keyline (the redder, the closer). The image is visibly coarser than Fig.~\ref{fig:aux1} }
-	\label{fig:aux2}
+	\centering
+	\begin{subfigure}{0.49\textwidth}
+		\centering\includegraphics[width=1.0\linewidth, trim={1.5cm 1.5cm 1.5cm 1cm},clip]{img/aux05.png}
+		\subcaption{\label{fig:aux1}}
+	\end{subfigure}
+	\begin{subfigure}{0.49\textwidth}
+		\centering\includegraphics[width=1.0\linewidth, trim={1.5cm 1.5cm 1.5cm 1cm},clip]{img/aux1.png}
+		\subcaption{\label{fig:aux2}}
+	\end{subfigure}
+	\caption{\label{fig:aux}The auxiliary images created with different step sizes. Pixel color encodes distance to nearest Keyline (the redder, the closer). \protect\subref{fig:aux1} step $0.5$,
+		\protect\subref{fig:aux2}~step~$1$}
 \end{figure}
 
 
@@ -460,7 +468,7 @@ Each minimization iteration executes following steps:
 	\item Calculate overall iteration score.
 \end{itemize}
 
-Minimized function takes form defined in Eq.~\ref{eq:minim}. Distance between matched points is casted onto edge gradient, because \textit{``location information is only present in direction [of the gradient]``}  \cite{jose2015realtime}. The matching function $M$ is not differentiable, making it impossible to calculate Jacobian of $\zeta$ analytically. Therefore Jacobians were calculated using the same formulas as in Tarrio and Pedre's implementation.
+Minimized function takes form defined in Eq.~\ref{eq:minim}. Distance between matched points is casted onto edge gradient, because \textit{``location information is only present in direction [of the gradient]``}  \cite{jose2015realtime}. Sample residuals are depicted in Fig.~\ref{fig:minim_hist} and Fig.~\ref{fig:minim_res}. The matching function $M$ is not differentiable, making it impossible to calculate Jacobian of $\zeta$ analytically. Therefore Jacobians were calculated using the same formulas as in Tarrio and Pedre's implementation.
 
 \begin{equation}
 E = \zeta \left( \vec{v},\ \ \vec{\omega} \right) = \sum_{i}^{p} \frac{w_i}{\sigma_{\rho_{i}}^2} \left[ \underset{h_t, h_c}{M} \left( \left( h_t \right) \bullet \vec{g_c} \right) \right] ^2
@@ -476,10 +484,21 @@ where:
 	\end{cases}$.
 \end{eqwhere}
 
-todo wykres histogramu, wykres jak spada score, wykres że kierunek
-we get residual (DResidual) \& weighted residual (fm) projected in direction of gradient
 
 Increment of the input vector is dictated by the Levenberg–Marquardt update equation \cite{press2007numerical}. One way of determining it is to use SVD on a 6x6 matrix $\Lambda$, as it is performed by Tarrio and Pedre. However, $\Lambda$ is always a positive definite \cite{madsen2004methods}, meaning that \textbf{Cholesky factorization can be used}, instead of slower, but less constrictive SVD. However, size of the decomposed matrix is quite small, so computational gain is negligible.
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.85\linewidth, trim={1.5cm 0.5cm 1.5cm 1cm},clip]{img/figures/hist__.png}
+	\caption{ Minimization residual after final iteration, with and without the weighting Huber norm. Negative values are present, because direction of displacement is taken into account }
+	\label{fig:minim_hist}
+\end{figure}
+
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=1.0\linewidth, trim={1.5cm 2.5cm 1.5cm 1.5cm},clip]{img/figures/resresres.png}
+	\caption{ Minimization residual after final iteration. Negative values are present, because direction of displacement is taken into account }
+	\label{fig:minim_res}
+\end{figure}
 
 This was tested in GNU Octave, using OpenCV \cite{opencv} linear algebra routines, compiled to MEX files. Random values were chosen to populate variables in the LM equation and then it was solved $10^6$ times, first using SVD, then Cholesky factorization. Average running times per iteration have been collected in Tab.~\ref{tab:chol}.
 
@@ -511,7 +530,13 @@ Moreover, after last minimization iteration, the $m_{pf}$ field of previous Keyl
 
 Levenberg-Marquardt algorithm is prone to falling to local minima. Repetitive patterns, such as fences, are especially challenging (see Fig.~2 in \cite{parra2008robust}). Generally, global minimization of arbitrary function is an intricate problem with no infallible solution. There has been proposed a~plethora of heuristic methods: evolutionary algorithms, simulated annealing, physical simulations (Momentum), etc. However, they are unsuitable for real-time applications \cite{szeliski}.
 
-In case of LM, crucial issue is choice of initial condition vectors. Following \cite{jose2015realtime}, two initial conditions were tested, and calculations proceeded using better one. These vectors are: $\vec{0}$ and rototranslation of the previous frame. If linear and angular instantaneous velocities of the camera do not change rapidly, it is reasonable to assume that previous and current velocities are not far apart in the parameter space.
+In case of LM, crucial issue is choice of initial condition vectors. Following \cite{jose2015realtime}, two initial conditions were tested, and calculations proceeded using better one (see Fig.~\ref{fig:minim_score}). These vectors are: $\vec{0}$ and rototranslation of the previous frame. If linear and angular instantaneous velocities of the camera do not change rapidly, it is reasonable to assume that previous and current velocities are not far apart in the parameter space.
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={0.5cm 0.5cm 1.5cm 1cm},clip]{img/figures/LMscore.png}
+	\caption{ Total energy minimization. Two initial conditions are tried, then better one is continued }
+	\label{fig:minim_score}
+\end{figure}
 
 One exception is the special case when too few Keylines are matched and system decides to reinitialize. This usually happens when number of detected Keylines also drops -- for instance in the fr2\_360\_kidnap sequence (TUM \cite{tum}). In the context of algorithm results postprocessing (i.e. fitting the estimated camera trajectory to ground truth data), it is better to assume no prior knowledge and overwrite the previous parameter vector with zeros.
 
