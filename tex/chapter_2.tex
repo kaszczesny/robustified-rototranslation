@@ -547,8 +547,6 @@ Since calculated transformation between the two frames is supposed to be the opt
 \end{figure}
 
 
-todo: pokazac wyfilotwane outliery
-
 Considering that there might have been some outliers that affected the quality calculated transformation and that potentially valid matches with no history need a chance to pick it up, it is essential to extend the list of matches to include Keylines that have not been back-projected perfectly.
 
 So as to make finding candidates for matching easier, current Keyline array is reverse-rotated\footnote{Rotated using rotation opposite to rotation $\vec{\omega}$ that was obtained during minimization.} and casted onto the old edge map. This decreases the distance between corresponding points and reduces the problem to a pure translatory problem. Translation $\vec{v}$ calculated during minimization, along with the reverse-rotated $h_r$, defines for each current Keyline a line. (todo details -- equality iff no uncertainty)
@@ -567,7 +565,37 @@ where:
 	\item[$\tau$] uncertainty estimation function that takes into account $\sigma_{\rho_{p}}$.
 \end{eqwhere}
 
-This provides additional outlier rejection - any match that is not compatible with model is rejected. A Keyline that moves in 3D differently than rest of the scene is most likely edge of an object that moves independently, as alluded in Section~\ref{sec:rebvo_outline}.
+This provides additional outlier rejection - any match that is not compatible with model is rejected. A Keyline that moves in 3D differently than rest of the scene is most likely edge of an object that moves independently, as alluded in Section~\ref{sec:rebvo_outline}. This is particularly visible on TUM fr2\_desk\_with\_person dataset, where object present on the scene were shuffled around. As seen on Fig.~\ref{fig:subfigure_outliers}, Keylines belonging to person moving within a scene have their history reset.
+
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}{0.35\textwidth}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/15_1985_.png}
+		\subcaption{\label{subfigure_a}}
+	\end{subfigure}
+	\begin{subfigure}{0.35\textwidth}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/1985.png}
+		\subcaption{\label{subfigure_a1}}
+	\end{subfigure}
+	\begin{subfigure}{0.35\textwidth}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/15_2010_.png}
+		\subcaption{\label{subfigure_b}}
+	\end{subfigure}
+	\begin{subfigure}{0.35\textwidth}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/2010.png}
+		\subcaption{\label{subfigure_b1}}
+	\end{subfigure}
+	\begin{subfigure}{0.35\textwidth}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/15_2035_.png}
+		\subcaption{\label{subfigure_c}}
+	\end{subfigure}
+	\begin{subfigure}{0.35\textwidth}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/2035.png}
+		\subcaption{\label{subfigure_c}}
+	\end{subfigure}
+	
+	\caption{\label{fig:subfigure_outliers} Outlier rejection example. Keyline color on figures on the left side denote its history}
+\end{figure}
 
 After forward matching and directed matching, the number of valid matches has to be greater than previously defined threshold. Threshold value of 500 Keylines has proved to be a good figure during tests, regardless of image scale.  If threshold is not met, algorithm resets, as there is not enough Keylines with established history to base future transformation calculations on.
 
