@@ -4,6 +4,8 @@
 
 In this chapter theory behind computer vision, 3D reconstruction and mathematical apparatus used in our algorithm are introduced. Pinhole camera model and basics of stereo and mono vision are briefly discussed. Other topics -- Difference of Gaussians edge detection and 3D rotation conventions -- can be found in Appendices B and C, respectively. Literature connected with this topic is overviewed. Finally, \textit{Rebvo} \cite{jose2015realtime} algorithm flow is described.
 
+todo: nieprawda, nie ma APENDIKSOW
+
 %-----------------
 
 \section{Pinhole camera model}
@@ -158,7 +160,7 @@ In \cite{robust_scale} a novel approach is proposed: by assuming a known, consta
 
 A very frequent problem in pure visual monocular odometry is unbounded position drift over time. Each 3D transformation that is estimated between consecutive frames is an instantaneous linear and angular velocity. To obtain accumulated position and azimuth after given frame, individual velocities have to be integrated. Each estimation error gains significance with time. In literature two ways of mitigation are the most common.
 
-First of all, information from GPS (Global Positioning System) can be employed to ensure that position does not drift away \cite{accurate_global_localization}. GPS signal quality greatly depends on location, so this approach may be unsuited for indoor use cases. GPS can not help with azimuth estimation, however. Finally, GPS is, out of the discussed methods, the only way to transform relative coordinates to real word coordinates (i.e. latitude and longitude). Other possibility would be to use special markers.
+First of all, information from GPS can be employed to ensure that position does not drift away \cite{accurate_global_localization}. GPS signal quality greatly depends on location, so this approach may be unsuited for indoor use cases. GPS can not help with azimuth estimation, however. Finally, GPS is, out of the discussed methods, the only way to transform relative coordinates to real word coordinates (i.e. latitude and longitude). Other possibility would be to use special markers.
 
 % todo: SLAM term must be explained in introduction
 
@@ -183,23 +185,46 @@ todo:
 
 \cite{visual_odometry} - landmark paper
 
+%?
+%“Moravec’s work at Stanford in the 1970s (Moravec, 1980).” TAK
+
 \cite{fast_monocular} \cite{costeira1998multibody} - outlier removal
+
+%Bayes trochę onieśmiela, ale może coś się przyda (do ew. przejrzenia).
 
 \cite{spatiotemporal} - good for full SLAM
 
-\cite{a_kalman}
+%Ulepszenie (?) do GoodFeaturesToTrack
+%Nie, raczej alternatywa. Nie zdążymy zaimplementować, a szkoda, bo dzięki informacji czasoprzestrzennej jest to system inteligentny, ale też wydajny
+
+\cite{a_kalman} - By having a camera mounted on the same height and knowing the angle of said camera relative to the ground (pointed slightly down), scale can be estimated.
+
+%Użyto filtru Kalmana do estymacji przepływów optycznych – wymagane pokrycie kolejnych obrazów to tylko 20%; maksymalna wykrywalna szybkość: kilka m/s. KF pozwala przewidzieć transformację obrazu, co redukuje feature space area.
 
 \cite{monoslam} - SLAM using only camera, new approach (camera is not on a robot, but independent)
 
+%Nie tworzy calej mapy, tylko zostawia garsc punktow o bardzo dobrej jakosci wg ktorych mozna sie orientowac (jak napotka drugi raz to samo, to wie ze tu byl i moze poprawic dryf skali)
+
 \cite{mouragnon2006real}
+
+%
 
 \cite{robust_visual_odometry_estimation} - dense method
 
+%Metody z dopasowywaniem ficzer pointów to metody indirect, poza tym są metody direct - taką przedstawiono w tym artykule. Jest: gęsta (wykorzystuje wszystkie piksele - przez to pewnie odpada na komórce)
+
 \cite{semi_dense} - semi-dense method
+
+%“In the last years, dense approaches to these challenges have become increasingly popular: Instead of operating solely on visual feature positions, they reconstruct and track on the whole image using a surface-based map and thereby are fundamentally different from feature-based approaches. Yet, these methods are to date either not real-time capable on standard CPU“
 
 \cite{a_stereo_visual} - comparison of feature detectors, consistency check
 
+%Dobry pomysł do feature matchingu: mutual consistency check - feature(t) pasuje najlepiej do feature(t-1), ale również na odwrót
+%“To reduce drift of estimation, Bundle Adjustment is a commonly used approach, which optimizes camera poses and the position of features over the past frames. However, the computation cost increases rapidly with the number of frames”
+
 \cite{gui2015robust} - mutual information instrad of features
+
+%
 
 % -------------
 

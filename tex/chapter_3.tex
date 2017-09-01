@@ -4,35 +4,63 @@ octave opencv mex
 % global results for various datasets
 This section focuses on discussing algorithm results obtained from longer sequences. Tested sequences come from KITTI and TUM public datasets. Results consists mainly from sequences:
 \begin{itemize}
-	\item TUM fr1 xyz - only translatory motions are present here, as stated by creators of this dataset "it's mainly for debugging purposes",
-	\item TUM fr2 desk - slow sweep around an office desk,
-	\item TUM fr2 desk with person - same as above, but present person moves the objects around, creating outliers,
-	\item TUM fr2 pioneer SLAM - robot with a mounted camera is trying to self-localize and map the room,
-	\item TUM fr3 long office household - slow sweep around two desks,
-	\item TUM fr3 teddy - slow sweep around a big plush teddy,
+	\item TUM fr1\_xyz - only translatory motions are present here, as stated by creators of this dataset "it's mainly for debugging purposes",
+	\item TUM fr2\_desk - slow sweep around an office desk,
+	\item TUM fr2\_desk\_with\_person - same as above, but present person moves the objects around, creating outliers,
+	\item TUM fr2\_pioneer\_SLAM - robot with a mounted camera is trying to self-localize and map the room,
+	\item TUM fr3\_long\_office\_household - slow sweep around two desks,
+	\item TUM fr3\_teddy - slow sweep around a big plush teddy,
 	\item KITTI 00 - video taken from a camera mounted on front of a car.
 \end{itemize}
-All of the sequences mentioned above include ground truth (laser positioning system in case of TUM, DGPS in case of KITTI), which is essential for debugging purposes and validation. Also, these datasets are commonly used for visual odometry systems evaluation.
 
-%trajektoria
-%	xyz, zaznaczone nok
-As the main goal of the algorithm is to estimate transformation between images, most care was put into making sure that the system correctly calculates velocity and rotation of the camera in respect to ground truth. Obtained trajectory was fitted onto ground truth trajectory using fminsearch function available in Matlab.
-/teddy/
-/long office household/
-/deskperson/
-Frames in which algorithm had to reinitialize are marked by a black circle, and are most likely a result of not having a stable supply of matched Keypoint and thus not having a reliable enough rototranslation. In case of /teddy/ sequence there are 4 cases of reinitialization: frames 271 272, 280, 386 387, 394. System recovered from three out of four of them, but the third was fatal in a sense that scale and starting rototranslation were lost, and in extension that trajectory as a whole can not be well fitted with ground truth, however partitioned sections can:
-/teddy\_full/
-/teddy\_nok/
-/teddy\_1/
-/teddy\_2/
+All of the sequences mentioned above include ground truth (laser positioning system in case of TUM, DGPS(Differential GPS) in case of KITTI), which is essential for debugging purposes and validation. Also, these datasets are commonly used for visual odometry systems evaluation.
+
+As the main goal of the algorithm is to estimate transformation between images, most care was put into making sure that the system correctly calculates velocity and rotation of the camera in respect to ground truth. Obtained trajectory was fitted onto ground truth trajectory using fminsearch function available in Matlab. Example of such fitting can be observed on Fig.~\ref{fig:traject}. Same trajectory was fragmented into its basic XYZ components and shown on Fig.~\ref{fig:trajectxyz}.
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/deskperson_trajectory.png}
+	\caption{ Example trajectory comparison between obtained results and ground truth from dataset TUM fr2\_desk\_with\_person }
+	\label{fig:traject}
+\end{figure}
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/deskperson_xyz.png}
+	\caption{ Example trajectory components comparison between obtained results and ground truth from dataset TUM fr2\_desk\_with\_person }
+	\label{fig:trajectxyz}
+\end{figure}
+
+Frames in which algorithm had to reinitialize are marked by a black circle, and are most likely a result of not having a stable supply of matched Keypoint and thus not having a reliable enough rototranslation. In case of TUM fr3\_teddy sequence there are 4 cases of reinitialization: frames 271 272, 280, 386 387, 394, as shown on Fig.~\ref{fig:teddyfull}. System recovered from three out of four of them, but the third was fatal in a sense that scale and starting rototranslation were lost, and in extension that trajectory as a whole can not be well fitted with ground truth (Fig.~\ref{fig:teddynok}), however partitioned sections can and are fitted quite good, shown on Fig.~\ref{fig:teddy1} and Fig.~\ref{fig:teddy2} for the first part and a second one, respectively.
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/teddy_full.png}
+	\caption{ Whole trajectory with denoted cases of reinitialization from dataset TUM fr3\_teddy }
+	\label{fig:teddyfull}
+\end{figure}
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/teddy_nok.png}
+	\caption{ Fitted trajectory showing fatal reinitialization problem from dataset TUM fr3\_teddy }
+	\label{fig:teddynok}
+\end{figure}
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/teddy_1.png}
+	\caption{ First part of the sequence fitted to ground truth from dataset TUM fr3\_teddy }
+	\label{fig:teddy1}
+\end{figure}
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/teddy_2.png}
+	\caption{ Second part of the sequence fitted to ground truth from dataset TUM fr3\_teddy }
+	\label{fig:teddy2}
+\end{figure}
 
 % moze cos o tym household, ja tego nie mam
 %  KITTI tez by bylo ok
 
+Influence of scale of the image was tested; sequence fr3\_teddy was scaled by 1/3th and 1/5th, respectively. 249 images from said sequence were processed and timed. Results per frame are presented on Fig.~\ref{fig:timing}. Larger images had more Keylines and, in extension, took about 1.81 more time to process. It should be noted that between runtimes same frame is more likely to take more time to process, meaning that increase in Keyline number on the same image was more or less the same.
 
-
-%czas wykonania
-Influence of scale of the image was tested; sequence fr3\_teddy was scaled by 1/3th and 1/5th, respectively. 249 images from said sequence were processed and timed. Results per frame are presented on /plot/. Larger images had more Keylines and, in extension, took about 1.81 more time to process. It should be noted that between runtimes same frame is more likely to take more time to process, meaning that increase in Keyline number on the same image was more or less the same.
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={0.0cm 1.5cm 1.5cm 0.0cm},clip]{img/figures/frametime.png}
+	\caption{ Calculations of algorithm on dataset TUM fr3\_teddy, timed per frame. Red line describes 1/3 scale, blue line describes 1/5 scale }
+	\label{fig:timing}
+\end{figure}
 
 %sredni blad/dryft
 %jakas tabelka moze? trzeba to w sensie sredniokwadratowym obliczyc

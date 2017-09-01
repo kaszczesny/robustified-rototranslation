@@ -2,12 +2,13 @@ todo abstract
 
 \chapter*{Introduction}
 
-Odometry is a term describing measurement of distance (from Greek: \textit{odos}~\==~ ``path``, \textit{metron}~\==~``measure``). For instance, car odometer is a device that calculates total traveled distance through multiplication of wheel diameter by the number of wheel spins. Visual odometry aims to determine position of an object by observing changes in video registered by one or more cameras attached to said object.
+Odometry is a term describing measurement of distance (from Greek: \textit{odos}~\==~ ``path``, \textit{metron}~\==~``measure``). For instance, car odometer is a device that calculates total traveled distance through multiplication of wheel diameter by the number of wheel spins. %Visual odometry aims to determine position of an object by observing changes in video registered by one or more cameras attached to said object.
+Visual odometry aims to determine the egomotion of an object - meaning its position relative to otherwise rigid scene - by observing changes in video registered by one or more cameras attached to said object.
 
 % to proste i tanie rozwiazanie dla lokalizacji kamery w porownaniu do gpsow, zyroskopow etc, a do tego kazdy ma durzo kamer bo sa wszedzie. jest wykorzystywana do stabilizacji obrazu, augmented reality albo po prostu w systemach SLAM(Self LOcalization And Mapping) wykorzystywanego w robotach/dronach do pomocy w autonomicznym poruszaniu sie czegos takiego lub mapowania pomieszczen. w tym paperze zajmujemy sie jednak tylko pozycja kamery ale nie jako system slam, bo nie trzymamy historii.
 % POKEMON GO TO THE MAGISTERKA
 
-This relatively easy and cheap approach to odometry takes advantage of a fact, that cameras are embedded into almost every mobile device we own, no matter how expensive they are - game consoles, phones, even smartwatches. Not every of those devices has a gyroscope, and even if they use GPS, its accuracy is relatively low. This technology is most commonly used for AR (augmented reality), stabilize a video or in the SLAM (Self Localization And Mapping) systems.
+This relatively easy and cheap approach to odometry takes advantage of a fact, that cameras are embedded into almost every mobile device we own, no matter how expensive they are - game consoles, phones, even smartwatches. Not every of those devices has a gyroscope, and even if they use GPS (Global Positioning System), its accuracy is relatively low. This technology is most commonly used for AR (augmented reality), stabilize a video or in the SLAM (Self-Localization And Mapping) systems.
 
 This paper focuses on the latter - self localization is particularly important on autonomous devices, such as drones, robots or even self-driving cars (Mars Rover used that technology /jak to napisac ladnie/). In this case, algorithm is not a full SLAM one - no global map or keypoint history are generated.
 % byl sobie landmark paper, czeste podejscie to slam ale niewydajny bo i7, slam w Roverze, a mysmy chcieli cos embedded na telefony komorkowe w normalnej cenie a nie z zyroskopem. strona odjarka z androidem zacytowac (?) moze cos o state of the art?, 
@@ -23,5 +24,5 @@ Each step of the algorithm flow from image capture was analyzed and tested on vi
 %podsumujemy sobie ze testowalismy a sekwencjach z dwoch datasetow a wyniki sa spoko jak sa spoko, bo jak sie zepsuje to nie XD
 
 PODZIAL PRACY
-
+%proponuje edgefinder razem, joiner ja, minimizer ty, matcher ja, kalman ty :S
 \clearpage 
