@@ -205,9 +205,9 @@ For more resilience, an additional test is performed. If (\ref{eq:test3}) is not
 where:
 \begin{eqwhere}[2cm]
 	\item[$\tmmathbf{A}$] 3x$(2w+1)$ matrix of pixel positions: $[X\ Y\ 1]$,
-	\item[$X$] column vector of $x$ coordinates of pixel centroids in neighborhood, assuming that central pixel's centroid is located at $x = 0$, ($(2w+1)$-tuple),
-	\item[$Y$] column vector of $y$ coordinates of pixel centroids in neighborhood, assuming that central pixel's centroid is located at $y = 0$, ($(2w+1)$-tuple),
-	\item[$\delta$] DoG values corresponding to $X$ and $Y$ ($(2w+1)$-tuple),
+	\item[$X$] column vector of $x$ coordinates of pixel centroids in neighborhood, assuming that central pixel's centroid is located at $x = 0$, ($(2w+1)$-vector),
+	\item[$Y$] column vector of $y$ coordinates of pixel centroids in neighborhood, assuming that central pixel's centroid is located at $y = 0$, ($(2w+1)$-vector),
+	\item[$\delta$] DoG values corresponding to $X$ and $Y$ ($(2w+1)$-vector),
 	\item[$\theta$] parameters defining the approximated plane: $z = \theta_{x}x + \theta_{y}y + \theta_{z}$.
 \end{eqwhere}
 
@@ -387,7 +387,7 @@ where:
 where:
 \begin{eqwhere}[2cm]
 	\item[$\gamma^{-1}$] back-projection function,
-	\item[$Q$] 3D world point (3-tuple).
+	\item[$Q$] 3D world point (3-vector).
 \end{eqwhere}
 
 \begin{equation}
@@ -397,8 +397,8 @@ where:
 where:
 \begin{eqwhere}[2cm]
 	\item[$\psi$] warping function,
-	\item[$\vec{v}$] camera translation (3-tuple),
-	\item[$\vec{\omega}$] camera azimuth rotation in axis-angle notation\footnote{Axis-angle vector $\vec{\omega}$ describes right-hand rotation by $||\vec{\omega}||$ radians about $O\omega$ axis \cite{hartley2003multiple} \cite{blanco2010tutorial}.} (3-tuple),
+	\item[$\vec{v}$] camera translation (3-vector),
+	\item[$\vec{\omega}$] camera azimuth rotation in axis-angle notation\footnote{Axis-angle vector $\vec{\omega}$ describes right-hand rotation by $||\vec{\omega}||$ radians about $O\omega$ axis \cite{hartley2003multiple} \cite{blanco2010tutorial}.} (3-vector),
 	\item[$ \mathfrak{exp}$] matrix exponentiation function, which can be approximated using Euler-Rodrigues formula \cite{opencv}.
 \end{eqwhere}
 
@@ -435,7 +435,7 @@ During each iteration of minimization, reprojected old Keylines and new Keylines
 
 \begin{enumerate}
 	\item History -- if $k_{p}$ is lower than some constant threshold $k_{thresh}$ (e.g. 2), then this Keyline is considered to be too uncertain (its history is too short) and it does not take part in minimization at all. This test is performed only after $k_{thresh}$ frames have been wholly processed by the algorithm in order to allow system to initialize.
-	\item Depth uncertainty -- Keylines where $\sigma_{\rho_{p}}$ exceeds its 95. percentile are rejected.
+	\item Depth uncertainty -- Keylines where $\sigma_{\rho_{p}}$ exceeds its 95. percentile are rejected. This parameter is estimated by Kalman filter during the mapping step.
 	\item Gradient similarity -- score based on angle between $\vec{g_p}$ and $\vec{g_c}$, as well as on their magnitudes, can not exceed a threshold.
 \end{enumerate}
 
@@ -472,7 +472,7 @@ where:
 	\item[$h_t$] transformed $h_p$, $h_{t} = \gamma^{-1}\left(\ \  \psi \left( \vec{v},\ \vec{\omega},\ \gamma \left( h_p, \rho_{p} \right) \right)\ \  \right)$,
 	\item[$M$] matching function, $\underset{h_t}{M}(\bullet) = \begin{cases} 
 	\bullet, & \exists h_c : h_t \textrm{ matches } h_c \\
-	r_{search}, & otherwise
+	r_{search}, & \textrm{ otherwise }
 	\end{cases}$.
 \end{eqwhere}
 
