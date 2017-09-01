@@ -94,16 +94,31 @@ Pakiet \texttt{subcaption} pozwala na umieszczanie w podpisie rysunku odnośnik�
 \begin{figure}[h]
 	\centering
 	\begin{subfigure}{0.35\textwidth}
-		\centering
-		\framebox[2.0\width]{A}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/15_1985_.png}
 		\subcaption{\label{subfigure_a}}
 	\end{subfigure}
 	\begin{subfigure}{0.35\textwidth}
-		\centering
-		\framebox[2.0\width]{B}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/1985.png}
+		\subcaption{\label{subfigure_a1}}
+	\end{subfigure}
+	\begin{subfigure}{0.35\textwidth}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/15_2010_.png}
 		\subcaption{\label{subfigure_b}}
 	\end{subfigure}
+	\begin{subfigure}{0.35\textwidth}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/2010.png}
+		\subcaption{\label{subfigure_b1}}
+	\end{subfigure}
+	\begin{subfigure}{0.35\textwidth}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/15_2035_.png}
+		\subcaption{\label{subfigure_c}}
+	\end{subfigure}
+	\begin{subfigure}{0.35\textwidth}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/2035.png}
+		\subcaption{\label{subfigure_c}}
+	\end{subfigure}
 	
-	\caption{\label{fig:subcaption_example}Przykład użycia \texttt{\textbackslash subcaption}: \protect\subref{subfigure_a} litera A, \protect\subref{subfigure_b} litera B.}
+	\caption{\label{fig:subcaption_example}Przykład użycia \texttt{\textbackslash subcaption}: \protect\subref{subfigure_a} litera A,
+	\protect\subref{subfigure_b} litera B \protect\subref{subfigure_c} litera C.}
 \end{figure}
 
