@@ -219,7 +219,7 @@ where:
 
 Obtained zero-crossing marks the subpixel position of the edge. Inequality~\ref{eq:subpix_inside} tests whether it lies within the pixel itself. If not -- edge is not detected. After this test, most of Keyline candidates form 1-pixel wide edges.
 
-todo quiver
+todo: quiver
 
 \begin{equation}
 max(|x_s|, |y_s|) < 0.5
@@ -250,8 +250,7 @@ Influence of all aforementioned tests to final result is depicted for an exempla
 	\label{fig:edgeprob}
 \end{figure}
 
-todo Czy wykrywanie krawedzi jest robust na zmiany jasnosci;
-
+todo: Czy wykrywanie krawedzi jest robust na zmiany jasnosci;
 
 \subsection{Depth initialization}
 
@@ -262,10 +261,7 @@ Some \textbf{thought was given to more elaborate initialization schemes}. Featur
 
 Their main disadvantage is their complexity, especially in case of more robust ones, like SIFT. They need to be somehow matched -- this becomes unfeasible for real-time applications once number feature points is too large \cite{szczesny}. This in turn means that many parameters would have to be carefully chosen so that a consumer-grade mobile system would not be flooded by excessive features and remain responsive. Finally, feature point descriptors encode larger pixel neighborhood than edges, but they lack structural information, meaning that match is likely produce more outliers, that need to be dealt with (filtered).
 
-
-
-todo figure
-
+todo: figure
 
 
 \subsection{Keyline joining}
@@ -534,7 +530,7 @@ todo
 
  % todo 2x depth
 
-This does not remedy the fundamental problem of scale ambiguity in monocular systems. To fix this issue, dimensions of real-life objects present the scene need to be known a priori. Excellent example of such objects, with well defined shape and size, are \textbf{traffic signs and license plates}, ever-present in urban environments that algorithm was originally envisioned for. Solutions for identifying those objects are:
+This does not remedy the fundamental problem of scale ambiguity in monocular systems. To fix this issue, dimensions of real-life objects present the scene need to be known a priori. Excellent example of such objects, with well defined shape and size, are \textbf{traffic signs and license plates}, ever-present in urban environments that the algorithm was originally envisioned for. Solutions for identifying those objects are:
 \begin{itemize}
 	\item Haar feature-based cascade classifier combined with descriptor ORB (Oriented FAST and Rotated BRIEF) \cite{opencv},
 	\item machine learning methods: SVM (Support Vector Machine) and neural networks,
@@ -543,6 +539,8 @@ This does not remedy the fundamental problem of scale ambiguity in monocular sys
 \end{itemize}
 
 This however entails additional, heavy computing cost and would not fit the designated platform. Moreover, no out-of-the-box implementation was found. Thus moving this problem out of the scope of this thesis.
+
+Tests conclude that estimated rescaling factor oscillates too much while the system is initializing, so depth rescalling is only present after system is fully initialized and depth is more or less stable (usually after 20 frames).
 
 % ----------------------
 \subsection{Tests on artificial data}

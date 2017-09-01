@@ -36,7 +36,7 @@ Image plane \(\pi\) is a rectangle parallel to plane \(XOY\). Its distance from 
 
 World coordinate points Q are projected onto \(\pi\) as \(Q'\), thus forming a 2D image. This relationship can be concisely written using camera matrix as in Eq.~\ref{eq:camera}.
 
-todo bold all matrices
+todo: bold all matrices
 
 \begin{equation}
 q = Q' \sim \underbrace{ \underbrace{  \begin{bmatrix}
@@ -161,8 +161,6 @@ In \cite{robust_scale} a novel approach is proposed: by assuming a known, consta
 A very frequent problem in pure visual monocular odometry is unbounded position drift over time. Each 3D transformation that is estimated between consecutive frames is an instantaneous linear and angular velocity. To obtain accumulated position and azimuth after given frame, individual velocities have to be integrated. Each estimation error gains significance with time. In literature two ways of mitigation are the most common.
 
 First of all, information from GPS can be employed to ensure that position does not drift away \cite{accurate_global_localization}. GPS signal quality greatly depends on location, so this approach may be unsuited for indoor use cases. GPS can not help with azimuth estimation, however. Finally, GPS is, out of the discussed methods, the only way to transform relative coordinates to real word coordinates (i.e. latitude and longitude). Other possibility would be to use special markers.
-
-% todo: SLAM term must be explained in introduction
 
 In SLAM systems loops in trajectories can be used as means of correcting position drift -- knowing landmark\footnote{Landmark is an excellent feature point, observable from many frames.}) descriptors in past frames, such loops can be detected and system parameters can be adjusted to close them \cite{the_application_of_kalman} \cite{monoslam}.
 
