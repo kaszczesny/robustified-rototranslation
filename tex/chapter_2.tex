@@ -112,7 +112,7 @@ Before performing any edge detection technique, one critical issue has to be add
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth, trim={1cm 1cm 1cm 1cm},clip]{img/figures/rectified_edge.png}
-	\caption{ Input image, zoomed-in near left border. Individual pixels produced by rectification can be observed on the right }
+	\caption{ Input image, already rectified by dataset authors, zoomed-in near left border. Individual pixels produced by rectification can be observed on the right }
 	\label{fig:rectifcy_border}
 \end{figure}
 
@@ -646,7 +646,7 @@ During tests some datasets exhibited salt-and-pepper noise in estimated depth ma
 
 \subsection{Depth reestimation}
 
- todo; @kwant: only missing and not finished part of this chapter
+ todo; @kwant: only missing and not finished part of Chapter 2 is this section
  % kalman fiter
 
  % inverse depth is constrained between certain min and max, didn't work well if min was too low (by min I mean too close to camera)
@@ -665,7 +665,7 @@ This does not remedy the fundamental problem of scale ambiguity in monocular sys
 	\item sliding window applied over image saliency \cite{lin2010robust}.
 \end{itemize}
 
-This however entails additional, heavy computing cost and would not fit the designated platform. Moreover, no out-of-the-box implementation was found. Thus moving this problem out of the scope of this thesis.
+This however entails additional, heavy computing cost and would not fit the designated platform. Moreover, no out-of-the-box implementation was found, thus moving this problem out of the scope of this thesis.
 
 
 % ----------------------
@@ -682,5 +682,5 @@ Rendering a full 3D sequence using e.g. a game engine was also considered, but d
 
 In order to assess algorithm accuracy as it processes new frames, estimated camera trajectory is systematically compared with ground truth data after each frame. An optimal isotropic scaling and Euclidean transformation between two trajectories is searched for. Obtained parameters do not influence future algorithm iterations, as in real world applications such data is simply unavailable. They are calculated only for visualization purposes.
 
-In \cite{arun1987least} it is described how to find an optimal (in the least square sense) translation and rotation between two trajectories 3D using SVD. Scaling factor can determined using \texttt{fminsearch}, a~black-box minimization routine available in the GNU Octave environment. Usually first 5 trajectory samples are not taken into account, as they are very noisy, because system is not yet initialized. Usually if system does converge at all, then good conformance with ground truth is achieved only after just a few frames. Mean residual distance between optimized trajectories is the final accuracy measure that is used in Chapter~\ref{cha:results}.
+In \cite{arun1987least} it is described how to find an optimal (in the least square sense) translation and rotation between two trajectories 3D using SVD. Scaling factor can determined using \texttt{fminsearch}, a~black-box minimization routine available in the GNU Octave environment. Usually first 5 trajectory samples are not taken into account, as they are very noisy, because system is not yet initialized. Generally if system does converge at all, then good conformance with ground truth is achieved only after just a few frames. Mean residual distance between optimized trajectories is the final accuracy measure that is used in Chapter~\ref{cha:results}.
 
