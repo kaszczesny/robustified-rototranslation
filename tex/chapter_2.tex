@@ -646,25 +646,16 @@ During tests some datasets exhibited salt-and-pepper noise in estimated depth ma
 
 \subsection{Depth reestimation}
 
- todo:
- 
- @kwant: tbd
+ todo; @kwant: only missing and not finished part of this chapter
  % kalman fiter
 
  % inverse depth is constrained between certain min and max, didn't work well if min was too low (by min I mean too close to camera)
 
 \subsection{Scale correction}
 
- %zauwazylismy ze dopoki nie ma zbieznosci to shrinking factor za bardzo oscyluje, wiec jest liczony dopiero po inicjalizacji systemu, tj 20 klatek
- 
- todo:
- 
- @kwant: tbd
- %optional estimate rescaling
+Scale correction step proposed by Tarrio and Pedre does not resolve the scale ambiguity problem. It is argued in \cite{jose2015realtime} that employed Kalman filter is biased, due to the fact that variance of velocity is much lower than $\sigma_{\rho}$. For each frame a single ``shrinking factor`` $\Xi$ can be calculated. Then it can be applied by Keylines by dividing $\rho$ and $\sigma_{\rho}$ by it.
 
- %according to Tarrio and Pedre, EKF is biased in rho estimation, so a global "shrinking factor" can be applied to depths and uncertainties.
-
- % todo 2x depth
+Tests have concluded that $\Xi$ oscillates too much while the system is initializing. \textbf{Therefore it is proposed not to estimate scale until system convergence} (usually a threshold of 20 frames suffices).
 
 This does not remedy the fundamental problem of scale ambiguity in monocular systems. To fix this issue, dimensions of real-life objects present the scene need to be known a priori. Excellent example of such objects, with well defined shape and size, are \textbf{traffic signs and license plates}, ever-present in urban environments that the algorithm was originally envisioned for. Solutions for identifying those objects are:
 \begin{itemize}
@@ -676,7 +667,6 @@ This does not remedy the fundamental problem of scale ambiguity in monocular sys
 
 This however entails additional, heavy computing cost and would not fit the designated platform. Moreover, no out-of-the-box implementation was found. Thus moving this problem out of the scope of this thesis.
 
-Tests have concluded that estimated rescaling factor oscillates too much while the system is initializing -- therefore depth rescalling is only allowed after system has fully initialized and depth is more or less stable (usually after 20 frames).
 
 % ----------------------
 \subsection{Tests on artificial data}
@@ -692,5 +682,5 @@ Rendering a full 3D sequence using e.g. a game engine was also considered, but d
 
 In order to assess algorithm accuracy as it processes new frames, estimated camera trajectory is systematically compared with ground truth data after each frame. An optimal isotropic scaling and Euclidean transformation between two trajectories is searched for. Obtained parameters do not influence future algorithm iterations, as in real world applications such data is simply unavailable. They are calculated only for visualization purposes.
 
-In \cite{arun1987least} it is described how to find an optimal (in the least square sense) translation and rotation between two trajectories 3D using SVD. Scaling factor can determined using \texttt{fminsearch}, a~black-box minimization routine available in the GNU Octave environment. Mean residual distance between optimized trajectories is the final accuracy measure that is used in Chapter~\ref{cha:results}.
+In \cite{arun1987least} it is described how to find an optimal (in the least square sense) translation and rotation between two trajectories 3D using SVD. Scaling factor can determined using \texttt{fminsearch}, a~black-box minimization routine available in the GNU Octave environment. Usually first 5 trajectory samples are not taken into account, as they are very noisy, because system is not yet initialized. Usually if system does converge at all, then good conformance with ground truth is achieved only after just a few frames. Mean residual distance between optimized trajectories is the final accuracy measure that is used in Chapter~\ref{cha:results}.
 
