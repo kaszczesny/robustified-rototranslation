@@ -38,9 +38,7 @@ Presented results consists mainly from the following sequences:
 	\item KITTI 01 - video taken from a camera mounted in front of a car.
 \end{itemize}
 
-todo: ogólnie było dobrze gdy ...
-
-A view from top of a trajectory is presented in Fig.~\ref{fig:traject}. Even with very few frames, complex motion has been recovered well.
+todo: ogólnie było dobrze gdy ... A view from top of a trajectory is presented in Fig.~\ref{fig:traject}. Despite the low number of frame, complex motion has been recovered relatively closely. Even in a dataset containing outliers (independently moving objects), odometry was correct (see Fig.~\ref{fig:trajectxyz}).
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/deskperson_trajectory.png}
@@ -48,36 +46,47 @@ A view from top of a trajectory is presented in Fig.~\ref{fig:traject}. Even wit
 	\label{fig:traject}
 \end{figure}
 
-Frames in which algorithm had to reinitialize are marked by a hollow black circle, and are most often a result of not having a stable supply of matched Keylines. In case of TUM fr3\_teddy sequence there are 4 cases of reinitialization: frames 271 \& 272, 280, 386 \& 387, 394, as shown in Fig.~\ref{fig:teddyfull}. System recovered from three out of four of them, but the third was fatal in a sense that scale and starting rototranslation were lost, and in extension that trajectory as a whole can not be well fitted with ground truth (Fig.~\ref{fig:teddynok}). However, partitioned sections can and are fitted quite good, shown on Fig.~\ref{fig:teddy1} and Fig.~\ref{fig:teddy2} for the first part and a second one, respectively.
-
-
 \begin{figure}[ht]
-	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/deskperson_xyz.png}
-	\caption{ Example trajectory components comparison between obtained results and ground truth from dataset TUM fr2\_desk\_with\_person }
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/deskperson_xyz.png}
+	\caption{ Example trajectory components comparison between obtained results and ground truth from dataset TUM fr2\_desk\_with\_person. Red line marks estimated position; blue~\==~ground truth; black circles~\==~reinitialization }
 	\label{fig:trajectxyz}
 \end{figure}
 
+Sometimes frames did not contain enough Keylines and system had to be reinitialized. In case of TUM fr3\_teddy sequence there are 4 cases of reinitialization: frames 271 \& 272, 280, 386 \& 387, 394, as shown in Fig.~\ref{fig:teddyfull}. System recovered from three out of four of them, but the third was fatal in a sense that scale and starting rototranslation were lost, and in extension that trajectory as a whole can not be well fitted with ground truth (Fig.~\ref{fig:teddynok}). However, partitioned sections can and are fitted quite well, shown on Fig.~\ref{fig:teddy1} and Fig.~\ref{fig:teddy2} for the first part and a second one, respectively. Such points could be potentially detected in post-processing, as they are a sharp mark of a otherwise smooth 3D curve.
+
 
 
 \begin{figure}[ht]
-	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/teddy_full.png}
-	\caption{ Whole trajectory with denoted cases of reinitialization from dataset TUM fr3\_teddy }
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/teddy_full.png}
+	\caption{ Whole trajectory with denoted cases of reinitialization from dataset TUM fr3\_teddy. Red line marks estimated position; blue~\==~ground truth; black circles~\==~reinitialization }
 	\label{fig:teddyfull}
 \end{figure}
 \begin{figure}[ht]
-	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/teddy_nok.png}
-	\caption{ Fitted trajectory showing fatal reinitialization problem from dataset TUM fr3\_teddy }
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/teddy_nok.png}
+	\caption{ Fitted trajectory showing fatal reinitialization problem from dataset TUM fr3\_teddy. Red line marks estimated position; blue~\==~ground truth; black circles~\==~reinitialization }
 	\label{fig:teddynok}
 \end{figure}
 \begin{figure}[ht]
-	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/teddy_1.png}
-	\caption{ First part of the sequence fitted to ground truth from dataset TUM fr3\_teddy }
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/teddy_1.png}
+	\caption{ First part of the sequence fitted to ground truth from dataset TUM fr3\_teddy. Red line marks estimated position; blue~\==~ground truth; black circles~\==~reinitialization }
 	\label{fig:teddy1}
 \end{figure}
 \begin{figure}[ht]
-	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/teddy_2.png}
-	\caption{ Second part of the sequence fitted to ground truth from dataset TUM fr3\_teddy }
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/teddy_2.png}
+	\caption{ Second part of the sequence fitted to ground truth from dataset TUM fr3\_teddy. Red line marks estimated position; blue~\==~ground truth; black circles~\==~reinitialization }
 	\label{fig:teddy2}
+\end{figure}
+
+todo wywiniecie + obrazek glebi + ze dalej leci dobrze
+
+The KITTI dataset was far more challenging than TUM. It very often happens that through many consecutive frames, one half of images systematically lack Keylines, affecting the algorithm. As camera was mounted on a car, individual displacements are more rapid. It is even possible that rolling shutter problem is present, although this was not tested. Another issue is that when car is moving forward, many Keylines are present in the middle of the field of view. They undergo little to no displacement between frames, therefore they might bias the minimization and prevent other Keylines from being matched (in the described scenario edges moderately close to image border contain most information about motion of the camera, due to visible disparity). A trajectory estimated for one of KITTI sequences in depicted in Fig~\ref{kitti_3}. These results are rather disheartening, as they show that algorithm need to be improved before it can be employed in urban scenarios for which it was originally planned.
+
+
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/todo.png}
+	\caption{ Estimated trajectory KITTI sequence Second part of the sequence fitted to ground truth from dataset TUM fr3\_teddy. Red line marks estimated position; blue~\==~ground truth; black circles~\==~reinitialization }
+	\label{fig:kitti_3}
 \end{figure}
 
 % moze cos o tym household, ja tego nie mam
