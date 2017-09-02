@@ -59,9 +59,7 @@ where:
 	\item[$t$] translation vector between 3D world coordinates and camera coordinates (3-vector).
 \end{eqwhere}
 
-Real cameras do not fully conform to this model \cite{szczesny}. They contain lenses that enlarge field of view (see Fig.~\ref{fig:analogue}). Lens curve passing light rays in a nonlinear fashion (this can be observed in fish-eye cameras \cite{fisheye_endoscopy}). Moreover, lenses themselves are imperfectly made and aligned. Finally, color aberration and CCD (Charge Coupled Device) sensor quantization noise introduce more nonlinearity \cite{heikkla14}. All these phenomena account for distortions.
-
-todo: Krzysztof, jest ich wiecej a tu wymienione sa tylko niektore
+Real cameras do not fully conform to this model \cite{szczesny}. They contain lenses that enlarge field of view (see Fig.~\ref{fig:analogue}). Lens curve passing light rays in a nonlinear fashion (this can be observed in fish-eye cameras \cite{fisheye_endoscopy}). Moreover, lenses themselves are imperfectly made and aligned. Other nonlinearlity sources include color aberration and CCD (Charge Coupled Device) sensor quantization noise \cite{heikkla14}, but this list is far from being exhaustive. All these phenomena account for distortions.
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.6\linewidth]{img/camera2.png}

@@ -1,32 +1,44 @@
 \chapter{Conclusion}
 
-Overall, presented algorithm is a novel, fresh take on lightweight, pure visual odometry. An easier way of implementing VO would have been the classic approach: extracting feature points, matching them and then estimating the rototranslation, possibly including IMU and/or input from the other camera along the way. However, a lot of research by the scientific community has been performed in this area, and it has been profoundly delved into (but of course existing solutions are still being perfected). This thesis aimed to explore the approach that is off the beaten track.
+Overall, presented algorithm continues the novel take on lightweight and pure visual odometry from \cite{jose2015realtime}. An easier way of implementing VO would have been the classic approach: extracting feature points using one of available feature detectors, matching them and then estimating the rototranslation; possibly including IMU and/or input from the other camera along the way. However, a lot of research by the scientific community has already been performed in this area (but of course existing solutions are still being perfected). This was covered in Chapter~\ref{cha:intro}. Work described in this thesis aimed to explore the approach that is off the beaten track and could operate in real time on mobile devices, instead of high-end personal computers.
 
-Results are promising, especially in cases of complicated motion, which was primary problem on assumed designation of implementation of said algorithm. Trajectories fit nicely onto the ground truth to some degree, which means that instantaneous azimuths are estimated well. It is important mainly because overall camera position originally supposed to be acquired from a GPS unit. Algorithm needs to be robustified against challenges of urban scenes, though.
+Results are promising, especially in cases of complicated motion, which was primary problem on assumed designation of implementation of said algorithm. Trajectories fit nicely onto the ground truth to some degree, which means that instantaneous azimuths are being estimated well. They are crucial, because absolute camera position was originally supposed to be acquired from a GPS unit, and camera orientation~\==~from odometry. Algorithm needs to be robustified against challenges of urban scenes, though.
 
-Additions to the original cite tarrio include:
+Additions to the original implementation \cite{jose2015realtime} include:
+\begin{itemize}
+	\item Removal of aritifical border edges possibly created during image rectification (applied before any edge detection substep).
+	\item One more edge detection test, that removes the need of having to later handle division by zero (or by numbers close to zero).
+	\item Simpler, but a little bit more effective edge detection threshold control mechanism (instead of hysteresis).
+	\item Depth initialization with normal-distributed random numbers in the first frame of the sequence, instead of a constant.
+	\item Creation of (marginally) more accurate lookup table for minimization.
+	\item Minor speed optimization -- usage of Cholesky decomposition instead of SVD, based on the observation that decomposed matrix is positive definite \cite{madsen2004methods}.
+	\item Optional median filter applied to edge depths before further regularization.
+	\item Proposition of depth bounds that perform better.
+\end{itemize}
 
-frame, additional test, chunking, depth init 
-
-spanning, cholesky
-
-median filter,, depth constraints
 
 %Jest całkiem spoko, ale trzeba nad tym wiecej popracowac zeby dostosowac do zalozenia. Wyniki sa obiecujace, szczegolnie rotacja na co wskazuje poprawne dopasowywanie sie trajektorii, a odleglosc i tak chcielismy wziac z gpsa.
 
-Many ways of improving presented solution have already been discussed in Chapter~\ref{cha:results}. In edge finder, additional test that 
+A handful of possible ways to further improve presented solution have already been addressed throughout Chapter~\ref{cha:results}:
+\begin{itemize}
+	\item Incorporation of fuzzy logic into edge detection.
+	\item Feature-based depth initialization (deemed unnecessary).
+	\item Usage of full pinhole camera model in projection and back-projection functions.
+	\item Scale ambiguity resolution by using a priori knowledge of traffic signs and license plates sizes.
+\end{itemize}
 
-fuzzy logic
+Some more general enhancements can also be proposed:
+\begin{itemize}
+	\item Instead of direct Jacobian calculation like Tarrio and Pedre, a black-box approach can be taken and Jacobians could be calculated numerically, e.g. using the Secant version of Levenberg-Marquardt algothim \cite{madsen2004methods}. Alternatively, an entirely different minimization algorithm could be picked, but this might affect time performance.
+	\item Many algorithm steps are performed independently for each Keyline. This suggests that they could be parallelized in the GPU (Graphics Processing Unit), taking performance to a whole new level. Nowadays GPUs are present not only in personal computer, but also in mobile devices.
+	\item Algorithm is configured with 30 parameters, that affect final outcomes in varying degrees. Most of their values have been simply acquired from \cite{jose2015realtime}. An extensive search of their optimal values, performed over large datasets, could be undertaken.
+	\item Keyline matching criteria (especially during the minimization step) could be dynamically changed, so that distant, but well-matched Keylines do not bias the outcome as it was observed when KITTI \cite{kitti} dataset was used.
+	\item Obtained trajectory can be Kalman-filtered, e.g. as in \cite{min2015visual}.
+	\item System could be transformed to a SLAM one. As long as only a few of best features would be remembered, real time would not be hindered \cite{monoslam}.
+\end{itemize}
 
-depth \& joining - not needed
 
-Minimizer - full pinhole, jacobians
-
-map - skala
-
-ogolnie - gpu, optymalizacja parametrow
-
-Ways of improving the system would be a bigger, better, stronger jacobians calculating algorithm, supplemented in many libraries, although it would have been needed to be fitted into our needs. Further plans include implementation of this algorithm in a more robust programming language, seeing as how well it behaves in Octave, our testing platform. Some other plans include ...
+Finally, the algorithm should be reimplemented in a more efficient programming language, such as C++. Time complexity, as well as behavior in real life scenarios, could be then verified.
 %Jak chcemy poprawic, moze jakis lepszy jakobian, moze implementacja w c, moze jakies plany jeszcze?
 
 %Although this is has been interesting take on VO, more research in this direction is needed. 
@@ -34,7 +46,7 @@ Ways of improving the system would be a bigger, better, stronger jacobians calcu
 
 %Watpliwa jest powodnosc, bo wszyscy jestesmy wszystkimi i nalezymy do struktury ego, wiec wyrwanie sie ze struktury powinno byc priorytetem
 
-ULEPSZENIA
+% ULEPSZENIA
 %skala ze znakow i tablic
 %wypierdalanie ramki (?)
 %partycjonowanie
