@@ -52,8 +52,7 @@ todo: ogólnie było dobrze gdy ... A view from top of a trajectory is presented
 	\label{fig:trajectxyz}
 \end{figure}
 
-Sometimes frames did not contain enough Keylines and system had to be reinitialized. In case of TUM fr3\_teddy sequence there are 4 cases of reinitialization visible in Fig.~\ref{fig:teddyfull}: frames 271 \& 272, 280, 386 \& 387 and 394. System recovered from three out of four of them, but the third was fatal in a sense that scale and starting rototranslation were lost, and in extension that trajectory as a whole can not be well fitted with ground truth (Fig.~\ref{fig:teddynok}). However, partitioned sections can and are fitted quite well, shown on Fig.~\ref{fig:teddy1} and Fig.~\ref{fig:teddy2} for the first part and the second one, respectively. Such points could be potentially detected in post-processing, as they are a sharp spots of a otherwise smooth 3D curve.
-
+Sometimes frames did not contain enough Keylines and system had to be reinitialized. In case of TUM fr3\_teddy sequence there are 4 cases of reinitialization visible in Fig.~\ref{fig:teddyfull}: frames 271 \& 272, 280, 386 \& 387 and 394. System has recovered from three out of four of them, but the third was fatal in a sense that scale and starting rototranslation were lost, and hence the trajectory as a whole could not be well fitted with ground truth (Fig.~\ref{fig:teddynok}). However, partitioned sections can and are fitted quite well, as shown in Fig.~\ref{fig:teddy1} for the first part, and in Fig.~\ref{fig:teddy2} for the second. Such points could be potentially detected in post-processing, as they are a sharp spots of an otherwise smooth 3D curve.
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/teddy_full.png}
@@ -76,9 +75,6 @@ Sometimes frames did not contain enough Keylines and system had to be reinitiali
 	\label{fig:teddy2}
 \end{figure}
 
-Places where rototranslation is lost due to reinitialization prevent usage of SLAM loop closure methods, as the 3D curves are very far from closing. For instance, in Fig.~\ref{fig:loop}, an expected loop and obtained trajectory are compared.
-
-
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/loop.png}
@@ -86,7 +82,34 @@ Places where rototranslation is lost due to reinitialization prevent usage of SL
 	\label{fig:loop}
 \end{figure}
 
-todo wywiniecie + obrazek glebi + ze dalej leci dobrze
+This reinitialization in particular is interesting, because of a depth estimation artifact. Movement in this sequence is a circle around the teddy bear - in every frame camera moves and rotates a bit, to always have the teddy bear in the middle of the picture frame. This causes the toy's edges to be more or less in the same spot, while edges of the environment are shifted a bit more. This can lead to the system estimating that if the edges of this object (lying closest in real life) don't move a lot, they have to be very far away, and the rest is closer. Example of such bad initialization is presented in Fig~\ref{fig:teddyflip}.
+
+\begin{figure}[ht]
+	\centering
+	\begin{subfigure}{0.49\textwidth}
+		\centering
+		\centering\includegraphics[width=0.3\linewidth]{img/figures/flip/14_0756.png}
+		\subcaption{\label{fig:teddyfirst}}
+	\end{subfigure}
+	\begin{subfigure}{0.49\textwidth}
+		\centering
+		\centering\includegraphics[width=0.3\linewidth]{img/figures/flip/14_1088.png}
+		\subcaption{\label{fig:teddybefore}}
+	\end{subfigure}
+	\begin{subfigure}{0.49\textwidth}
+		\centering
+		\centering\includegraphics[width=0.3\linewidth]{img/figures/flip/14_1094.png}
+		\subcaption{\label{fig:teddyafter}}
+	\end{subfigure}
+	\begin{subfigure}{0.49\textwidth}
+		\centering
+		\centering\includegraphics[width=0.3\linewidth]{img/figures/flip/14_1172.png}
+		\subcaption{\label{fig:teddylast}}
+	\end{subfigure}
+	\caption{\label{fig:teddyflip} An example of bad depth initialization (the warmer, the more distanced from the camera object is) \protect\subref{fig:teddyfirst} Well-initialized depth, protect\subref{fig:teddybefore} Depth before the reinitialization, protect\subref{fig:teddyafter} Depth after the reinitialization,
+		\protect\subref{fig:teddylast} Badly initialized depth after a few frames}
+\end{figure}
+
 
 The KITTI dataset was far more challenging than TUM. It very often happens that through many consecutive frames, one half of images systematically lack Keylines, affecting the algorithm. As camera was mounted on a car, individual displacements are more rapid. It is even possible that rolling shutter problem is present, although this was not tested. Another issue is that when car is moving forward, many Keylines are present in the middle of the field of view. They undergo little to no displacement between frames, therefore they might bias the minimization and prevent other Keylines from being matched (in the described scenario edges moderately close to image border contain most information about motion of the camera, due to visible disparity). A trajectory estimated for one of KITTI sequences in depicted in Fig~\ref{fig:kitti_3}. These results are rather disheartening, as they show that algorithm needs to be improved before it can be employed in urban scenarios for which it was originally planned in this thesis.
 
@@ -123,14 +146,14 @@ The KITTI dataset was far more challenging than TUM. It very often happens that 
 		
 		\begin{tabularx}{1.0\textwidth}{C{0.4} C{0.2} C{0.1} C{0.2}}
 			\toprule
-			\thead{Sequence} & \thead{Average drift [$\frac{m}{s}$]} & \thead{Scale} & \thead{Mean score [m]} \\
+			\thead{Sequence} & \thead{Average drift [$\frac{m}{s}$]} & \thead{Scale} & \thead{Cumulative drift [m]} \\
 			\midrule
-			TUM fr3\_long\_office\_household & $3.6$ & ? & ? \\
-			TUM fr3\_teddy (long subsequence) & $1.8$ & ? & ? \\
-			TUM fr3\_teddy (short subsequence) & $0.6$ & ? & ? \\
-			TUM fr2\_desk\_with\_person & $0.4$ & ? & ? \\
-			TUM fr2\_desk\_with\_person & $0.1$ & ? & ? \\
-			% KITTI 01 &  & $18.2$ & ? \\
+			TUM fr3\_long\_office\_household & $3.6$ & 1.6 \\
+			TUM fr3\_teddy (long subsequence) & $1.8$ & 1.1 \\
+			TUM fr3\_teddy (short subsequence) & $0.6$ & 1.5 \\
+			TUM fr2\_desk\_with\_person & $0.4$ & 1.05 \\
+			TUM fr2\_desk\_with\_person & $0.1$ & 1.69 \\
+			KITTI 01 & ? & ? \\
 			\bottomrule
 		\end{tabularx}
 		
