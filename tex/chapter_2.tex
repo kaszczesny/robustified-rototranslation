@@ -485,7 +485,7 @@ where:
 \end{eqwhere}
 
 
-Increment of the input vector is dictated by the Levenberg–Marquardt update equation \cite{press2007numerical}. One way of determining it is to use SVD on a 6x6 matrix $\tmmathbf{\Lambda}$, as it is performed by Tarrio and Pedre. However, $\tmmathbf{\Lambda}$ is always a positive definite \cite{madsen2004methods}, meaning that \textbf{Cholesky factorization can be used}, instead of slower, but less constrictive SVD. However, size of the decomposed matrix is quite small, so computational gain is negligible.
+Increment of the input vector is dictated by the Levenberg–Marquardt update equation \cite{press2007numerical}. One way of determining it is to use SVD on a 6x6 matrix $\Lambda$, as it is performed by Tarrio and Pedre. However, $\Lambda$ is always a positive definite \cite{madsen2004methods}, meaning that \textbf{Cholesky factorization can be used}, instead of slower, but less constrictive SVD. However, size of the decomposed matrix is quite small, so computational gain is negligible.
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.85\linewidth, trim={1.5cm 0.5cm 1.5cm 1cm},clip]{img/figures/hist__.png}
