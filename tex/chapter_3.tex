@@ -1,35 +1,63 @@
 \chapter{Discussion of results}
 \label{cha:results}
-octave opencv mex
 
 % global results for various datasets
-This section focuses on discussing algorithm results obtained from longer sequences. Tested sequences come from KITTI and TUM public datasets. Results consists mainly from sequences:
+This chapter focuses on discussing overall algorithm results obtained from longer sequences. Tested sequences come from TUM \cite{tum} and KITTI \cite{kitti} public datasets. Results include comparison of $x$, $y$ and $z$ components of the estimated camera trajectory with ground truth, as well as numeric quantities (Table~\ref{tab:drift}). Some erroneous outcomes are also presented, with brief commentary.
+
+\section{Experimental setup}
+
+All of the tested sequences include ground truth (either laser positioning system in case of TUM, or  Differential GPS in case of KITTI), which is essential for debugging and validation purposes. Also, these datasets are commonly used for visual odometry systems evaluation, making to possible to compare proposed algorthim with others. Intrinsic camera parameters were reported by dataset authors.
+
+As the main goal of the algorithm is to estimate transformation between images, most care was put into making sure that the system correctly calculates position of the camera in respect to ground truth. Obtained trajectory was fitted onto ground truth trajectory using method explained in Section~\ref{sec:fitting}.
+
+Algorithm itself was implemented in the GNU Octave environment. The OpenCV \cite{opencv} library was also used; it was complied to MEX files, that can be executed by Octave. Choice of programming language enabled fast prototyping and easy visualization, but prevented the algorithm from achieving real-time performance. Based on results in \cite{jose2015realtime} it is estimated that implementation in a compiled language such as C++ would accomplish such goal even on a~consumer-grade smartphone.
+
+In order to speed up computations, images were first scaled down. This removed some false edges, while retaining only the strongest ones, thus greatly reducing the number of Keylines. In \cite{jose2015realtime} it was already shown that algorithm run time depends linearly on Keyline number. The biggest downscaling factor was reduction of size by 80\%, resulting in an 128 by 96 pixels wide image. Although such images are too small to be easily interpreted by humans, algorithm results were still satisfactory.
+
+Comparison of time needed to process one frame with two different downscaling factors is featured in Fig.~\ref{fig:timing}. For these particular images and scales, larger scale resulted in $1.81$ more processing time per frame, on average. Measured time included creation of some visualization files, but this factor was insignificant next to the most time-consuming step, i.e.~the minimization.
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={0.0cm 1.0cm 1.5cm 0.0cm},clip]{img/figures/frametime.png}
+	\caption{ Single frame processing time for TUM fr3\_teddy sequence. Red line corresponds to scale of $\frac{1}{3}$ of original image; blue line~\==~ $\frac{1}{5}$ }
+	\label{fig:timing}
+\end{figure}
+
+
+A few system parameters had to be adjusted between TUM and KITTI datasets, but there was no need of fine tuning the configuration for every sequence separately.
+
+\section{Trajectory comparison}
+
+Presented results consists mainly from the following sequences:
 \begin{itemize}
-	\item TUM fr1\_xyz - only translatory motions are present here, as stated by creators of this dataset "it's mainly for debugging purposes",
+	\item TUM fr1\_xyz - only translatory motions are present here, as stated by creators of this dataset "\textit{it's mainly for debugging purposes}",
 	\item TUM fr2\_desk - slow sweep around an office desk,
 	\item TUM fr2\_desk\_with\_person - same as above, but present person moves the objects around, creating outliers,
 	\item TUM fr2\_pioneer\_SLAM - robot with a mounted camera is trying to self-localize and map the room,
 	\item TUM fr3\_long\_office\_household - slow sweep around two desks,
-	\item TUM fr3\_teddy - slow sweep around a big plush teddy,
-	\item KITTI 00 - video taken from a camera mounted on front of a car.
+	\item TUM fr3\_teddy - slow sweep around a big plush teddy bear,
+	\item KITTI 01 - video taken from a camera mounted in front of a car.
 \end{itemize}
 
-All of the sequences mentioned above include ground truth (laser positioning system in case of TUM, DGPS(Differential GPS) in case of KITTI), which is essential for debugging purposes and validation. Also, these datasets are commonly used for visual odometry systems evaluation.
+todo: ogólnie było dobrze gdy ...
 
-As the main goal of the algorithm is to estimate transformation between images, most care was put into making sure that the system correctly calculates velocity and rotation of the camera in respect to ground truth. Obtained trajectory was fitted onto ground truth trajectory using fminsearch function available in Matlab. Example of such fitting can be observed on Fig.~\ref{fig:traject}. Same trajectory was fragmented into its basic XYZ components and shown on Fig.~\ref{fig:trajectxyz}.
+A view from top of a trajectory is presented in Fig.~\ref{fig:traject}. Even with very few frames, complex motion has been recovered well.
 
 \begin{figure}[ht]
-	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/deskperson_trajectory.png}
-	\caption{ Example trajectory comparison between obtained results and ground truth from dataset TUM fr2\_desk\_with\_person }
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/deskperson_trajectory.png}
+	\caption{ Example trajectory comparison between obtained results and ground truth from dataset TUM fr2\_desk\_with\_person, projected on the $y=0$ plane, as camera height was the least significant motion component. }
 	\label{fig:traject}
 \end{figure}
+
+Frames in which algorithm had to reinitialize are marked by a hollow black circle, and are most often a result of not having a stable supply of matched Keylines. In case of TUM fr3\_teddy sequence there are 4 cases of reinitialization: frames 271 \& 272, 280, 386 \& 387, 394, as shown in Fig.~\ref{fig:teddyfull}. System recovered from three out of four of them, but the third was fatal in a sense that scale and starting rototranslation were lost, and in extension that trajectory as a whole can not be well fitted with ground truth (Fig.~\ref{fig:teddynok}). However, partitioned sections can and are fitted quite good, shown on Fig.~\ref{fig:teddy1} and Fig.~\ref{fig:teddy2} for the first part and a second one, respectively.
+
+
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/deskperson_xyz.png}
 	\caption{ Example trajectory components comparison between obtained results and ground truth from dataset TUM fr2\_desk\_with\_person }
 	\label{fig:trajectxyz}
 \end{figure}
 
-Frames in which algorithm had to reinitialize are marked by a black circle, and are most likely a result of not having a stable supply of matched Keypoint and thus not having a reliable enough rototranslation. In case of TUM fr3\_teddy sequence there are 4 cases of reinitialization: frames 271 272, 280, 386 387, 394, as shown on Fig.~\ref{fig:teddyfull}. System recovered from three out of four of them, but the third was fatal in a sense that scale and starting rototranslation were lost, and in extension that trajectory as a whole can not be well fitted with ground truth (Fig.~\ref{fig:teddynok}), however partitioned sections can and are fitted quite good, shown on Fig.~\ref{fig:teddy1} and Fig.~\ref{fig:teddy2} for the first part and a second one, respectively.
+
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/teddy_full.png}
@@ -55,22 +83,41 @@ Frames in which algorithm had to reinitialize are marked by a black circle, and 
 % moze cos o tym household, ja tego nie mam
 %  KITTI tez by bylo ok
 
-Influence of scale of the image was tested; sequence fr3\_teddy was scaled by 1/3th and 1/5th, respectively. 249 images from said sequence were processed and timed. Results per frame are presented on Fig.~\ref{fig:timing}. Larger images had more Keylines and, in extension, took about 1.81 more time to process. It should be noted that between runtimes same frame is more likely to take more time to process, meaning that increase in Keyline number on the same image was more or less the same.
 
-\begin{figure}[ht]
-	\centering\includegraphics[width=0.75\linewidth, trim={0.0cm 1.5cm 1.5cm 0.0cm},clip]{img/figures/frametime.png}
-	\caption{ Calculations of algorithm on dataset TUM fr3\_teddy, timed per frame. Red line describes 1/3 scale, blue line describes 1/5 scale }
-	\label{fig:timing}
-\end{figure}
+
+
 
 %sredni blad/dryft
 %jakas tabelka moze? trzeba to w sensie sredniokwadratowym obliczyc
 
-long office ok3- 3.6038m/s
-teddy long - 1.8033m/s
-teddy short - 0.57838m/s
-desk with person outlier rej - 0.43574m/s
-				 outlier depth - 0.092159m/s
+%long office ok3- 3.6038m/s
+%teddy long - 1.8033m/s
+%teddy short - 0.57838m/s
+%desk with person outlier rej - 0.43574m/s
+%				 outlier depth - 0.092159m/s
+
+\begin{table}[ht]
+	\centering
+	
+	\begin{threeparttable}
+		\caption{Algorithm results for selected sequences}
+		\label{tab:drift}
+		
+		\begin{tabularx}{1.0\textwidth}{C{0.4} C{0.2} C{0.1} C{0.2}}
+			\toprule
+			\thead{Sequence} & \thead{Average drift [$\frac{m}{s}$]} & \thead{Scale} & \thead{Mean score [m]} \\
+			\midrule
+			TUM fr3\_long\_office\_household & $3.6$ & ? & ? \\
+			TUM fr3\_teddy (long subsequence) & $1.8$ & ? & ? \\
+			TUM fr3\_teddy (short subsequence) & $0.6$ & ? & ? \\
+			TUM fr2\_desk\_with\_person & $0.4$ & ? & ? \\
+			TUM fr2\_desk\_with\_person & $0.1$ & ? & ? \\
+			KITTI 01 & ? & ? & ? \\
+			\bottomrule
+		\end{tabularx}
+		
+	\end{threeparttable}
+\end{table}
 
 %nok, figura z  edgefindera
 
@@ -78,48 +125,4 @@ desk with person outlier rej - 0.43574m/s
 
 
 
-
-
-\begin{lstlisting}
-src
-\end{lstlisting}
-
-Pakiet \texttt{siunitx} zadba o to, by liczba została poprawnie sformatowana: \\
-\begin{center}
-	\num{1234567890.0987654321}
-\end{center}
-
-
-Pakiet \texttt{subcaption} pozwala na umieszczanie w podpisie rysunku odnośników do ,,podilustracji'': \\
-
-\begin{figure}[h]
-	\centering
-	\begin{subfigure}{0.35\textwidth}
-		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/15_1985_.png}
-		\subcaption{\label{subfigure_a}}
-	\end{subfigure}
-	\begin{subfigure}{0.35\textwidth}
-		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/1985.png}
-		\subcaption{\label{subfigure_a1}}
-	\end{subfigure}
-	\begin{subfigure}{0.35\textwidth}
-		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/15_2010_.png}
-		\subcaption{\label{subfigure_b}}
-	\end{subfigure}
-	\begin{subfigure}{0.35\textwidth}
-		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/2010.png}
-		\subcaption{\label{subfigure_b1}}
-	\end{subfigure}
-	\begin{subfigure}{0.35\textwidth}
-		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/15_2035_.png}
-		\subcaption{\label{subfigure_c}}
-	\end{subfigure}
-	\begin{subfigure}{0.35\textwidth}
-		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/2035.png}
-		\subcaption{\label{subfigure_c}}
-	\end{subfigure}
-	
-	\caption{\label{fig:subcaption_example}Przykład użycia \texttt{\textbackslash subcaption}: \protect\subref{subfigure_a} litera A,
-	\protect\subref{subfigure_b} litera B \protect\subref{subfigure_c} litera C.}
-\end{figure}
 
