@@ -140,7 +140,7 @@ Exemplary Difference of Gaussians image is depicted in Fig.~\ref{fig:dog}. \text
 
 Another parameter is window size -- it defines pixel neighborhood that will take part in later calculations of edge position. For window size $w$, $(2w+1)^2$ immediate neighbors will be considered, including the center pixel itself. For sake of this thesis, value $w = 2$ was used.
 
-\subsubsection{First test}
+\subsubsection*{First test}
 \label{edge_first}
 
 Edge detection procedure is performed for every pixel that lies at least $w$ pixels from image border, so that neighborhood does not need to be extrapolated. In order to speed up computations by early identifying non-edges, first derivative of pixel intensity is calculated by applying two Sobel operators (derivatives along $x$ and $y$ axes) and taking norm of the result. This norm is then compared with a threshold. 
@@ -174,7 +174,7 @@ In Fig.~\ref{fig:bucket} some pixels on the right half of the image were conside
 		\protect\subref{fig:bucket_b} Chunked first test threshold}
 \end{figure}
 
-\subsubsection{Second test}
+\subsubsection*{Second test}
 \label{edge_second}
 
 Neighborhood of pixels that have passed the first test is checked for ``sign balance``. Number of positive and negative DoG values has to be comparable within a defined percentage, e.g. 20\%. Example results of the test for 2 different pixels are depicted in Fig.~\ref{fig:plusminus}. It was observed that pixels very rarely fail this particular test.
@@ -185,7 +185,7 @@ Neighborhood of pixels that have passed the first test is checked for ``sign bal
 	\label{fig:plusminus}
 \end{figure}
 
-\subsubsection{Third test}
+\subsubsection*{Third test}
 \label{edge_third}
 
 Then DoG values are approximated by a plane using linear regression -- (\ref{eq:regress}) is solved for~$\theta$. Pseudo-inverse of $\tmmathbf{A}$, needed to solve it, has to be computed only once for the whole algorithm. Zero-crossing of the plane can be determined algebraically, resulting in (\ref{eq:zerocross}). This has been visualized in Fig.~\ref{fig:zeroc}. These closed-form formulas are the main reason for DoG not being computationally demanding, as curve-fitting approaches are usually iterative.
@@ -234,7 +234,7 @@ where:
 \label{eq:test3}
 \end{equation}
 
-\subsubsection{Fourth test}
+\subsubsection*{Fourth test}
 \label{edge_fourth}
 
 Obtained zero-crossing marks the subpixel position of the edge; an example of a few subpixel positions along an edge is presented in Fig.~\ref{fig:quiv}. (\ref{eq:subpix_inside}) tests whether it lies within the pixel itself. If not -- edge is not detected. After this test, most of Keyline candidates form 1-pixel wide edges.
@@ -250,7 +250,7 @@ max(|x_s|, |y_s|) < 0.5
 \label{eq:subpix_inside}
 \end{equation}
 
-\subsubsection{Fifth test}
+\subsubsection*{Fifth test}
 \label{edge_fith}
 
 Normal vector of fitted plane is defined by (\ref{eq:planenorm}). Vector $\vec{r}$ can projected onto $z=0$ plane, creating third derivative vector: the edge gradient $\vec{g}$. If $||\vec{g}||$ is small, then $r_{z}$ component must have dominated $\vec{r}$, meaning that fitted plane was almost parallel to the $z=0$ plane. In turn this implies that edge was not sharp. Therefore, as a final test, norm of $\vec{g}$ is tested -- it must exceed a~threshold for edge to be finally detected.
@@ -264,7 +264,7 @@ where:
 	\item[$\vec{r}$] normal vector of the fitted plane $z = \theta_{x}x + \theta_{y}y + \theta_{z}$.
 \end{eqwhere}
 
-\subsubsection{Edge detection tests summary}
+\subsubsection*{Edge detection tests summary}
 
 Influence of all aforementioned tests to final result is depicted for an exemplary frame in Fig.~\ref{fig:edgeprob}. Colored regions do resemble to some degree a probability distribution -- probability that given pixel contains an edge. Thus initially \textbf{use of fuzzy logic was considered}. Ultimately, as already mentioned, detected edges were deemed to be acceptable, so this idea was not pursued. Such approach would also require more processing power, making it less suitable for mobile devices.
 
