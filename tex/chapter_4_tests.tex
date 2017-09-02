@@ -35,7 +35,7 @@ Some more general enhancements can also be proposed:
 	\item Algorithm is configured with roughly 30 parameters, that affect final outcomes in varying degrees. Most of their values have been simply acquired from \cite{jose2015realtime}. An extensive search for their optimal values, performed over large datasets, could be undertaken.
 	\item Keyline matching criteria (especially during the minimization step) could be dynamically changed, so that distant, but well-matched Keylines do not bias the outcome as it was observed when KITTI \cite{kitti} dataset was used.
 	\item Obtained trajectory can be Kalman-filtered, e.g. as in \cite{min2015visual}.
-	\item System could be transformed to a SLAM one. As long as only a few of best features would be remembered, real time would not be hindered \cite{monoslam}. As it is not expected to form closed loops in real life navigation scenarios, saved features could be rather used to tackle occlusions.
+	\item System could be transformed to a SLAM one. As long as only a few of best features would be remembered, real time would not be hindered \cite{monoslam}. As it is not expected to form closed loops in real life navigation scenarios, saved features could be rarely used to tackle occlusions.
 	\item GPS information could be incorporated, as it was originally intended; e.g. by taking approach similar to \cite{accurate_global_localization}. It could, over larger time scale, alleviate the problem of error accumulation when trajectory rapidly changes direction due to system reinitialization (and error accumulation in general).
 \end{enumerate}
 
