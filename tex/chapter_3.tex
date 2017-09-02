@@ -74,7 +74,7 @@ in particular
 	\label{fig:trajectxyz}
 \end{figure}
 
-Sometimes frames did not contain enough Keylines and system had to be reinitialized. In case of TUM fr3\_teddy sequence there are 4 cases of reinitialization visible in Fig.~\ref{fig:teddyfull}: frames 271 \& 272, 280, 386 \& 387 and 394. System has recovered from three out of four of them, but the third (not enough edges present on the photo paired with motion blur result in constantly low Keyline number, no matter the scale and gradient detection threshold) was fatal in a sense that scale and starting rototranslation were lost, and hence the trajectory as a whole could not be well fitted with ground truth (Fig.~\ref{fig:teddynok}). However, partitioned sections can and are fitted quite well, as shown in Fig.~\ref{fig:teddy1} for the first part, and in Fig.~\ref{fig:teddy2} for the second. Such points could be potentially detected in post-processing, as they are a sharp spots of an otherwise smooth 3D curve.
+Sometimes frames did not contain enough Keylines and system had to be reinitialized. In case of TUM fr3\_teddy sequence there are 4 cases of reinitialization visible in Fig.~\ref{fig:teddyfull}: frames 271 \& 272, 280, 386 \& 387 and 394. System has recovered from three out of four of them, but the third\footnote{There were simply not enough edges (objects) present on the photo. Paired with motion blur, this resulted in low Keyline number, no matter the image scale and gradient detection threshold.} was fatal in a sense that scale and starting rototranslation were lost, and hence the trajectory as a whole could not be well fitted with ground truth (Fig.~\ref{fig:teddynok}). However, partitioned sections can and are fitted quite well, as shown in Fig.~\ref{fig:teddy1} for the first part, and in Fig.~\ref{fig:teddy2} for the second. Such points could be potentially detected in post-processing, as they are a sharp spots of an otherwise smooth 3D curve.
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.7\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/teddy_full.png}
@@ -121,16 +121,16 @@ This particular reinitialization is especially interesting, because of a depth e
 		\centering\includegraphics[width=0.9\linewidth]{img/figures/flip/1088.png}
 		\subcaption{\label{fig:teddybefore1}}
 	\end{subfigure}
-	\begin{subfigure}{0.4\textwidth}
-		\centering
-		\centering\includegraphics[width=0.9\linewidth]{img/figures/flip/14_1094.png}
-		\subcaption{\label{fig:teddyafter}}
-	\end{subfigure}
-	\begin{subfigure}{0.4\textwidth}
-		\centering
-		\centering\includegraphics[width=0.9\linewidth]{img/figures/flip/1094.png}
-		\subcaption{\label{fig:teddyafter1}}
-	\end{subfigure}
+	%\begin{subfigure}{0.4\textwidth}
+	%	\centering
+	%	\centering\includegraphics[width=0.9\linewidth]{img/figures/flip/14_1094.png}
+	%	\subcaption{\label{fig:teddyafter}}
+	%\end{subfigure}
+	%\begin{subfigure}{0.4\textwidth}
+	%	\centering
+	%	\centering\includegraphics[width=0.9\linewidth]{img/figures/flip/1094.png}
+	%	\subcaption{\label{fig:teddyafter1}}
+	%\end{subfigure}
 	\begin{subfigure}{0.4\textwidth}
 		\centering
 		\centering\includegraphics[width=0.9\linewidth]{img/figures/flip/14_1172.png}
@@ -141,8 +141,9 @@ This particular reinitialization is especially interesting, because of a depth e
 		\centering\includegraphics[width=0.9\linewidth]{img/figures/flip/1172.png}
 		\subcaption{\label{fig:teddylast1}}
 	\end{subfigure}
-	\caption{\label{fig:teddyflip} An example of bad depth initialization (the warmer the color, the greater the depth) \protect\subref{fig:teddyfirst}, \protect\subref{fig:teddyfirst1} Well-initialized depth, \protect\subref{fig:teddybefore}, \protect\subref{fig:teddybefore1} Depth before the reinitialization, \protect\subref{fig:teddyafter}, \protect\subref{fig:teddyafter1} Depth after the reinitialization,
-		\protect\subref{fig:teddylast}, \protect\subref{fig:teddylast1} Badly initialized depth after a few frames}
+	\caption{\label{fig:teddyflip} An example of invalid depth estimation after system reinitialization. Warm colors denote large edge distance from the camera. \protect\subref{fig:teddyfirst}, \protect\subref{fig:teddyfirst1} Well\=/estimated depth, as background is warmer (cyan) and foreground is cooler (blue), \protect\subref{fig:teddybefore}, \protect\subref{fig:teddybefore1} Depth is reset with random values due to motion blur,
+	%\protect\subref{fig:teddyafter}, \protect\subref{fig:teddyafter1} Depth after the reinitialization,
+		\protect\subref{fig:teddylast},~\protect\subref{fig:teddylast1} Invalid depth after few frames~\==~depth of the bear is estimated to be larger than the objects that are situated behind it in reality}
 \end{figure}
 
 Places where rototranslation is lost due to reinitialization prevent usage of SLAM loop closure methods, as the curves are very far from closing. For instance, in Fig.~\ref{fig:loop}, an expected loop and obtained trajectory are compared.

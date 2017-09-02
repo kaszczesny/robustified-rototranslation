@@ -95,10 +95,12 @@ Pixels that contain subpixel edge positions are called Keylines and, after edge 
 
 Explanation of the algorthim given in Section~\ref{sec:rebvo_outline} is valid not only for \cite{jose2015realtime}, but also for the discussed implementation. Briefly summarizing:
 \begin{enumerate}
-	\itemsep0em 
+	\itemsep-0em 
 	\item Edge extraction~\==~Section~\ref{sec:edge_extraction}. A number of tests is performed to decide whether a pixel contains an edge~\==~Section~\ref{sec:dog_tests}.
+	
 	\item Edge tracking (minimization)~\==~Section~\ref{sec:edge_tracking}. Keylines from previous frame already had their depths estimated in previous iteration of the algorithm. By using pixel positions and depths, Keylines are projected from image plane to 3D space, where they transformed in order to ``keep up`` with camera movement, and back-projected to image plane of the current frame~\==~Section~\ref{sec:warp}. They should coincide with new current frame Keylines that belong to same objects in the scene. Minimization is performed until this 3D transformation is optimal~\==~Section~\ref{sec:energyminim}.
-	\item Due to reasons mentioned in Section~\ref{sec:mapping}, in order to find matches between previous and current Keylines, additional matching has to be executed~\==~Section~\ref{sec:directed}. Depth information is propagated from previous frame to current, smoothed out (Section~\ref{sec:regul}) and updated to take into account the motion that camera has underwent (Section~\ref{sec:kalman}).
+	
+	\item Due to reasons mentioned in Sec.~\ref{sec:mapping}, in order to find matches between previous and current Keylines, additional matching has to be executed~\==~Sec.~\ref{sec:directed}. Depth information is propagated from previous frame to current, smoothed out (Sec.~\ref{sec:regul}) and updated to take into account the motion that camera has underwent (Sec.~\ref{sec:kalman}).
 \end{enumerate}
 
 % ---
@@ -153,12 +155,31 @@ Exemplary Difference of Gaussians image is depicted in Fig.~\ref{fig:dog}. \text
 	\label{fig:dog}
 \end{figure}
 
-Another parameter is window size -- it defines pixel neighborhood that will take part in later calculations of edge position. For window size $w$, $(2w+1)^2$ immediate neighbors will be considered, including the center pixel itself. For sake of this thesis, value $w = 2$ was used.
+Another parameter is window size -- it defines pixel neighborhood that will take part in later calculations of edge position. For window size $w$, $(2w+1)^2$ immediate neighbors will be considered, including the center pixel itself. For sake of this thesis, value $w = 2$ was used. Edge detection procedure is performed for every pixel that lies at least $w$ pixels from image border, so that neighborhood does not need to be extrapolated. The procedure consists of five subsequent tests. If a pixel passes all of them, it is considered to be an edge (and additionally its subpixel position and edge gradient ale calculated along the way).
 
-\subsubsection*{First test}
+Influence of these tests on final result is depicted for an exemplary frame in Fig.~\ref{fig:edgeprob}. Color map explanation:
+\begin{itemize}
+	\itemsep0em
+	\item dark blue (0 in the color map) -- neighborhood outside image,
+	\item blue (1 in the color map) -- pixel rejected by the first derivative norm test,
+	\item light blue (2 in the color map) -- ,
+	\item cyan (3 in the color map) -- ,
+	\item green (4 in the color map) -- ,
+	\item orange (5 in the color map) -- ,
+	\item red (6 in the color map) -- reserved for debug purposes,
+	\item dark red (7 in the color map) -- pixel identified as Keyline.
+\end{itemize}
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=1.0\linewidth, trim={1.5cm 2.5cm 1.5cm 2.5cm},clip]{img/figures/edge_prob.png}
+	\caption{ Edge detection tests results. Pixel colors indicate which test has rejected given pixel (or if is has been identified as edge)}
+	\label{fig:edgeprob}
+\end{figure}
+
+\subsubsection*{First test -- first derivative norm}
 \label{edge_first}
 
-Edge detection procedure is performed for every pixel that lies at least $w$ pixels from image border, so that neighborhood does not need to be extrapolated. In order to speed up computations by early identifying non-edges, first derivative of pixel intensity is calculated by applying two Sobel operators (derivatives along $x$ and $y$ axes) and taking norm of the result. This norm is then compared with a threshold. 
+ In order to speed up computations by early identifying non-edges, first derivative of pixel intensity is calculated by applying two Sobel operators (derivatives along $x$ and $y$ axes) and taking norm of the result. This norm is then compared with a threshold. 
 
 Tarrio and Pedre use hysteresis to determine threshold value after every frame. On the one hand, presented algorithm operates offline, so abundance of keylines is not an issue. On the other, hysteresis parameters still need to be adjusted for given dataset. Invalid parameters can alter overall algorithm results significantly, so from algorithm analysis point of view, the fewer of them, the better. \textbf{Thus instead simpler solution was tested out}.
 
@@ -281,13 +302,9 @@ where:
 
 \subsubsection*{Edge detection tests summary}
 
-Influence of all aforementioned tests to final result is depicted for an exemplary frame in Fig.~\ref{fig:edgeprob}. Colored regions do resemble to some degree a probability distribution -- probability that given pixel contains an edge. Thus initially \textbf{use of fuzzy logic was considered}. Ultimately, as already mentioned, detected edges were deemed to be acceptable, so this idea was not pursued. Such approach would also require more processing power, making it less suitable for mobile devices.
+Colored regions in Fig.~\ref{fig:edgeprob} resemble to some degree a probability distribution -- the probability that given pixel contains an edge. Thus initially \textbf{use of fuzzy logic was considered}. Ultimately, as already mentioned, detected edges were deemed to be acceptable, so this idea was not pursued. Such approach would also require more processing power, making it less suitable for mobile devices.
 
-\begin{figure}[ht]
-	\centering\includegraphics[width=1.0\linewidth, trim={1.5cm 2.5cm 1.5cm 2.5cm},clip]{img/figures/edge_prob.png}
-	\caption{ Edge detection tests results. Pixel colors: dark blue -- neighborhood outside image; blue, light blue (not present), cyan (not present), green and orange -- rejected by tests 1 to 5, respectively; red -- reserved for debug purposes (not present); dark red -- final Keylines}
-	\label{fig:edgeprob}
-\end{figure}
+
 
 Presented edge detection algorithm has proved to be quite robust under lighting conditions changes, as reported in \cite{jose2015realtime}. An example is depicted in Fig.~\ref{fig:light} (input images) and Fig.~\ref{fig:light2} (map of detected edges).
 
