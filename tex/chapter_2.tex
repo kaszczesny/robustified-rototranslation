@@ -638,11 +638,11 @@ After forward matching and directed matching, the number of valid matches must e
 
 \subsection{Regularization}
 
-Regularization is based on the assumption that Keylines located near each other on the image, are also close to one another in 3D, meaning that their $\rho$ are similar. As edges of real-life objects are seldom jagged, difference in depth between adjoining Keylines can be smoothed out. This is done by taking a weighted mean of $\rho$ and $\sigma_{\rho}$ of directly joined Keylines (see Section~\ref{sec:joining}). Weights take into account $\sigma_{\rho}$ and a simple angle-based gradient similarity measure. To be regularized, a Keyline needs to have 2 neighbors (this means excluding ends of edges).
+Regularization is based on the assumption that Keylines located near each other on the image are also close to one another in 3D, meaning that their $\rho$ are similar. As edges of real-life objects are seldom jagged, difference in depth between adjoining Keylines can be smoothed out. This is done by taking a weighted mean of $\rho$ and $\sigma_{\rho}$ of directly joined Keylines (see Section~\ref{sec:joining}). Weights take into account $\sigma_{\rho}$ and a simple angle-based gradient similarity measure. To be regularized, a Keyline needs to have 2 neighbors (this means excluding ends of edges).
 
 However, the aforementioned assumption is not always true. This is why additional tests on neighboring pixels are needed. Firstly, depth of the neighbors must be comparable, taking into account their uncertainties. Then angle between gradients of neighboring Keylines is checked for similarity. These tests are usually passed; most of rejected Keylines are corners.
 
-During tests some datasets exhibited salt-and-pepper noise in estimated depth maps; e.g.~single Keylines were predicted to be extremely distance from their neighbors). Such noise had the tendency it be propagated by regularization, instead of being filtered. For such rare scenarios a \textbf{median filter was used} before the normal regularization procedure. For each Keyline, its depth was reestimated as median of its immediate neighbors, removing single wrongly predicted depths. In normal scenarios, median filter does not visibly affect algorithm outcome.
+During tests some datasets exhibited salt-and-pepper noise in estimated depth maps; e.g.~single Keylines were predicted to be extremely distanced from their neighbors). Such noise had the tendency to be propagated by regularization, instead of being filtered. For such rare scenarios a \textbf{median filter was used} before the normal regularization procedure. For each Keyline, its depth was reestimated as median of its immediate neighbors, removing single wrongly predicted depths. In normal scenarios, median filter does not visibly affect algorithm outcome.
 
 \subsection{Depth reestimation}
 
@@ -688,10 +688,9 @@ Along with data from KITTI and TUM datasets, some tests on generated data were p
 Rendering a full 3D sequence using e.g. a game engine was also considered, but due to antialiasing, too simple lighting techniques, texturing simplifications (bump-mapping) and lack of raytracing, obtained results could be unreliable. Therefore instead popular datasets with well-defined ground truth data were chosen.
 
 
-\subsection{Post-processing trajectory fitting}
+\subsection{Trajectory fitting}
 
+In order to assess algorithm accuracy as it processes new frames, estimated camera trajectory is systematically compared with ground truth data after each frame. An optimal isotropic scaling and Euclidean transformation between two trajectories is searched for. Obtained parameters do not influence future algorithm iterations, as in real world applications such data is simply unavailable. They are calculated only for visualization purposes.
 
-todo \cite{arun1987least}
-
-@kwant: tbd
+In \cite{arun1987least} it is described how to find an optimal (in the least square sense) translation and rotation between two trajectories 3D using SVD. Scaling factor can determined using \texttt{fminsearch}, a~black-box minimization routine available in the GNU Octave environment. Mean residual distance between optimized trajectories is the final accuracy measure that is used in Chapter~\ref{cha:results}.
 
