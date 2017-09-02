@@ -230,8 +230,8 @@ Neighborhood of pixels that have passed the first test is checked for ``sign bal
 Then DoG values are approximated by a plane using linear regression -- (\ref{eq:regress}) is solved for~$\theta$. Pseudo-inverse of $\tmmathbf{A}$, needed to solve it, has to be computed only once for the whole algorithm. Zero-crossing of the plane can be determined algebraically, resulting in (\ref{eq:zerocross}). This has been visualized in Fig.~\ref{fig:zeroc}. These closed-form formulas are the main reason for DoG not being computationally demanding, as curve-fitting approaches are usually iterative.
 
 \begin{figure}[ht]
-	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 0.5cm 1.0cm 0.5cm},clip]{img/figures/zeroc2.png}
-	\caption{ Zero-crossing search. DoG values have been depicted with a mesh. Two planes are present: approximation of the DoG and the $z=0$ plane }
+	\centering\includegraphics[width=0.75\linewidth]{img/figures/zeroc2.png}
+	\caption{ Zero-crossing search. Local approximation of DoG values has been depicted with a colored plane. It intersects the $z=0$ plane, creating a red line. Blue line also lies on the $z=0$ plane; it passes through the origin (cyan point) and is perpendicular to red line. Intersection these two lines (black point) is the zero crossing }
 	\label{fig:zeroc}
 \end{figure}
 
