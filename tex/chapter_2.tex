@@ -340,6 +340,7 @@ Their main disadvantage is their complexity, especially in case of more robust o
 
 
 \subsection{Keyline joining}
+\label{sec:joining}
 
 After obtaining individual Keylines, they are joined together to form connected edges.
 For each Keyline, its neighbors are searched among 3 out of 8 bordering pixels. Search is performed in direction perpendicular to $\vec{g}$, an example is depicted in Fig.~\ref{fig:edgejoin}.
@@ -554,7 +555,7 @@ For obtained information to be useful in the next iteration of the algorithm, it
 	\item index of matching Keyline from the previous frame.
 \end{itemize}
 
-At this stage initial matching has already been performed during minimization. As it was noted in Section~\ref{sec:rebvo_outline}, it is quite coarse, however. In addition, there is another reason for such elaborate match searching scheme. After system has been initialized (i.e. after $k_{thresh}$ frames have been processed), history test will become active in the minimizer. Only Keylines already having some matching history will have possibility of being matched again and propagated further. On the other hand, ``new`` Keylines with no prior history will not have opportunity of gaining it, because they will be always skipped in the very first minimizer test and not matched.
+At this stage initial matching has already been performed during minimization. As it was noted in Section~\ref{sec:rebvo_outline}, it is quite coarse, however. In addition, there is another reason for such elaborate match searching scheme. After system has been initialized (i.e. after $k_{thresh}$ frames have been processed), history test will become active in the minimizer. As far as the minimizer is concerned, only Keylines already having some matching history will have possibility of being matched again and propagated further. On the other hand, ``new`` Keylines with no prior history will not have opportunity of gaining it, because they will be always skipped in the very first minimizer test and not matched. This is why additional matching is needed.
 
 Finally, the mapping step contains depth information inter-frame processing procedures (regularization, Kalman filtering, scale correction).
 
@@ -624,7 +625,7 @@ This provides additional outlier rejection scheme -- any match that is not compa
 		\subcaption{\label{fig:outlier_f}}
 	\end{subfigure}
 	
-	\caption{\label{fig:outliers} Outlier rejection example on the TUM \cite{tum} dataset. Keyline color on \protect\subref{fig:outlier_a}, \protect\subref{fig:outlier_b} and \protect\subref{fig:outlier_c} denotes Keyline history $k$ (the warmer, the greater)}
+	\caption{\label{fig:outliers} Outlier rejection example on the TUM \cite{tum} dataset. Keyline color on \protect\subref{fig:outlier_a}, \protect\subref{fig:outlier_c} and \protect\subref{fig:outlier_e} denotes Keyline history $k$ (the warmer, the greater)}
 \end{figure}
 
 After forward matching and directed matching, the number of valid matches must exceed previously defined threshold. Threshold value of 500 Keylines has proved to be a good figure during tests, regardless of image scale.  If threshold is not met, algorithm resets, as there is not enough Keylines with established history to base future transformation calculations on. A valid matching results is depicted in Fig.~\ref{fig:match}.
@@ -637,31 +638,11 @@ After forward matching and directed matching, the number of valid matches must e
 
 \subsection{Regularization}
 
-% optional regularization, performed twice
-%
-% main assumption is that KLs neighboring on an edge ale located near each other in 3D, so their depth should be similiar
-%
+Regularization is based on the assumption that Keylines located near each other on the image, are also close to one another in 3D, meaning that their $\rho$ are similar. As edges of real-life objects are seldom jagged, difference in depth between adjoining Keylines can be smoothed out. This is done by taking a weighted mean of $\rho$ and $\sigma_{\rho}$ of directly joined Keylines (see Section~\ref{sec:joining}). Weights take into account $\sigma_{\rho}$ and a simple angle-based gradient similarity measure. To be regularized, a Keyline needs to have 2 neighbors (this means excluding ends of edges).
 
-todo
+However, the aforementioned assumption is not always true. This is why additional tests on neighboring pixels are needed. Firstly, depth of the neighbors must be comparable, taking into account their uncertainties. Then angle between gradients of neighboring Keylines is checked for similarity. These tests are usually passed; most of rejected Keylines are corners.
 
-@kwant: tbd
-
-% todo: median filter; regularize before and after Kalman
-
-%As edges of real-life objects are seldom very jagged, difference in depth between adjoining Keylines needs to be smoothed out, assuming that neighboring pixels belong to objects located near each other in three-dimensional space. This is done by taking weighted mean of rho and s\_rho of directly joined Keylines. Two iterations of regularization are performed. To be regularized, a Keyline needs to have two neighbors (this means excluding ends of edges).
-
-% for each KL:
-%
-%  check if 2 neighbors pass test:
-%
-%   if depths outweight uncertainties (probabilistic uncertainty)
-%
-%   if angle between gradients is below threshold
-%
-%  if tests are passed, rho and s\_rho are smoothened taking weighted mean of its value and its neighbors
-
-% image: show that assumption isn't ALWAYS true
-% Having in mind previous assumption, that might not always be the case. Objects might lie on the scene in such a way, that their edges as seen by the camera might intersect and form a~continuous curve. This is why additional test on neighboring pixels are needed. First, they need to lie on approximately the same distance from the camera. Because depth is estimated, uncertainty on said estimation is calculated in /gdzie to bylo?/ step. If difference between estimated depth for two neighbors outweights sum of uncertainties, it is assumed that they belong to different objects. This test is purely probabilistic. Second, angle between gradients of neighboring Keylines is checked. Again, if its greater than previously defined threshold, regularization is not performed.
+During tests some datasets exhibited salt-and-pepper noise in estimated depth maps; e.g.~single Keylines were predicted to be extremely distance from their neighbors). Such noise had the tendency it be propagated by regularization, instead of being filtered. For such rare scenarios a \textbf{median filter was used} before the normal regularization procedure. For each Keyline, its depth was reestimated as median of its immediate neighbors, removing single wrongly predicted depths. In normal scenarios, median filter does not visibly affect algorithm outcome.
 
 \subsection{Depth reestimation}
 
