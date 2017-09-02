@@ -89,7 +89,7 @@ Most implementations of visual odometry systems use two cameras spaced by a cons
 	\label{fig:stereo}
 \end{figure}
 
-(\ref{eq:fund}) describes correspondence between matched points with the fundamental matrix. At least 7 matching feature points (points with well defined surroundings) are needed to obtain $\tmmathbf{F}$, but usually much more are used so as to mitigate noise \cite{zhang1998determining}. When cameras are calibrated, essential matrix $\tmmathbf{E}$ can be calculated with (\ref{eq:ess}). Essential matrix can be then decomposed into rotation and translation between 3D points registered by both cameras using Singular Value Decomposition (1 solution out of 4 has to be chosen). $\tmmathbf{E}$ has scale ambiguity, which can be resolved using baseline in (\ref{eq:disparity}) \cite{improving}. It is worth mentioning that baseline can not be determined using autocalibration (calibration without using known a priori objects) alone - an object of known dimensions must be measured on images.
+Correspondence between matched points is described by (\ref{eq:fund}) with the fundamental matrix. At least 7 matching feature points (points with well defined surroundings) are needed to obtain~$\tmmathbf{F}$, but usually much more are used so as to mitigate noise \cite{zhang1998determining}. When cameras are calibrated, essential matrix $\tmmathbf{E}$ can be calculated with (\ref{eq:ess}). Essential matrix can be then decomposed into rotation and translation between 3D points registered by both cameras using Singular Value Decomposition (1 solution out of 4 has to be chosen). $\tmmathbf{E}$ has scale ambiguity, which can be resolved using baseline in (\ref{eq:disparity}) \cite{improving}. It is worth mentioning that baseline can not be determined using autocalibration (calibration without using known a priori objects) alone - an object of known dimensions must be measured on images.
 
 \begin{equation}
 p_{2}^{T}\tmmathbf{F}p_{1}=0
@@ -102,7 +102,7 @@ where:
 \end{eqwhere}
 
 \begin{equation}
-\tmmathbf{K}_{2}^{T}\tmmathbf{F}\tmmathbf{K}_{1}=\tmmathbf{E}=[t]_{s}R
+\tmmathbf{K}_{2}^{T}\tmmathbf{F}\tmmathbf{K}_{1}=\tmmathbf{E}=[t]_{s}\tmmathbf{R}
 \label{eq:ess}
 \end{equation}
 where:
@@ -163,31 +163,29 @@ In SLAM systems loops in trajectories can be used as means of correcting positio
 
 ``\textit{The term VO was introduced by Nister in his landmark paper \cite{visual_odometry}, and he provided the first real-time and long-run VO implementation with a robust outlier rejection scheme, which is still widely used up to now}`` \cite{a_stereo_visual}. Solution proposed by Nister supported both mono and stereo vision, and used additional data from IMU. Real-time operation was accomplished on then-popular 1~GHz Pentium III processor.
 
-Many papers focus alone on the problem of detection of independently moving objects (visual odometry outliers). In \cite{fast_monocular} such objects are identified using particle filter and probabilistic approach. \cite{costeira1998multibody} focuses more on a related, but more difficult task -- estimation of individual objects velocities. 
+Many papers focus alone on the problem of detection of independently moving objects (visual odometry outliers). In \cite{fast_monocular} such objects are identified using particle filter and probabilistic approach. More focus is given in \cite{costeira1998multibody} to a related, but more difficult task -- estimation of individual objects velocities. 
 
 In \cite{vehicle_egomotion} a neural network-based classifier is utilized for separating the road from rest of objects registered. Then optical flow of the road is calculated. This flow has a special mathematical structure \cite{recovery_of_egomotion}, making it easier to infer the camera egomotion from it.
 
-Well known and efficient feature detector is described in \cite{shi1994good}. \cite{spatiotemporal} refers to it, by introducing features that are especially good from the SLAM point of view. Classic approaches monitor only temporal properties (i.e. how they appear in a single image). However, spatial properties (i.e.~how features appear in the 3D space) should be taken into account in systems that preserve feature history.
+Well known and efficient feature detector is described in \cite{shi1994good}. Features that are especially good from the SLAM point of view are introduced in \cite{spatiotemporal}. Classic approaches monitor only temporal properties (i.e. how they appear in a single image). However, spatial properties (i.e.~how features appear in the 3D space) should be taken into account in systems that preserve feature history.
 
-\cite{a_stereo_visual} contains a comparison of most popular feature detectors. Moreover, a~consistency check step for feature matching is proposed, ensuring that features are best matched not only between frames $n$ and $n+1$, but also in the reverse direction.
+A comparison of the most popular feature detectors is presented in \cite{a_stereo_visual}. Moreover, a~consistency check step for feature matching is proposed, ensuring that features are best matched not only between frames $n$ and $n+1$, but also in the reverse direction.
 
-In \cite{robust_scale} a novel approach is monocular systems scale ambiguity proposed: by assuming a~known, constant camera height above ground plane, global scale can be estimated. This step is performed between all consecutive frames, independently from main visual odometry algorithm.
+In \cite{robust_scale} a novel approach to monocular systems scale ambiguity proposed: by assuming a~known, constant camera height above ground plane, global scale can be estimated. This step is performed between all consecutive frames, independently from main visual odometry algorithm.
 
-Similarly in \cite{a_kalman}, scale is estimated on the basis of known camera height and pitch angle (downward tilt). Moreover, this is a full system that estimates camera velocity using optical flow. As long as speed does not exceed a couple of m/s, only 20\% coverage between consecutive frames is needed.
+Similarly in \cite{a_kalman}, scale is estimated on the basis of known camera height and pitch angle (downward tilt). Moreover, this is a full system that estimates camera velocity using optical flow. As long as speed does not exceed a couple of meters per second, only 20\% coverage between consecutive frames is needed.
 
 
 Other approach to scale estimation is presented in \cite{xiao2015novel}, where a ground-extraction scheme and modified Kalman filter is used.
 
-The celebrated MonoSLAM \cite{monoslam} system has introduced a shift to the paradigm of visual odometry -- ``\textit{from mobile robotics to the 'pure vision' domain of a single uncontrolled camera}``. Instead of full map, only 100 best feature points are remembered. They are used for loop closure that remedies the position drift. MonoSLAM achieves real-time on a low-end 1.6~GHz Pentium~M processor.
+The celebrated MonoSLAM method is described in \cite{monoslam}. It has introduced a shift to the paradigm of visual odometry -- ``\textit{from mobile robotics to the 'pure vision' domain of a single uncontrolled camera}``. Instead of full map, only 100 best feature points are remembered. They are used for loop closure, that remedies the position drift. MonoSLAM achieves real-time on a~low-end 1.6~GHz Pentium~M processor.
 
 
 Authors of \cite{mouragnon2006real} aim to fully reconstruct the 3D scene by using bundle adjustment. Method is proved to be both fast and robust.
 
-\cite{gui2015robust} presents an unusual approach to visual inertial odometry -- instead of feature points, mutual information between visual and intertial input is used to determine camera motion.
+Quite different approach to visual inertial odometry is presented in \cite{gui2015robust} -- instead of feature points, mutual information between visual and intertial input is used to determine camera motion.
 
-A dense method is proposed in \cite{robust_visual_odometry_estimation}. It operates not on features, but on all of image pixels, making it somewhat more robust on the one hand, but inadequate for mobile devices on the other.
-
-A semi-dense method presented in \cite{semi_dense} uses probabilistic inverse depth maps. Real-time is achieved, but only on a quad-core i7~processor.
+A dense method is proposed in \cite{robust_visual_odometry_estimation}. It operates not on features, but on all of image pixels, making it somewhat more robust on the one hand, but inadequate for mobile devices on the other. A semi-dense method presented in \cite{semi_dense} uses probabilistic inverse depth maps. Real-time is achieved, but only on a quad-core i7~processor.
 
 
 % -------------
@@ -197,12 +195,12 @@ A semi-dense method presented in \cite{semi_dense} uses probabilistic inverse de
 
 In this section the \textit{Rebvo} algorithm description is briefly paraphrased for the needs of this thesis.
 
-\cite{jose2015realtime} presents new-fashioned approach to monocular visual odometry. The algorithm is reported to be capable of running in real time on an ARM processor. This sets it apart from numerous other state-of-the-art methods whose authors claim to achieve real time, but do not stress out that it is only possible on high-end personal computers.
+Tarrio and Pedre present new-fashioned approach to monocular visual odometry in \cite{jose2015realtime}. The algorithm is reported to be capable of running in real time on an ARM processor. This sets it apart from numerous other state-of-the-art methods whose authors claim to achieve real time, but do not stress out that it is only possible on high-end PCs (Personal Computers).
 
-It is similar to semi-dense methods, that achieve SLAM using only selected features (in this case -- edges). It is not a~full SLAM system, so only two consecutive frames are stored at each time and no global map is created. Information from previous frames is retained as estimated depth. Features are matched on pixel basis. This concept is compliant with argument made by Harris: ``\textit{Because of ill-conditioning, the use of parametrized curves (eg. circular arcs) cannot be expected to provide the solution, especially with real imagery.}`` \cite{harris}. Similarly to many other state-of-the-art systems, depth information is stored as inverse. It is worth mentioning, however, that inverse depth is most useful in full SLAM systems, where the ``\textit{ray from the first camera position from which the feature was observed}`` \cite{civera2008inverse} can be stored along with that feature.
+It is similar to semi-dense methods, that achieve SLAM using only selected features (in this case -- edges). It is not a~full SLAM system, so only two consecutive frames are stored at each time and no global map is created. Information from previous frames is retained in the form of estimated depth. Features are matched on pixel basis. This concept is compliant with argument made by Harris: ``\textit{Because of ill-conditioning, the use of parametrized curves (e.g.~circular arcs) cannot be expected to provide the solution, especially with real imagery.}``~\cite{harris}. Similarly to many other state-of-the-art systems, depth information is stored as inverse. It is worth mentioning, however, that inverse depth is most useful in full SLAM systems, where the ``\textit{ray from the first camera position from which the feature was observed}`` \cite{civera2008inverse} can be stored along with that feature.
 
 
-Algorithm consists of three main steps, similar to other visual odometry systems. First of all, \textbf{edge extraction} is performed, preferably with subpixel precision. Moreover, edge gradient is calculated for each pixel. Neighboring pixels are joined into connected\footnote{Each edge has no gaps between neighboring pixels} edges, using gradient information.
+Algorithm consists of three main steps, similar to other visual odometry systems. First of all, \textbf{edge extraction} is performed, preferably with subpixel precision. Moreover, edge gradient is calculated for each pixel. Neighboring pixels are joined into connected\footnote{\textit{Connected} in the sense that each edge has no gaps between neighboring pixels.} edges, using gradient information.
 
 Then \textbf{tracking} is performed. Edges from previous frames are first projected into 3D space using their already estimated depths. Then an iterative procedure (Levenberg-Marquardt algorithm) aims to find such 3D transformation that establishes consensus between frames (i.e.~minimizes the geometric re-projection error). Projected points are rotated and transformed in 3D, then projected back onto image plane. Minimized cost function is essentially the sum of squared distances between back-projected edges from the previous frame and closest edges from the current frame. Actual cost function also takes into consideration gradient correspondence criteria. Obtained pairs of edge pixels do not constitute an exhaustive list of matches, considering that:
 \begin{itemize}
@@ -216,7 +214,7 @@ Then \textbf{tracking} is performed. Edges from previous frames are first projec
  
 Final step -- \textbf{mapping} -- associates matching edges between frames using obtained optimal 3D transformation. Due to aforementioned problems, after tracking a matching routine is needed for each edge pixel. Because depth of previous frame edges is estimated with some uncertainty, camera motion establishes a line segment defining the area where possible matches will be searched for. Once such candidate has been found, it is tested for gradient correspondence and, most importantly, for model consistency~\==~deviation of position on the segment obtained from linear transformation equation can not exceed depth uncertainty. After matching, depth information is propagated for matched edge pixels from previous frame to the current, and is optionally regularized. Previous depth has to be reestimated ($OZ$ axis velocity has to be taken into account). This is achieved using Extended Kalman Filter. Scale drift, inherent problem of pure visual odometry, can be then mitigated to some limited degree by diving estimated depths by frame shrinking factor.
 
-Accuracy of results obtained in \cite{jose2015realtime} are comparable with other state-of-the-art algorithms \cite{yang2017direct}.
+Accuracy of results obtained in \cite{jose2015realtime} are comparable with other state-of-the-art algorithms~\cite{yang2017direct}.
 
 % ---
 

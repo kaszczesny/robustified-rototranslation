@@ -1,14 +1,14 @@
 \chapter{Analysis and improvements of \textit{Rebvo} algorithm}
 \label{cha:intro2}
 
-This chapter contains thorough analysis of proposed algorithm. The algorithm is carefully explained, step by step, using various examples. Symbols used through the chapter are explained in Section~\ref{sec:struct}. Much attention is paid to edge detector, because it also had to be implemented, as available ready-made edge detection methods did not meet algorithm requirements. Figures used throughout the chapter were generated using input images from TUM \cite{tum} and KITTI~\cite{kitti} datasets. Chapter is concluded with remark on trajectory postprocessing, used to estimate algorithm accuracy.
+This chapter contains thorough analysis of proposed algorithm. The algorithm is carefully explained, step by step, using various examples. Symbols used through the chapter are explained in Section~\ref{sec:struct}. Short overview of all substeps is given in Section~\ref{sec:alg}. Much attention is paid to edge detector, because it had to be implemented along with the main algorithm, as available ready-made edge detection methods did not meet algorithm requirements. Figures used throughout the chapter were generated using input images from TUM \cite{tum} and KITTI~\cite{kitti} datasets. Chapter is concluded with remark on trajectory postprocessing, used to estimate algorithm accuracy.
 
-Note: considerations, improvements and modifications of the original algorithm are \textbf{emphasized}.
+Note: considerations, modifications and improvements of the original algorithm are \textbf{emphasized}. The have also been collected in Chapter~\ref{cha:conclusion}.
 
 \section{Notation (Keyline structure) and {\tt main} loop}
 \label{sec:struct}
 
-Pixels that contain subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}. When $(n+1)$-th frame of video input is being processed, only $n$-th and $(n+1)$-th Keyline arrays are available; $(n-1)$-th is discarded, as it is no longer needed. This is presented in Fig.~\ref{fig:flowchart_main}. Fields of $n$-th Keyline array will be denoted with subscript $_{p}$ (for \textit{previous}) and $_{t}$ (for \textit{transformed}). Subscripts $_{c}$ (\textit{current}) and $_{r}$ (\textit{rotated}) will be associated with $(n+1)$-th frame.
+Pixels that contain subpixel edge positions are called Keylines and, after edge extraction, are stored as an array of structures defined in Table \ref{tab:keyline}. When $(n+1)$-th frame of video input is being processed, only $n$-th and $(n+1)$-th Keyline arrays are available; $(n-1)$-th is discarded, as it is no longer needed. This is presented in Fig.~\ref{fig:flowchart_main}. Fields of $n$-th Keyline array will be denoted with subscript $_{p}$ (for \textit{previous}) and $_{t}$ (for \textit{transformed}). Subscripts $_{c}$ (\textit{current}) and $_{r}$ (\textit{rotated}) will be associated with the $(n+1)$-th frame.
 
 \begin{figure}[hp]
 	\begin{footnotesize}
@@ -88,9 +88,23 @@ Pixels that contain subpixel edge positions are called Keylines and, after edge 
 	\end{threeparttable}
 \end{table}
 
+\newpage
+
+\section{Algorithm outline}
+\label{sec:alg}
+
+Explanation of the algorthim given in Section~\ref{sec:rebvo_outline} is valid not only for \cite{jose2015realtime}, but also for the discussed implementation. Briefly summarizing:
+\begin{enumerate}
+	\itemsep0em 
+	\item Edge extraction~\==~Section~\ref{sec:edge_extraction}. A number of tests is performed to decide whether a pixel contains an edge~\==~Section~\ref{sec:dog_tests}.
+	\item Edge tracking (minimization)~\==~Section~\ref{sec:edge_tracking}. Keylines from previous frame already had their depths estimated in previous iteration of the algorithm. By using pixel positions and depths, Keylines are projected from image plane to 3D space, where they transformed in order to ``keep up`` with camera movement, and back-projected to image plane of the current frame~\==~Section~\ref{sec:warp}. They should coincide with new current frame Keylines that belong to same objects in the scene. Minimization is performed until this 3D transformation is optimal~\==~Section~\ref{sec:energyminim}.
+	\item Due to reasons mentioned in Section~\ref{sec:mapping}, in order to find matches between previous and current Keylines, additional matching has to be executed~\==~Section~\ref{sec:directed}. Depth information is propagated from previous frame to current, smoothed out (Section~\ref{sec:regul}) and updated to take into account the motion that camera has underwent (Section~\ref{sec:kalman}).
+\end{enumerate}
+
 % ---
 
 \section{Edge extraction}
+\label{sec:edge_extraction}
 
 Primal step of algorithm is subpixel edge extraction. Keyline structures are populated using extracted data (edge position and edge gradient). Keylines that are estimated to lie on same edge are joined.
 
@@ -119,12 +133,13 @@ Before performing any edge detection technique, one critical issue has to be add
 In case of DoG, these \textbf{artificial edges need to be removed} before Gaussian blurring~\==~otherwise they would spread out, making it tricky to reject them later. In tested datasets, artificial borders' thickness did not exceed 1~pixel, so simply 1-pixel wide frame of outermost pixels was always discarded. In general case, \textbf{width of the frame can be figured out from distortion model}, instead of being set manually. However, for highly distorted images, a rectangular frame would also discard many valid pixels -- either in corners (barrel distortions), or near middle of borders (pincushion distortions).
 
 \subsection{Difference of Gaussians strength tests}
+\label{sec:dog_tests}
 
-After necessary preprocessing, edge detection can be started. Generally edge detection works by finding positions in image where pixel intensity changes most rapidly. Basic idea of DoG is to approximate image second derivative (the Laplacian) \cite{szeliski} \cite{jain1995machine}. The zero-crossing of Laplacian corresponds to such positions. Example based on real data, reduced to one dimension for clarity, is presented on Fig.~\ref{fig:slice}. Other approaches to edge detection involve curve fitting \cite{fabijanska} \cite{devernay1995non} \cite{wei2010two}.
+After necessary preprocessing, edge detection can be started. Generally edge detection works by finding positions in image where pixel intensity changes most rapidly. Basic idea of DoG is to approximate image second derivative (the Laplacian) \cite{szeliski} \cite{jain1995machine}. The zero-crossing of Laplacian corresponds to such positions. Example based on real data, reduced to one dimension for clarity, is presented on Fig.~\ref{fig:slice}. Other approaches to edge detection involve curve fitting~\cite{fabijanska}~\cite{devernay1995non}~\cite{wei2010two}.
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth, trim={1.5cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/subpixelslice.png}
-	\caption{ DoG zero-crossing subpixel edge detection. Discussed method was applied to an image, then one row of pixels containing very apparent edge was extracted. Red $\times$ denotes calculated subpixel edge position }
+	\caption{ DoG zero-crossing subpixel edge detection. Discussed method was applied to an image, then one row of pixels containing very a apparent edge was extracted. Red cross denotes calculated subpixel edge position }
 	\label{fig:slice}
 \end{figure}
 
@@ -369,6 +384,7 @@ Initially \textbf{more edge joining strategies had been considered}: morphologic
 %--
 
 \section{Edge tracking}
+\label{sec:edge_tracking}
 
 Goal of edge tracking is to find a 3D transformation (rototranslation -- translation and rotation) that best describes transition between two consecutive frames. Previous frame Keylines are projected to 3D space, where they are rototranslated; then resulting points are back-projected to image plane (transformations are elaborated upon in Section~\ref{sec:warp}). Reprojected Keylines are matched against Keylines of the next frame -- see Sections~\ref{sec:aux}~and~\ref{sec:minim_match}. Minimization of the residual is performed using Levenberg-Marquardt algorithm. Similarly to~\cite{jose2015realtime}, implementation is based on \cite{madsen2004methods}.
 
@@ -523,7 +539,7 @@ This was tested in GNU Octave, using OpenCV \cite{opencv} linear algebra routine
 \end{table}
 
 
-After optimal transformation parameters have been found, uncertainty of the result is estimated as covariance matrix in form $\left( \tmmathbf{J}^T \tmmathbf{J} \right) ^ {-1}$. \textbf{If the matrix being converted is ill-conditioned, then it is assumed that minimization has failed.} For example, this can happen if no matches at all were found. Then all residuals will be equal and $\zeta$ will be completely flat locally.
+After optimal transformation parameters have been found, uncertainty of the result is estimated as covariance matrix in form $\left( \tmmathbf{J}^T \tmmathbf{J} \right) ^ {-1}$. \textbf{If the matrix being converted is ill-conditioned, then it is assumed that minimization has failed.} For example, this can happen if no matches at all were found. Then all residuals will be equal and $\zeta$ will be completely flat locally. Usually minimization fails only if number of input Keylines is too low.
 
 Moreover, after last minimization iteration, the $m_{pf}$ field of previous Keylines is populated. For every Keyline that was successfully matched to a current Keyline, reference to this current Keyline is saved in the said field.
 
@@ -546,6 +562,7 @@ During some tests, the prior rototranslation vector for the first frame in seque
 %--
 
 \section{Mapping}
+\label{sec:mapping}
 
 For obtained information to be useful in the next iteration of the algorithm, it needs to be preserved. Since this is not a full SLAM system, data needs to be updated and passed on to next array of Keylines. This is achieved by the mapping step: Keylines from previous iteration are matched to Keylines that are currently being processed. Data that is passed on between matched Keylines contains:
 
@@ -565,6 +582,7 @@ Finally, the mapping step contains depth information inter-frame processing proc
 Since calculated transformation between the two frames is supposed to be the optimal one, after applying it to 3D positions of previous Keylines and casting them into the image plane, their expected positions on the next frame will be obtained. This was already done at the minimization step; said Keylines were then paired with their corresponding match using property $m_{pf}$ (see conclusion of Section~\ref{sec:energyminim}). Forward matching simply uses this information and copies appropriate field values from previous Keylines to their new forward matched counterparts. If later a better match is found, already copied data will be simply overwritten. \textit{Forward} refers to the fact that minimizer creates initial matches from previous frame to current.
 
 \subsection{Directed matching}
+\label{sec:directed}
 
 
 Considering that there might have been some outliers that affected the quality calculated transformation and that potentially valid matches with no history need a chance to pick it up, it is essential to extend the list of matches to include Keylines that have not been back-projected perfectly.
@@ -637,6 +655,7 @@ After forward matching and directed matching, the number of valid matches must e
 \end{figure}
 
 \subsection{Regularization}
+\label{sec:regul}
 
 Regularization is based on the assumption that Keylines located near each other on the image are also close to one another in 3D, meaning that their $\rho$ are similar. As edges of real-life objects are seldom jagged, difference in depth between adjoining Keylines can be smoothed out. This is done by taking a weighted mean of $\rho$ and $\sigma_{\rho}$ of directly joined Keylines (see Section~\ref{sec:joining}). Weights take into account $\sigma_{\rho}$ and a simple angle-based gradient similarity measure. To be regularized, a Keyline needs to have 2 neighbors (this means excluding ends of edges).
 
@@ -645,6 +664,7 @@ However, the aforementioned assumption is not always true. This is why additiona
 During tests some datasets exhibited salt-and-pepper noise in estimated depth maps; e.g.~single Keylines were predicted to be extremely distanced from their neighbors). Such noise had the tendency to be propagated by regularization, instead of being filtered. For such rare scenarios a \textbf{median filter was used} before the normal regularization procedure. For each Keyline, its depth was reestimated as median of its immediate neighbors, removing single wrongly predicted depths. In normal scenarios, median filter does not visibly affect algorithm outcome.
 
 \subsection{Depth reestimation}
+\label{sec:kalman}
 
  todo; @kwant: only missing and not finished part of Chapter 2 is this section
  % kalman fiter
