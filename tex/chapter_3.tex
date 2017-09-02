@@ -27,7 +27,7 @@ A few system parameters had to be adjusted between TUM and KITTI datasets, but t
 
 \section{Trajectory comparison}
 
-Presented results consists mainly from the following sequences. Selected values have been collected in Table~\ref{tab:drift} - first two used only for visualization as discussed in Section~\ref{sec:fitting}, last one obtained from evaluation script $evaluate\_ate$ available in TUM evaluation benchmark. It should be noted that these numbers are scores for only parts of said sequences.
+Presented results consists mainly from the following sequences. Selected values have been collected in Table~\ref{tab:drift} - first two were used only for visualization as discussed in Section~\ref{sec:fitting}, last one was obtained from evaluation script $evaluate\_ate$ available in TUM evaluation benchmark \cite{TUM}. It should be noted that these numbers are scores for only parts of said sequences.
 \begin{itemize}
 	\item TUM fr1\_xyz - only translatory motions are present here, as stated by creators of this dataset "\textit{it's mainly for debugging purposes}",
 	\item TUM fr2\_desk - slow sweep around an office desk,
@@ -45,17 +45,22 @@ Presented results consists mainly from the following sequences. Selected values 
 		\caption{Algorithm results for selected parts of sequences}
 		\label{tab:drift}
 		
-		\begin{tabularx}{0.9\textwidth}{C{0.32} C{0.2} C{0.15} C{0.33}}
+		\begin{tabularx}{0.9\textwidth}{C{0.5} C{0.2} C{0.15} C{0.15}}
 			\toprule
-			\thead{Sequence} & \thead{Average drift [$\frac{m}{s}$]} & \thead{Scale} & \thead{Absolute trajectory error [${m}$]}\\
+			\thead{Sequence} & \thead{Average drift [$\frac{m}{s}$]} & \thead{Scale} & \thead{ATE\tnote{a} [${m}$]}\\
 			\midrule
-			TUM fr3\_long\_office\_household & $3.6$ & 1.6 &  0.302054 \\
-			TUM fr3\_teddy (long subsequence) & $1.8$ & 1.1 & 0.287423 \\
-			TUM fr3\_teddy (short subsequence) & $0.6$ & 1.5 & 0.175470 \\
-			TUM fr2\_desk\_with\_person & $0.4$ & 1.05 & 0.133835 \\
-			TUM fr2\_desk\_with\_person & $0.1$ & 1.69 & 0.066621 \\
+			TUM fr3\_long\_office\_household & $3.6$ & 1.6 &  0.302 \\
+			TUM fr3\_teddy (long subsequence) & $1.8$ & 1.1 & 0.287 \\
+			TUM fr3\_teddy (short subsequence) & $0.6$ & 1.5 & 0.175 \\
+			TUM fr2\_desk\_with\_person & $0.4$ & 1.05 & 0.133 \\
+			TUM fr2\_desk\_with\_person & $0.1$ & 1.69 & 0.066 \\
 			\bottomrule
 		\end{tabularx}
+		
+		\begin{tablenotes}
+			\footnotesize
+			\item[a] Absolute Trajectory Error
+		\end{tablenotes}
 		
 	\end{threeparttable}
 \end{table}
