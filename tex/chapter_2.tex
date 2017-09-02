@@ -458,7 +458,7 @@ During each iteration of minimization, reprojected old Keylines and new Keylines
 
 Each minimization iteration executes following steps:
 \begin{itemize}
-	\item Using previously estimated Jacobian matrix $J$ and other information from previous iteration, propose new parameter vector in the 6-dimensional parameter space $\left[ \vec{v},\ \ \vec{\omega} \right]$.
+	\item Using previously estimated Jacobian matrix $\tmmathbf{J}$ and other information from previous iteration, propose new parameter vector in the 6-dimensional parameter space $\left[ \vec{v},\ \ \vec{\omega} \right]$.
 	\item For each Keyline in previous frame:
 	\begin{itemize}
 		\item Perform reprojection: $h_{t} = \left( \gamma^{-1} \circ \psi \circ \gamma \right) \left( h_p, \rho_{p} \right)$.
@@ -522,7 +522,7 @@ This was tested in GNU Octave, using OpenCV \cite{opencv} linear algebra routine
 \end{table}
 
 
-After optimal transformation parameters have been found, uncertainty of the result is estimated as covariance matrix in form $\left( J^T J \right) ^ {-1}$. \textbf{If $J^T J$ is ill-conditioned, then it is assumed that minimization has failed.} For example, this can happen if no matches at all were found. Then all residuals will be equal and $\zeta$ will be completely flat locally.
+After optimal transformation parameters have been found, uncertainty of the result is estimated as covariance matrix in form $\left( \tmmathbf{J}^T \tmmathbf{J} \right) ^ {-1}$. \textbf{If the matrix being converted is ill-conditioned, then it is assumed that minimization has failed.} For example, this can happen if no matches at all were found. Then all residuals will be equal and $\zeta$ will be completely flat locally.
 
 Moreover, after last minimization iteration, the $m_{pf}$ field of previous Keylines is populated. For every Keyline that was successfully matched to a current Keyline, reference to this current Keyline is saved in the said field.
 
