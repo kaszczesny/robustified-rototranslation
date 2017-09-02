@@ -369,7 +369,7 @@ Initially \textbf{more edge joining strategies had been considered}: morphologic
 
 \section{Edge tracking}
 
-Goal of edge tracking is to find a 3D transformation (translation and rotation) that best describes transition between two consecutive frames. Previous frame Keylines are projected to 3D space, where they are rototranslated (rotated and translated); then resulting points are back-projected to image plane (transformations are elaborated upon in Section~\ref{sec:warp}). Reprojected Keylines are matched against Keylines of the next frame -- see Sections~\ref{sec:aux}~and~\ref{sec:minim_match}. Minimization of the residual is performed using Levenberg-Marquardt algorithm. Similarly to~\cite{jose2015realtime}, implementation is based on \cite{madsen2004methods}.
+Goal of edge tracking is to find a 3D transformation (rototranslation -- translation and rotation) that best describes transition between two consecutive frames. Previous frame Keylines are projected to 3D space, where they are rototranslated; then resulting points are back-projected to image plane (transformations are elaborated upon in Section~\ref{sec:warp}). Reprojected Keylines are matched against Keylines of the next frame -- see Sections~\ref{sec:aux}~and~\ref{sec:minim_match}. Minimization of the residual is performed using Levenberg-Marquardt algorithm. Similarly to~\cite{jose2015realtime}, implementation is based on \cite{madsen2004methods}.
 
 \subsection{Warping function}
 \label{sec:warp}
@@ -430,7 +430,7 @@ Some gaps are unavoidable, however, because $\vec{g}$ is available only in place
 		\centering\includegraphics[width=1.0\linewidth, trim={1.5cm 1.5cm 1.5cm 1cm},clip]{img/aux1.png}
 		\subcaption{\label{fig:aux2}}
 	\end{subfigure}
-	\caption{\label{fig:aux}The auxiliary images created with different step sizes. Pixel color encodes distance to nearest Keyline (the redder, the closer). \protect\subref{fig:aux1} step $0.5$,
+	\caption{\label{fig:aux}The auxiliary images created with different step sizes. Pixel color encodes distance to nearest Keyline (the warmer, the closer). \protect\subref{fig:aux1} step $0.5$,
 		\protect\subref{fig:aux2}~step~$1$}
 \end{figure}
 
@@ -556,73 +556,84 @@ For obtained information to be useful in the next iteration of the algorithm, it
 
 At this stage initial matching has already been performed during minimization. As it was noted in Section~\ref{sec:rebvo_outline}, it is quite coarse, however. In addition, there is another reason for such elaborate match searching scheme. After system has been initialized (i.e. after $k_{thresh}$ frames have been processed), history test will become active in the minimizer. Only Keylines already having some matching history will have possibility of being matched again and propagated further. On the other hand, ``new`` Keylines with no prior history will not have opportunity of gaining it, because they will be always skipped in the very first minimizer test and not matched.
 
-Finally, the mapping step contains depth information inter-frame processing procedures.
+Finally, the mapping step contains depth information inter-frame processing procedures (regularization, Kalman filtering, scale correction).
 
 \subsection{Forward matching}
 
 
-Since calculated transformation between the two frames is supposed to be the optimal one, after applying it to 3D positions of previous Keylines and casting them into the image plane, their expected positions on the next frame will be obtained. This was already done at the minimization step; said Keylines were then paired with their corresponding match using property $m_pf$ (see conclusion of Section~\ref{sec:energyminim}). Forward matching simply uses this information and copies appropriate field values from previous Keylines to their new forward matched counterparts. If later a better match is found, already copied data will be simply overwritten. \textit{Forward} refers to the fact that minimizer creates initial matches from previous frame to current.
+Since calculated transformation between the two frames is supposed to be the optimal one, after applying it to 3D positions of previous Keylines and casting them into the image plane, their expected positions on the next frame will be obtained. This was already done at the minimization step; said Keylines were then paired with their corresponding match using property $m_{pf}$ (see conclusion of Section~\ref{sec:energyminim}). Forward matching simply uses this information and copies appropriate field values from previous Keylines to their new forward matched counterparts. If later a better match is found, already copied data will be simply overwritten. \textit{Forward} refers to the fact that minimizer creates initial matches from previous frame to current.
 
 \subsection{Directed matching}
+
+
+Considering that there might have been some outliers that affected the quality calculated transformation and that potentially valid matches with no history need a chance to pick it up, it is essential to extend the list of matches to include Keylines that have not been back-projected perfectly.
+
+So as to make finding candidates for matching easier, current Keyline array is reverse-rotated\footnote{Rotated using rotation opposite to rotation $\vec{\omega}$ that was obtained during minimization.} and casted onto the old edge map. This decreases the distance between corresponding points and reduces the problem to a pure translatory problem. Translation $\vec{v}$ calculated during minimization, along with the reverse-rotated $h_r$, defines for each current Keyline a line. Were $\rho_r$ known precisely, relationship between matching points would satisfy (\ref{eq:consistency_eq}). As it is not, (\ref{eq:consistency_eq}) defines a line.
+
+\begin{equation}
+h_p = h_r - \rho_{r} \left( fv_{r_{x,y}}-h_{r}v_{r_z} \right)
+\label{eq:consistency_eq}
+\end{equation}
+
+Because of assumption that $\rho_r > 0$, search line is reduced to a halfline. A possible match should lie on the halfline. In order to further constrain search area, maximum and minimum pixel displacements are estimated, leaving only a line segment (see Fig.~\ref{fig:directed_m}). Keylines that lie within it are possible candidates for matches. \textit{Directed} refers to probing along the direction of line segment.
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.8\linewidth, trim={1.5cm 1.5cm 1.5cm 1cm},clip]{img/searchmatch.png}
+	\caption{ Directed matching along halfline segent. Orange pixels denote~\==~current Keylines, rotated to previous frame rotation; cyan~\==~previous Keylines; dark red~\==~position of a current and a previous Keyline. Green and red arrows span over the line segment }
+	\label{fig:directed_m}
+\end{figure}
+
+Searching starts at a point that is estimated to be a most possible match. The procedure is performed checking pixels closer to segment ends, in an alternating manner. A segment of halfline If an inspected pixel a previous Keyline, it is considered a possible match, that still needs to be validated. Firstly, $\vec{g_p}$ and $\vec{g_r}$ are compared, analogously to the third keyline matching test of the minimizer (see Section~\ref{sec:minim_match}). Secondly, potential match needs to conform to the motion model, defined in (\ref{eq:consistency}).
+
+\begin{equation}
+\abs* {\frac{\norm*{h_p - h_r}}{\norm*{fv_{r_{x,y}}-h_{r}v_{r_z}} }-\rho_{r}} < \tau(\sigma_{\rho_{r}})
+\label{eq:consistency}
+\end{equation}
+where:
+\begin{eqwhere}[2cm]
+	\item[$\vec{v_r}$] translation vector, $\vec{v_r} = \left( \mathfrak{exp} \left ( \left[ \vec{\omega} \right ]_{s} \right ) \right) ^T \vec{v}$,
+	\item[$\tau$] uncertainty estimation function that takes into account $\sigma_{\rho_{r}}$.
+\end{eqwhere}
+
+This provides additional outlier rejection scheme -- any match that is not compatible with model is rejected. A Keyline that moves in 3D differently than rest of the scene most likely belongs to edge of an object that moves independently, as alluded in Section~\ref{sec:rebvo_outline}. This is particularly visible on TUM fr2\_desk\_with\_person dataset, where objects present in the scene were shuffled around. As it can be seen in Fig.~\ref{fig:outliers}, Keylines belonging to a moving person have their history repeatedly reset.
+
+\begin{figure}[hp]
+	\centering
+	\begin{subfigure}{0.45\textwidth}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/15_1985_.png}
+		\subcaption{\label{fig:outlier_a}}
+	\end{subfigure}
+	\begin{subfigure}{0.45\textwidth}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/1985.png}
+		\subcaption{\label{fig:outlier_b}}
+	\end{subfigure}
+	\begin{subfigure}{0.45\textwidth}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/15_2010_.png}
+		\subcaption{\label{fig:outlier_c}}
+	\end{subfigure}
+	\begin{subfigure}{0.45\textwidth}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/2010.png}
+		\subcaption{\label{fig:outlier_d}}
+	\end{subfigure}
+	\begin{subfigure}{0.45\textwidth}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/15_2035_.png}
+		\subcaption{\label{fig:outlier_e}}
+	\end{subfigure}
+	\begin{subfigure}{0.45\textwidth}
+		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/2035.png}
+		\subcaption{\label{fig:outlier_f}}
+	\end{subfigure}
+	
+	\caption{\label{fig:outliers} Outlier rejection example on the TUM \cite{tum} dataset. Keyline color on \protect\subref{fig:outlier_a}, \protect\subref{fig:outlier_b} and \protect\subref{fig:outlier_c} denotes Keyline history $k$ (the warmer, the greater)}
+\end{figure}
+
+After forward matching and directed matching, the number of valid matches must exceed previously defined threshold. Threshold value of 500 Keylines has proved to be a good figure during tests, regardless of image scale.  If threshold is not met, algorithm resets, as there is not enough Keylines with established history to base future transformation calculations on. A valid matching results is depicted in Fig.~\ref{fig:match}.
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=1.0\linewidth, trim={1.5cm 1.5cm 1.5cm 1cm},clip]{img/figures/match_.png}
 	\caption{ Matches laid over an image from the TUM~\cite{tum} dataset. Red pixels denote Keylines in this frame; blue~\==~Keylines in next frame (not transformed in any way); pink~\==~positions occupied by a Keyline in both frames, regardless if these Keylines are related; green vectors~\==~directed matches between Keylines. Not matched Keylines are still visible }
 	\label{fig:match}
 \end{figure}
-
-
-Considering that there might have been some outliers that affected the quality calculated transformation and that potentially valid matches with no history need a chance to pick it up, it is essential to extend the list of matches to include Keylines that have not been back-projected perfectly.
-
-So as to make finding candidates for matching easier, current Keyline array is reverse-rotated\footnote{Rotated using rotation opposite to rotation $\vec{\omega}$ that was obtained during minimization.} and casted onto the old edge map. This decreases the distance between corresponding points and reduces the problem to a pure translatory problem. Translation $\vec{v}$ calculated during minimization, along with the reverse-rotated $h_r$, defines for each current Keyline a line. (todo details -- equality iff no uncertainty)
-
-Because of assumption that $\rho_r > 0$, search line is reduced to a halfline. It starts at projected point $h_r$ and goes in the direction of camera motion, projected on 2D plane. A possible match should lie on the halfline. To further constrain search area, maximum and minimum pixel displacements are estimated, leaving only a line segment. Keylines that lie within it are possible candidates for matches.  \textit{Directed} refers to probing along the line segment.
-
-Searching starts at a point that is estimated to be a most possible match. The procedure is performed checking pixels closer to segment ends, in an alternating manner. If an inspected pixel a previous Keyline, it is considered a possible match, that still needs to be validated. Firstly, $\vec{g_p}$ and $\vec{g_r}$ are compared, analogously to the third keyline matching test of the minimizer (see Section~\ref{sec:minim_match}). Secondly, potential match needs to conform to the motion model, defined in (\ref{eq:consistency}).
-
-\begin{equation}
-\abs* {\frac{\norm*{h_p - h_r}}{\norm*{fv_{r_{x,y}}-h_{r}v_{r_z}} }-\rho_{p}} < \tau(\sigma_{\rho_{p}})
-\label{eq:consistency}
-\end{equation}
-where:
-\begin{eqwhere}[2cm]
-	\item[$\vec{v_r}$] translation vector, $\vec{v_r} = \left( \mathfrak{exp} \left ( \left[ \vec{\omega} \right ]_{s} \right ) \right) ^T \vec{v}$,
-	\item[$\tau$] uncertainty estimation function that takes into account $\sigma_{\rho_{p}}$.
-\end{eqwhere}
-
-This provides additional outlier rejection - any match that is not compatible with model is rejected. A Keyline that moves in 3D differently than rest of the scene is most likely edge of an object that moves independently, as alluded in Section~\ref{sec:rebvo_outline}. This is particularly visible on TUM fr2\_desk\_with\_person dataset, where object present on the scene were shuffled around. As seen on Fig.~\ref{fig:subfigure_outliers}, Keylines belonging to person moving within a scene have their history reset.
-
-\begin{figure}[h]
-	\centering
-	\begin{subfigure}{0.35\textwidth}
-		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/15_1985_.png}
-		\subcaption{\label{subfigure_a}}
-	\end{subfigure}
-	\begin{subfigure}{0.35\textwidth}
-		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/1985.png}
-		\subcaption{\label{subfigure_a1}}
-	\end{subfigure}
-	\begin{subfigure}{0.35\textwidth}
-		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/15_2010_.png}
-		\subcaption{\label{subfigure_b}}
-	\end{subfigure}
-	\begin{subfigure}{0.35\textwidth}
-		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/2010.png}
-		\subcaption{\label{subfigure_b1}}
-	\end{subfigure}
-	\begin{subfigure}{0.35\textwidth}
-		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/15_2035_.png}
-		\subcaption{\label{subfigure_c}}
-	\end{subfigure}
-	\begin{subfigure}{0.35\textwidth}
-		\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/outlier/2035.png}
-		\subcaption{\label{subfigure_c}}
-	\end{subfigure}
-	
-	\caption{\label{fig:subfigure_outliers} Outlier rejection example. Keyline color on figures on the left side denote its history}
-\end{figure}
-
-After forward matching and directed matching, the number of valid matches has to be greater than previously defined threshold. Threshold value of 500 Keylines has proved to be a good figure during tests, regardless of image scale.  If threshold is not met, algorithm resets, as there is not enough Keylines with established history to base future transformation calculations on.
 
 \subsection{Regularization}
 
