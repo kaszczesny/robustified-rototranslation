@@ -1,32 +1,55 @@
 \chapter{Conclusion}
 
-Overall, this algorithm is a novel, fresh take on visual odometry. Results are promising, especially in cases of complicated motion which is a primary problem on assumed designation of implementation of said algorithm. Trajectories fit nicely onto the ground truth to some degree, especially rotations - it is important mainly because overall translations was supposed to come from a GPS unit.
+Overall, presented algorithm is a novel, fresh take on lightweight, pure visual odometry. An easier way of implementing VO would have been the classic approach: extracting feature points, matching them and then estimating the rototranslation, possibly including IMU and/or input from the other camera along the way. However, a lot of research by the scientific community has been performed in this area, and it has been profoundly delved into (but of course existing solutions are still being perfected). This thesis aimed to explore the approach that is off the beaten track.
+
+Results are promising, especially in cases of complicated motion, which was primary problem on assumed designation of implementation of said algorithm. Trajectories fit nicely onto the ground truth to some degree, which means that instantaneous azimuths are estimated well. It is important mainly because overall camera position originally supposed to be acquired from a GPS unit. Algorithm needs to be robustified against challenges of urban scenes, though.
+
+Additions to the original cite tarrio include:
+
+frame, additional test, chunking, depth init 
+
+spanning, cholesky
+
+median filter,, depth constraints
+
 %Jest całkiem spoko, ale trzeba nad tym wiecej popracowac zeby dostosowac do zalozenia. Wyniki sa obiecujace, szczegolnie rotacja na co wskazuje poprawne dopasowywanie sie trajektorii, a odleglosc i tak chcielismy wziac z gpsa.
+
+Many ways of improving presented solution have already been discussed in Chapter~\ref{cha:results}. In edge finder, additional test that 
+
+fuzzy logic
+
+depth \& joining - not needed
+
+Minimizer - full pinhole, jacobians
+
+map - skala
+
+ogolnie - gpu, optymalizacja parametrow
 
 Ways of improving the system would be a bigger, better, stronger jacobians calculating algorithm, supplemented in many libraries, although it would have been needed to be fitted into our needs. Further plans include implementation of this algorithm in a more robust programming language, seeing as how well it behaves in Octave, our testing platform. Some other plans include ...
 %Jak chcemy poprawic, moze jakis lepszy jakobian, moze implementacja w c, moze jakies plany jeszcze?
 
-Although this is an interesting take on VO, more research in this direction is needed. An easier way of implementing VO is a classic approach: extracting feature points, matching them and then estimating the rototranslation. A lot of research from respected scientists was already performed, and that path is pretty well described and constantly improven upon.
+%Although this is has been interesting take on VO, more research in this direction is needed. 
 %Podejscie jest naprawde interesujace, ale potrzeba wiecej badan w tym kierunku, bo latwiej byloby cos zrobic przez feature pointy > match > RT, bo lepiej opisane i wiecej powazanych naukowcow tak robilo i ulepszalo.
 
 %Watpliwa jest powodnosc, bo wszyscy jestesmy wszystkimi i nalezymy do struktury ego, wiec wyrwanie sie ze struktury powinno byc priorytetem
 
 ULEPSZENIA
-skala ze znakow i tablic
-wypierdalanie ramki (?)
-partycjonowanie
-use of fuzzy logic, macierz why?
-random depth init
-init ground truth :S
-inne strategie joinowania
-model na pinhole
-spanning na mniej niz 1px
-cholesky zamiast svd
-filtr medianowy
+%skala ze znakow i tablic
+%wypierdalanie ramki (?)
+%partycjonowanie
+%use of fuzzy logic, macierz why?
+%random depth init
+%init ground truth :S
+%inne strategie joinowania
+%model na pinhole
+%spanning na mniej niz 1px
+%cholesky zamiast svd
+%filtr medianowy
 
 
 
 
 
-optymalizacja paramaetrow, papametry wielismy od tarrio
-gpu
+%optymalizacja paramaetrow, papametry wielismy od tarrio
+%gpu
