@@ -149,25 +149,27 @@ In order to filter out noise, image should be first smoothed with a Gaussian fil
 
 Exemplary Difference of Gaussians image is depicted in Fig.~\ref{fig:dog}. \textit{Implementation insight}:~while individual smoothed images can be computed using {\tt uint8} as underlying data type (for speed), the difference has to be computed using signed data type. Otherwise obtained function will not cross zero!
 
+\newpage
+
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth, trim={1.25cm 1.25cm 1.25cm 1cm},clip]{img/figures/dog.png}
 	\caption{ Difference of Gaussians applied to an image from the TUM dataset~\cite{tum}. Near-zero values indicate feasible edge candidates }
 	\label{fig:dog}
 \end{figure}
 
-Another parameter is window size -- it defines pixel neighborhood that will take part in later calculations of edge position. For window size $w$, $(2w+1)^2$ immediate neighbors will be considered, including the center pixel itself. For sake of this thesis, value $w = 2$ was used. Edge detection procedure is performed for every pixel that lies at least $w$ pixels from image border, so that neighborhood does not need to be extrapolated. The procedure consists of five subsequent tests. If a pixel passes all of them, it is considered to be an edge (and additionally its subpixel position and edge gradient ale calculated along the way).
+Another parameter is window size -- it defines pixel neighborhood that will take part in later calculations of edge position. For window size $w$, $(2w+1)^2$ immediate neighbors will be considered, including the center pixel itself. For sake of this thesis, value $w = 2$ was used. 
 
-Influence of these tests on final result is depicted for an exemplary frame in Fig.~\ref{fig:edgeprob}. Color map explanation:
-\begin{itemize}
-	\itemsep0em
+Edge detection procedure is performed for every pixel that lies at least $w$ pixels from image border, so that neighborhood does not need to be extrapolated. The procedure consists of five subsequent tests. If a pixel passes all of them, it is considered to be an edge (and additionally its subpixel position and edge gradient ale calculated along the way). Influence of these tests on final result is depicted for an exemplary frame in Fig.~\ref{fig:edgeprob}. Color map explanation:
+\begin{itemize}[topsep=0.5em]
+	\itemsep-0.25em
 	\item dark blue (0 in the color map) -- neighborhood outside image,
-	\item blue (1 in the color map) -- pixel rejected by the first derivative norm test,
-	\item light blue (2 in the color map) -- ,
-	\item cyan (3 in the color map) -- ,
-	\item green (4 in the color map) -- ,
-	\item orange (5 in the color map) -- ,
+	\item blue (1 in the color map) -- rejected by the first derivative norm test,
+	\item light blue (2 in the color map) -- rejected by DoG sign balance test,
+	\item cyan (3 in the color map) -- rejected by well\=/conditioning test,
+	\item green (4 in the color map) -- rejected by zero\=/crossing position test,
+	\item orange (5 in the color map) -- rejected by third derivative norm test,
 	\item red (6 in the color map) -- reserved for debug purposes,
-	\item dark red (7 in the color map) -- pixel identified as Keyline.
+	\item dark red (7 in the color map) -- identified as a Keyline.
 \end{itemize}
 
 \begin{figure}[ht]
@@ -187,6 +189,7 @@ Image is partitioned into $a^2$ rectangular chunks, for relatively small $a$, e.
 
 Proposed procedure also has parameters, but there are few advantages:
 \begin{itemize}
+	\itemsep0em
 	\item parameters are much simpler to interpret,
 	\item effectively only one parameter is crucial (the constant threshold) and rest of procedure serves as a refinement,
 	\item operates without delay, which is vital especially if keyline number is too low.
@@ -210,7 +213,7 @@ In Fig.~\ref{fig:bucket} some pixels on the right half of the image were conside
 		\protect\subref{fig:bucket_b} Chunked first test threshold}
 \end{figure}
 
-\subsubsection*{Second test}
+\subsubsection*{Second test -- DoG sign balance}
 \label{edge_second}
 
 Neighborhood of pixels that have passed the first test is checked for ``sign balance``. Number of positive and negative DoG values has to be comparable within a defined percentage, e.g. 20\%. Example results of the test for 2 different pixels are depicted in Fig.~\ref{fig:plusminus}. It was observed that pixels very rarely fail this particular test.
@@ -221,13 +224,13 @@ Neighborhood of pixels that have passed the first test is checked for ``sign bal
 	\label{fig:plusminus}
 \end{figure}
 
-\subsubsection*{Third test}
+\subsubsection*{Third test -- well-conditioning}
 \label{edge_third}
 
 Then DoG values are approximated by a plane using linear regression -- (\ref{eq:regress}) is solved for~$\theta$. Pseudo-inverse of $\tmmathbf{A}$, needed to solve it, has to be computed only once for the whole algorithm. Zero-crossing of the plane can be determined algebraically, resulting in (\ref{eq:zerocross}). This has been visualized in Fig.~\ref{fig:zeroc}. These closed-form formulas are the main reason for DoG not being computationally demanding, as curve-fitting approaches are usually iterative.
 
 \begin{figure}[ht]
-	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 0.5cm 1.0cm 0.5cm},clip]{img/figures/zeroc.png}
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 0.5cm 1.0cm 0.5cm},clip]{img/figures/zeroc2.png}
 	\caption{ Zero-crossing search. DoG values have been depicted with a mesh. Two planes are present: approximation of the DoG and the $z=0$ plane }
 	\label{fig:zeroc}
 \end{figure}
@@ -270,14 +273,14 @@ where:
 \label{eq:test3}
 \end{equation}
 
-\subsubsection*{Fourth test}
+\subsubsection*{Fourth test -- zero-crossing position}
 \label{edge_fourth}
 
-Obtained zero-crossing marks the subpixel position of the edge; an example of a few subpixel positions along an edge is presented in Fig.~\ref{fig:quiv}. (\ref{eq:subpix_inside}) tests whether it lies within the pixel itself. If not -- edge is not detected. After this test, most of Keyline candidates form 1-pixel wide edges.
+Obtained zero-crossing marks the subpixel position of the edge; an example of a few subpixel positions along an edge is presented in Fig.~\ref{fig:quiv}. Inequality (\ref{eq:subpix_inside}) tests whether it lies within the pixel itself. If not -- edge is not detected. After this test, most of Keyline candidates form 1-pixel wide edges.
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=1.0\linewidth, trim={1.5cm 5.5cm 1.5cm 5cm},clip]{img/figures/quiv.png}
-	\caption{ Obtained zero-crossings of a particularly well detected edge. Black pixels denote background (non-Keylines) and blue~\==~Keylines. White vectors represent edge gradient. Initial points of vectors are the subpixel zero-crossings }
+	\caption{ Obtained zero-crossings of a particularly well detected edge. Black pixels denote background (non-Keylines) and blue~\==~Keylines. The blue line is a 1-pixel wide edge. White vectors represent edge gradient. Initial points of vectors are the subpixel zero-crossings }
 	\label{fig:quiv}
 \end{figure}
 
@@ -286,7 +289,7 @@ max(|x_s|, |y_s|) < 0.5
 \label{eq:subpix_inside}
 \end{equation}
 
-\subsubsection*{Fifth test}
+\subsubsection*{Fifth test -- third derivative norm}
 \label{edge_fith}
 
 Normal vector of fitted plane is defined by (\ref{eq:planenorm}). Vector $\vec{r}$ can projected onto $z=0$ plane, creating third derivative vector: the edge gradient $\vec{g}$. If $||\vec{g}||$ is small, then $r_{z}$ component must have dominated $\vec{r}$, meaning that fitted plane was almost parallel to the $z=0$ plane. In turn this implies that edge was not sharp. Therefore, as a final test, norm of $\vec{g}$ is tested -- it must exceed a~threshold for edge to be finally detected.
@@ -302,7 +305,7 @@ where:
 
 \subsubsection*{Edge detection tests summary}
 
-Colored regions in Fig.~\ref{fig:edgeprob} resemble to some degree a probability distribution -- the probability that given pixel contains an edge. Thus initially \textbf{use of fuzzy logic was considered}. Ultimately, as already mentioned, detected edges were deemed to be acceptable, so this idea was not pursued. Such approach would also require more processing power, making it less suitable for mobile devices.
+Colored regions visible in Fig.~\ref{fig:edgeprob} do resemble to some degree a probability distribution -- the probability that given pixel contains an edge. Thus initially \textbf{use of fuzzy logic was considered}. Ultimately, as already mentioned, detected edges were deemed to be acceptable, so this idea was not pursued. Such approach would also require more processing power, making it less suitable for mobile devices.
 
 
 
@@ -356,7 +359,7 @@ Presented edge detection algorithm has proved to be quite robust under lighting 
 		\subcaption{\label{fig:light2_d}}
 	\end{subfigure}
 	
-	\caption{\label{fig:light2}Edge detection in 4 consecutive KITTI \cite{kitti} frames under lighting conditions changes~\==~input images. Detected edges are denoted with cyan, pruned edge pixels~\==~with yellow}
+	\caption{\label{fig:light2}Edge detection in 4 consecutive KITTI \cite{kitti} frames under lighting conditions changes~\==~input images. Detected edges are denoted with cyan}
 \end{figure}
 
 
@@ -604,7 +607,11 @@ Since calculated transformation between the two frames is supposed to be the opt
 
 Considering that there might have been some outliers that affected the quality calculated transformation and that potentially valid matches with no history need a chance to pick it up, it is essential to extend the list of matches to include Keylines that have not been back-projected perfectly.
 
-So as to make finding candidates for matching easier, current Keyline array is reverse-rotated\footnote{Rotated using rotation opposite to rotation $\vec{\omega}$ that was obtained during minimization.} and casted onto the old edge map. This decreases the distance between corresponding points and reduces the problem to a pure translatory problem. Translation $\vec{v}$ calculated during minimization, along with the reverse-rotated $h_r$, defines for each current Keyline a line. Were $\rho_r$ known precisely, relationship between matching points would satisfy (\ref{eq:consistency_eq}). As it is not, (\ref{eq:consistency_eq}) defines a line.
+So as to make finding candidates for matching easier, current Keyline array is reverse-rotated\footnote{Rotated using rotation opposite to rotation $\vec{\omega}$ that was obtained during minimization.} and casted onto the old edge map. This decreases the distance between corresponding points and reduces the problem to a pure translatory problem.
+
+This approach can be compared to \textit{mutual consistency check} in \cite{a_stereo_visual}. During minimization, previous Keylines were forward rotated onto current image plane and matching was performed. Now current Keylines are reverse rotated onto previous image plane in hopes of finding more matches.
+
+Translation $\vec{v}$ calculated during minimization, along with the reverse-rotated $h_r$, defines for each current Keyline a line. Were $\rho_r$ known precisely, relationship between matching points would satisfy (\ref{eq:consistency_eq}). As it is not, (\ref{eq:consistency_eq}) defines a line.
 
 \begin{equation}
 h_p = h_r - \rho_{r} \left( fv_{r_{x,y}}-h_{r}v_{r_z} \right)
@@ -615,7 +622,7 @@ Because of assumption that $\rho_r > 0$, search line is reduced to a halfline. A
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.8\linewidth, trim={1.5cm 1.5cm 1.5cm 1cm},clip]{img/searchmatch.png}
-	\caption{ Directed matching along halfline segent. Orange pixels denote~\==~current Keylines, rotated to previous frame rotation; cyan~\==~previous Keylines; dark red~\==~position of a current and a previous Keyline. Green and red arrows span over the line segment }
+	\caption{ Directed matching along halfline segent. Orange pixels denote current Keylines, rotated to previous frame by $\tmmathbf{R}^T$; cyan~\==~previous Keylines; dark red~\==~position of a current and a previous Keyline. Green and red arrows span over the line segment }
 	\label{fig:directed_m}
 \end{figure}
 
@@ -631,7 +638,7 @@ where:
 	\item[$\tau$] uncertainty estimation function that takes into account $\sigma_{\rho_{r}}$.
 \end{eqwhere}
 
-This provides additional outlier rejection scheme -- any match that is not compatible with model is rejected. A Keyline that moves in 3D differently than rest of the scene most likely belongs to edge of an object that moves independently, as alluded in Section~\ref{sec:rebvo_outline}. This is particularly visible on TUM fr2\_desk\_with\_person dataset, where objects present in the scene were shuffled around. As it can be seen in Fig.~\ref{fig:outliers}, Keylines belonging to a moving person have their history repeatedly reset.
+This provides additional outlier rejection scheme -- any match that is not compatible with model is rejected. A Keyline that moves in 3D differently than rest of the scene most likely belongs to edge of an object that moves independently, as alluded in Section~\ref{sec:rebvo_outline}. This is particularly visible on TUM fr2\_desk\_with\_person dataset, where objects present in the scene were shuffled around. As it can be seen in Fig.~\ref{fig:outliers}, Keylines belonging to a moving person have their history repeatedly reset. Outliers are filtered even if camera itself moves~\==~as long as their motion is not consistent with the scene.
 
 \begin{figure}[hp]
 	\centering
@@ -667,7 +674,7 @@ After forward matching and directed matching, the number of valid matches must e
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=1.0\linewidth, trim={1.5cm 1.5cm 1.5cm 1cm},clip]{img/figures/match_.png}
-	\caption{ Matches laid over an image from the TUM~\cite{tum} dataset. Red pixels denote Keylines in this frame; blue~\==~Keylines in next frame (not transformed in any way); pink~\==~positions occupied by a Keyline in both frames, regardless if these Keylines are related; green vectors~\==~directed matches between Keylines. Not matched Keylines are still visible }
+	\caption{ Matches laid over an image from the TUM~\cite{tum} dataset. Red pixels denote Keylines in this frame; blue~\==~Keylines in next frame (not transformed in any way); pink~\==~positions occupied by a Keyline in both frames, regardless if these Keylines are related; green vectors~\==~directed matches between Keylines. Not matched Keylines are still visible. }
 	\label{fig:match}
 \end{figure}
 
