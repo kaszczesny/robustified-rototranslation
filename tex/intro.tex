@@ -4,26 +4,33 @@
 
 
 %Uzasadnienie podjęcia tematu – musimy odpowiedzieć na pytanie, jak i dlaczego ważne jest to, o czym napisaliśmy.
-Egomotion is an underlying problem behind SLAM systems and in some cases can be more accurate than GPS systems.
-
+GPS applications struggle during rapid changes of motion, e.g.~while sharp turns are made. Yet driver needs feedback from the positioning system particularly at such moments.
+Visual Odometry systems are usually more accurate (quick to act) than GPS in this regard.
 %Problem badawczy – napiszmy jasno, jaki był cel badania, co badaliśmy, jaki problem intelektualny/praktyczny staraliśmy się rozwiązać.
-Problem present in most GPS applications is accuracy estimated position while making sharp turns, for example on roundabouts, where driver needs quicky feedback on whether he took the appropriate turn. To increase this accuracy, Visual Odometry could be used. This work performs in-depth analysis of a state-of-the-art VO algorithm and proposes some improvements that are especially suited for road scenarios.
-
-
+This work performs in-depth analysis of a chosen state-of-the-art VO algorithm and proposes some improvements that are especially suited for road scenarios.
 %Rebvo algorithm was tested for that routine, as creators of said algorithm point out its real-time capabilities.
-
 %Metodologia – należy opisać jak staraliśmy się odpowiedzieć na pytanie z poprzedniego punktu. Perspektywa, metody, techniki.
-Analyzed algorithm was implemented in GNU Octave and tested using popular datasets. Much attention has been paid to intermediate results.
-
+Analyzed algorithm was implemented in GNU Octave and tested using popular datasets. Much attention was paid to intermediate results.
 %Wyniki – streszczamy to, co nasze badanie wykazało.
 %Implikacje – abstrakt zamykamy wnioskami, które płyną z naszej pracy.
-Tests show convergence with algorithm authors' publication, and conclude that said algorithm would work well under conditions mentioned before, making it useful in implementation of GPS units' performance increasing system.
-
-Tests show that algorithm converges quickly. Some challenges of urban scenarios were not solved, but ways for improvement are suggested.
+%Tests show convergence with algorithm authors' publication, and conclude that said algorithm would work well under conditions mentioned before, making it useful in implementation of GPS units' performance increasing system.
+Tests show that algorithm converges quickly. Some challenges of urban scenarios were not solved, but ways for improvement were suggested.
 
 
 %Słowa kluczowe – dla porządku i ułatwienia sklasyfikowania naszej pracy opisujemy ją słowami kluczowymi.
-\textbf{Keywords}~\==~visual odometry, egomotion, motion estimation, SLAM, edge detection
+\textbf{Keywords}~\==~visual odometry, egomotion, motion estimation, edge detection
+
+GPS applications struggle during rapid changes of motion, e.g.~while sharp turns are made. Yet driver needs feedback from the positioning system particularly at such moments.
+Visual Odometry systems are usually more accurate (quick to act) than GPS in this regard.
+%Problem badawczy – napiszmy jasno, jaki był cel badania, co badaliśmy, jaki problem intelektualny/praktyczny staraliśmy się rozwiązać.
+This work performs in-depth analysis of a chosen state-of-the-art VO algorithm and proposes some improvements that are especially suited for road scenarios.
+%Rebvo algorithm was tested for that routine, as creators of said algorithm point out its real-time capabilities.
+%Metodologia – należy opisać jak staraliśmy się odpowiedzieć na pytanie z poprzedniego punktu. Perspektywa, metody, techniki.
+Analyzed algorithm was implemented in GNU Octave and tested using popular datasets. Much attention was paid to intermediate results.
+%Wyniki – streszczamy to, co nasze badanie wykazało.
+%Implikacje – abstrakt zamykamy wnioskami, które płyną z naszej pracy.
+%Tests show convergence with algorithm authors' publication, and conclude that said algorithm would work well under conditions mentioned before, making it useful in implementation of GPS units' performance increasing system.
+Tests show that algorithm converges quickly. Some challenges of urban scenarios were not solved, but ways for improvement were suggested.
 
 \addcontentsline{toc}{chapter}{Introduction}
 \chapter*{Introduction}
