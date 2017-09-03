@@ -1,39 +1,72 @@
-\chapter{Testy}
+\chapter{Conclusion}
+\label{cha:conclusion}
 
-\section{Test URL-a}
+Overall, presented algorithm continues the novel take on lightweight and pure visual odometry from \cite{jose2015realtime}. An easier way of implementing VO would have been the classic approach: extracting feature points using one of available feature detectors, matching them and then estimating the rototranslation; possibly including IMU and/or input from the other camera along the way. However, a lot of research by the scientific community has already been performed in this area (but of course existing solutions are still being perfected). This was covered in Chapter~\ref{cha:intro}. Studies described in this thesis aimed to explore an approach that was off the beaten track and could operate in real time on mobile devices, instead of high-end PCs.
 
-Wejdź na stronę \url{https://www.google.pl/} i wpisz szukane zdanie.
+Results are promising, especially in cases of complicated motion, which was primary problem on assumed designation of implementation of said algorithm. Trajectories fit nicely onto the ground truth to some degree, which means that instantaneous azimuths are being estimated adequately. They are crucial, because absolute camera position was originally supposed to be acquired from a GPS unit, and camera orientation~\==~from odometry. Algorithm needs to be robustified against challenges of urban scenes, though. Presented implementation is publicly available via a Git repository: \url{https://github.com/kaszczesny/robustified-rototranslation}, so that it can be independently verified, or perhaps further developed.
 
-\clearpage
+Additions to the original implementation \cite{jose2015realtime} that were described in Chapter~\ref{cha:results} include:
+\begin{itemize}[topsep=0.5em]
+	\itemsep-0.25em
+	\item removal of aritifical border edges possibly created during image rectification (applied before any edge detection substep),
+	\item one more edge detection test, that removes the need of having to later handle division by zero (or by numbers close to zero),
+	\item simpler, but a little bit more effective edge detection threshold control mechanism (instead of hysteresis),
+	\item depth initialization with normal-distributed random numbers in the first frame of the sequence, instead of a constant,
+	\item creation of (marginally) more accurate lookup table for minimization,
+	\item minor speed optimization -- usage of Cholesky decomposition instead of SVD, based on the observation that decomposed matrix is positive definite \cite{madsen2004methods},
+	\item optional median filter applied to edge depths before further regularization,
+	\item proposition of estimated depth bounds that perform better.
+\end{itemize}
 
-\section{Test dzielenia wdów}
 
-Lorem ipsum dolor sit amet, ex est alia dolorem commune. Duo modo errem no. Ea harum doming atomorum mei. Consul animal malorum cu qui, sumo dicta graece an est, vim ei clita regione.
+%Jest całkiem spoko, ale trzeba nad tym wiecej popracowac zeby dostosowac do zalozenia. Wyniki sa obiecujace, szczegolnie rotacja na co wskazuje poprawne dopasowywanie sie trajektorii, a odleglosc i tak chcielismy wziac z gpsa.
 
-Vel eu quando doming fastidii, mei graeco indoctum an, legere theophrastus in pro. Te mei probatus eleifend interpretaris. Est no autem liber vituperatoribus, cu mea dicam constituto. Ea laudem tritani consectetuer sit, sanctus patrioque expetendis vix in. Duo id fugit adversarium signiferumque, an quot modus molestiae qui.
+A handful of possible ways to further improve presented solution have been addressed also throughout the Chapter~\ref{cha:results}:
+\begin{itemize}[topsep=0.5em]
+	\itemsep-0.25em
+	\item incorporation of fuzzy logic into edge detection,
+	\item feature-based depth initialization (deemed unnecessary),
+	\item usage of full pinhole camera model in projection and back-projection functions,
+	\item scale ambiguity resolution by using a priori knowledge of traffic signs and license plates sizes.
+\end{itemize}
 
-Ut paulo definiebas pro. Mea an quod esse. Et atomorum facilisis moderatius sit. Graeco iudicabit forensibus in vel. Eam cu lorem aeterno offendit, cu vix nulla congue posidonium. Vel lucilius evertitur vituperata no.
+Some more general enhancements can also be proposed:
+\begin{enumerate}
+	\item Instead of direct Jacobian calculation like Tarrio and Pedre, a black-box approach can be taken and Jacobians could be calculated numerically, e.g. using the Secant version of Levenberg-Marquardt algothim \cite{madsen2004methods}. Alternatively, an entirely different minimization algorithm could be picked, but this might affect time performance.
+	\item Many algorithm steps are performed independently for each Keyline. This suggests that they could be parallelized in the GPU (Graphics Processing Unit), taking performance to a whole new level. Nowadays GPUs are present not only in PCs, but also in mobile devices.
+	\item Algorithm is configured with roughly 30 parameters, that affect final outcomes in varying degrees. Most of their values have been simply acquired from \cite{jose2015realtime}. An extensive search for their optimal values, performed over large datasets, could be undertaken.
+	\item As far as visualizations are concerned, another color map should be used. Many of the figures presented in Chapter~\ref{cha:intro2} (and all images that were created automatically by the implementation) used the default \texttt{jet} colormap, or colors were chosen manually. Authors are aware that \texttt{jet} should not be used to represent dense fields \cite{rainbow}. Figures did depict only individual edges, but still their visual appeal could be enhanced.
+	\item Keyline matching criteria (especially during the minimization step) could be dynamically changed, so that distant, but well-matched Keylines do not bias the outcome as it was observed when KITTI \cite{kitti} dataset was used.
+	\item Obtained trajectory can be Kalman-filtered, e.g. as in \cite{min2015visual}.
+	\item System could be transformed to a SLAM one. As long as only a few of best features would be remembered, real time would not be hindered \cite{monoslam}. As it is not expected to form closed loops in real life navigation scenarios, saved features could be instead used to tackle occlusions.
+	\item GPS information could be incorporated, as it was originally intended; e.g. by taking approach similar to \cite{accurate_global_localization}. It could, over larger time scale, alleviate the problem of error accumulation when trajectory rapidly changes direction due to system reinitialization (and error accumulation in general).
+\end{enumerate}
 
-Mea eu graecis prodesset. Et tota eius nec. Ei etiam oratio has, vel ei homero eripuit invenire. Sed ex errem intellegebat, sea et elitr intellegat constituto. Nostro voluptua accusamus eos in, ei sale admodum has. Vim ne consetetur reformidans, ad has malis recusabo persequeris, per etiam virtute invenire in.
 
-Te nihil eruditi eam, sit aperiam accusam mediocritatem at. Nec ne nonumy dictas disputationi, vis ridens sadipscing ex. Harum euripidis ex vix, at consetetur instructior signiferumque mel, at mei elitr honestatis. Id sit congue vituperata. Temporibus eloquentiam no eum.
+Finally, the algorithm should be reimplemented in a more efficient programming language, such as C++. Time complexity, as well as behavior in real life scenarios, could be then verified.
+%Jak chcemy poprawic, moze jakis lepszy jakobian, moze implementacja w c, moze jakies plany jeszcze?
 
-Pro id esse phaedrum, nostro iudicabit eos ut. Sit ea aperiam alienum, harum audiam voluptua cu usu. Iudico invenire te vel, id suscipit disputando pri. Ut sumo expetenda mea.
+%Although this is has been interesting take on VO, more research in this direction is needed. 
+%Podejscie jest naprawde interesujace, ale potrzeba wiecej badan w tym kierunku, bo latwiej byloby cos zrobic przez feature pointy > match > RT, bo lepiej opisane i wiecej powazanych naukowcow tak robilo i ulepszalo.
 
-Cum at idque nullam aperiam, vis ex aeque ponderum luptatum. Vix soluta graeco dissentiet ut, ut est reque periculis similique, ut dicta dicant repudiare sea. Ne dolor legendos signiferumque ius, at eirmod convenire qui. Suas numquam conceptam mei ex. Autem homero eos et, sea dicta alienum iudicabit ut.
+%Watpliwa jest powodnosc, bo wszyscy jestesmy wszystkimi i nalezymy do struktury ego, wiec wyrwanie sie ze struktury powinno byc priorytetem
 
-Ea duo consulatu vulputate, id elit perpetua cum. His ei aeque saepe audiam. Prompta laoreet facilisi ne sed, per hinc consetetur te, oratio fuisset ullamcorper mel at. Quis suscipiantur ne nec, agam efficiendi usu in.
+% ULEPSZENIA
+%skala ze znakow i tablic
+%wypierdalanie ramki (?)
+%partycjonowanie
+%use of fuzzy logic, macierz why?
+%random depth init
+%init ground truth :S
+%inne strategie joinowania
+%model na pinhole
+%spanning na mniej niz 1px
+%cholesky zamiast svd
+%filtr medianowy
 
-Vis eu iuvaret singulis appellantur, usu ex saepe omittantur. Sed possit mnesarchum at, usu illum choro oratio in, et debet dolor vix. Mel aperiri suscipiantur ne, te per illum fuisset, lorem pericula mei ad. Pri id tale lucilius dissentiet, id sea sonet expetenda. Agam sensibus persequeris sed no, eum at tamquam sanctus.
 
-Omnis exerci soleat ut vis. Rebum vidisse sea ex. Ius animal gubergren efficiantur ad, mollis probatus nec ut. Meis platonem ex vel, ut qui tale tritani equidem. Vide meis fuisset mel at, nam an assum delenit gubergren. No illum reprimique vim, te augue nullam per, ludus dicant suscipiantur ne sed.
 
-An pri mediocrem deseruisse, ad sumo audire dissentiet sit. Sit ea civibus lobortis. Etiam ceteros commune ei vis. Pro ei equidem vivendo. Quo ne prima periculis omittantur, ex rebum veritus sit, ei dolor maiestatis mea.
 
-\subsection{Lorem ipsum}
 
-Et mel munere quodsi sapientem. Essent legimus ne pro. Est ornatus definiebas et. No habemus docendi ius, purto sapientem mei at. Tamquam vivendo necessitatibus has at, no habemus praesent nec. No quo modus iudicabit scriptorem. Modus intellegebat ea vim. Cu ius lorem regione offendit, ne accusata sensibus vituperatoribus quo. Sit ut iuvaret indoctum. Ut mea sale justo. Sapientem definitionem ius eu, at sea quem doming. Facete conclusionemque ut nec, vix at duis eius. Eos quot consequuntur et, ornatus liberavisse ne mei.
-
-Per an dicam commodo tractatos, usu in timeam numquam tacimates. Case delectus eu sea, usu audiam eleifend tincidunt id, nec at decore discere mentitum. Ut elit veri eloquentiam his, ceteros tractatos ea has. Duo impetus scribentur et, eu quo errem everti, ad recusabo consulatu ius. Fastidii comprehensam pri ea, ex duo augue quando denique. Eos aeterno deserunt sententiae cu, ius quas tation patrioque ex.
-
-Id autem scripta explicari nec, congue quidam possit te sit. Et usu ipsum bonorum graecis, ferri verear deterruisset eum cu. Purto porro accommodare cu vim. Cum ei tritani pertinacia voluptaria.
+%optymalizacja paramaetrow, papametry wielismy od tarrio
+%gpu

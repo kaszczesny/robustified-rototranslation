@@ -1,72 +1,198 @@
-\chapter{Przykłady elementów pracy dyplomowej}
+\chapter{Discussion of results}
+\label{cha:results}
 
-\section{Liczba}
+% global results for various datasets
+This chapter focuses on discussing overall algorithm results obtained from longer sequences. Tested sequences come from TUM \cite{tum} and KITTI \cite{kitti} public datasets. Results include comparison of $x$, $y$ and $z$ components of the estimated camera trajectory with ground truth, as well as numeric quantities (Table~\ref{tab:drift}). Some erroneous outcomes are also presented, with brief commentary.
 
-Pakiet \texttt{siunitx} zadba o to, by liczba została poprawnie sformatowana: \\
-\begin{center}
-	\num{1234567890.0987654321}
-\end{center}
+\section{Experimental setup}
 
+All of the tested sequences include ground truth (either laser positioning system in case of TUM, or  Differential GPS in case of KITTI), which is essential for debugging and validation purposes. Also, these datasets are commonly used for visual odometry systems evaluation, making to possible to compare proposed algorthim with others. Intrinsic camera parameters were reported by dataset authors.
 
-\section{Rysunek}
+As the main goal of the algorithm is to estimate transformation between images, most care was put into making sure that the system correctly calculates position of the camera in respect to ground truth. Obtained trajectory was fitted onto ground truth trajectory using method explained in Section~\ref{sec:fitting}.
 
-Pakiet \texttt{subcaption} pozwala na umieszczanie w podpisie rysunku odnośników do ,,podilustracji'': \\
+Algorithm itself was implemented in the GNU Octave environment. The OpenCV \cite{opencv} library was also used; it was compiled to MEX files, that can be executed by Octave. Choice of programming language enabled fast prototyping and easy visualization, but prevented the algorithm from achieving real-time performance. Based on results in \cite{jose2015realtime} it is estimated that implementation in a compiled language such as C++ would accomplish such goal even on a~consumer-grade smartphone.
 
-\begin{figure}[h]
-	\centering
-	\begin{subfigure}{0.35\textwidth}
-		\centering
-		\framebox[2.0\width]{A}
-		\subcaption{\label{subfigure_a}}
-	\end{subfigure}
-	\begin{subfigure}{0.35\textwidth}
-		\centering
-		\framebox[2.0\width]{B}
-		\subcaption{\label{subfigure_b}}
-	\end{subfigure}
-	
-	\caption{\label{fig:subcaption_example}Przykład użycia \texttt{\textbackslash subcaption}: \protect\subref{subfigure_a} litera A, \protect\subref{subfigure_b} litera B.}
+In order to speed up computations, images were first scaled down. This removed some false edges, while retaining only the strongest ones, thus greatly reducing the number of Keylines. In \cite{jose2015realtime} it was already shown that algorithm run time depends linearly on Keyline number. The biggest downscaling factor was reduction of size by 80\%, resulting in an 128 by 96 pixels wide image. Although such images are too small to be easily interpreted by humans, algorithm results were still satisfactory.
+
+Comparison of time needed to process one frame with two different downscaling factors is featured in Fig.~\ref{fig:timing}. For these particular images and scales, larger scale resulted in $1.81$ more processing time per frame, on average. Measured time included creation of some visualization files, but this factor was insignificant next to the most time-consuming step, i.e.~the minimization.
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={0.0cm 1.0cm 1.5cm 0.0cm},clip]{img/figures/frametime.png}
+	\caption{ Single frame processing time for TUM fr3\_teddy sequence. Red line corresponds to scale of $\frac{1}{3}$ of original image; blue line~\==~ $\frac{1}{5}$ }
+	\label{fig:timing}
 \end{figure}
 
-\section{Tabela}
 
-Pakiet \texttt{threeparttable} umożliwia dodanie do tabeli adnotacji: \\
+A few system parameters had to be adjusted between TUM and KITTI datasets, but there was no need of fine tuning the configuration for every sequence separately.
 
-\begin{table}[h]
+\section{Trajectory comparison}
+
+Presented results consists mainly from the following sequences. Selected values have been collected in Table~\ref{tab:drift} - first two were used only for visualization as discussed in Section~\ref{sec:fitting}, last one was obtained from evaluation script $evaluate\_ate$ available in TUM evaluation benchmark \cite{tum}. It should be noted that these numbers are scores for only parts of said sequences.
+\begin{itemize}
+	\item TUM fr1\_xyz - only translatory motions are present here, as stated by creators of this dataset "\textit{it's mainly for debugging purposes}",
+	\item TUM fr2\_desk - slow sweep around an office desk,
+	\item TUM fr2\_desk\_with\_person - same as above, but present person moves the objects around, creating outliers,
+	\item TUM fr2\_pioneer\_SLAM - robot with a mounted camera is trying to self-localize and map the room,
+	\item TUM fr3\_long\_office\_household - slow sweep around two desks,
+	\item TUM fr3\_teddy - slow sweep around a big plush teddy bear,
+	\item KITTI 01 - video registered by cameras\footnote{Output from only one camera was used for algorithm evaluation, as it is a monocular system.} mounted in front of a car.
+\end{itemize}
+
+\begin{table}[ht]
 	\centering
 	
 	\begin{threeparttable}
-		\caption{Przykład tabeli}
-		\label{tab:table_example}
+		\caption{Algorithm results for selected parts of sequences}
+		\label{tab:drift}
 		
-		\begin{tabularx}{0.6\textwidth}{C{1}}
+		\begin{tabularx}{0.9\textwidth}{C{0.5} C{0.25} C{0.1} C{0.15}}
 			\toprule
-			\thead{Nagłówek\tnote{a}} \\
+			\thead{Sequence} & \thead{Average drift\tnote{a} [$\frac{m}{s}$]} & \thead{Scale} & \thead{ATE\tnote{b} [${m}$]}\\
 			\midrule
-			Tekst 1 \\
-			Tekst 2 \\
+			TUM fr3\_long\_office\_household & $3.6$ & 1.6 &  0.302 \\
+			TUM fr3\_teddy (long subsequence) & $1.8$ & 1.1 & 0.287 \\
+			TUM fr3\_teddy (short subsequence) & $0.6$ & 1.5 & 0.175 \\
+			TUM fr2\_desk\_with\_person & $0.4$ & 1.05 & 0.133 \\
+			TUM fr2\_desk\_with\_person & $0.1$ & 1.69 & 0.066 \\
 			\bottomrule
 		\end{tabularx}
 		
 		\begin{tablenotes}
 			\footnotesize
-			\item[a] Jakiś komentarz\textellipsis
+			\item[a] RMSE between fitted trajectory points, multiplied by the frame rate (FPS)
+			\item[b] Absolute Trajectory Error -- RMSE in meters after trajectory alignment
 		\end{tablenotes}
 		
 	\end{threeparttable}
 \end{table}
 
-\section{Wzory matematyczne}
+Overall, the algorithm performed well in scenarios where camera underwent complex movement, instead of simple linear translations. This is due to the fact that in the former case disparities between frames generally make it easier to recover the egomotion, independently from employed odometry algorithm. For example, a view from top of a trajectory is presented in Fig.~\ref{fig:traject}. Despite the low number of frame, complex motion has been recovered relatively closely. Even in a~dataset containing outliers (independently moving objects), odometry was correct (see Fig.~\ref{fig:trajectxyz}).
 
-Czasem zachodzi potrzeba wytłumaczenia znaczenia symboli użytych w równaniu. Można to zrobić z użyciem zdefiniowanego na potrzeby niniejszej klasy środowiska \texttt{eqwhere}.
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/deskperson_trajectory.png}
+	\caption{ Example trajectory comparison between obtained results and ground truth from dataset TUM fr2\_desk\_with\_person, projected on the $y=0$ plane, as camera height was the least significant motion component. }
+	\label{fig:traject}
+\end{figure}
 
-\begin{equation}
-E = mc^2
-\end{equation}
-gdzie
-\begin{eqwhere}[2cm]
-	\item[$m$] masa
-	\item[$c$] prędkość światła w próżni
-\end{eqwhere}
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.7\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/deskperson_xyz.png}
+	\caption{ Example trajectory components comparison between obtained results and ground truth from dataset TUM fr2\_desk\_with\_person. Red line marks estimated position; blue~\==~ground truth }
+	\label{fig:trajectxyz}
+\end{figure}
 
-Odległość półpauzy od lewego marginesu należy dobrać pod kątem najdłuższego symbolu (bądź listy symboli) poprzez odpowiednie ustawienie parametru tego środowiska (domyślnie: 2 cm).
+Sometimes frames did not contain enough Keylines and system had to be reinitialized. In case of TUM fr3\_teddy sequence there are 4 cases of reinitialization visible in Fig.~\ref{fig:teddyfull}: frames 271 \& 272, 280, 386 \& 387 and 394. System has recovered from three out of four of them, but the third\footnote{There were simply not enough edges (objects) present on the photo. Paired with motion blur, this resulted in low Keyline number, no matter the image scale and gradient detection threshold.} was fatal in a sense that scale and starting rototranslation were lost, and hence the trajectory as a whole could not be well fitted with ground truth (Fig.~\ref{fig:teddynok}). However, partitioned sections can and are fitted quite well, as shown in Fig.~\ref{fig:teddy1} for the first part, and in Fig.~\ref{fig:teddy2} for the second. Such points could be potentially detected in post-processing, as they are a sharp spots on an otherwise smooth 3D curve.
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.7\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/teddy_full.png}
+	\caption{ Whole trajectory with denoted cases of reinitialization from dataset TUM fr3\_teddy. Red line marks estimated position; blue~\==~ground truth; black circles~\==~reinitialization }
+	\label{fig:teddyfull}
+\end{figure}
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.7\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/teddy_nok.png}
+	\caption{ Fitted trajectory showing fatal reinitialization problem from dataset TUM fr3\_teddy. Red line marks estimated position; blue~\==~ground truth; black circles~\==~reinitialization }
+	\label{fig:teddynok}
+\end{figure}
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.7\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/teddy_1.png}
+	\caption{ First part of the sequence fitted to ground truth from dataset TUM fr3\_teddy. Red line marks estimated position; blue~\==~ground truth; black circles~\==~reinitialization }
+	\label{fig:teddy1}
+\end{figure}
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.7\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/teddy_2.png}
+	\caption{ Second part of the sequence fitted to ground truth from dataset TUM fr3\_teddy. Red line marks estimated position; blue~\==~ground truth; black circles~\==~reinitialization }
+	\label{fig:teddy2}
+\end{figure}
+
+This particular reinitialization is especially interesting, because of a depth estimation artifact. Movement in this sequence is a circular, around the teddy bear -- in every frame camera moves and rotates a bit, so as to always have the teddy bear in the middle of the picture frame. This causes the toy's edges to be more or less in the same spot, while edges of the environment are shifted a bit more. This in turn can lead to the system estimating that since the edges of this object, actually lying the closest in 3D, don't move a lot, they have to be very far away, and the rest of picture is closer. Example of such bad initialization is presented in Fig~\ref{fig:teddyflip}. It is worth mentioning that in such cases estimated trajectory, after being reinitialized, also did fit the ground truth, despite having calculated wrong Keyline depths.
+
+\begin{figure}[hp]
+	\centering
+	\begin{subfigure}{0.4\textwidth}
+		\centering
+		\centering\includegraphics[width=0.9\linewidth]{img/figures/flip/14_0756.png}
+		\subcaption{\label{fig:teddyfirst}}
+	\end{subfigure}
+	\begin{subfigure}{0.4\textwidth}
+		\centering
+		\centering\includegraphics[width=0.9\linewidth]{img/figures/flip/756.png}
+		\subcaption{\label{fig:teddyfirst1}}
+	\end{subfigure}
+	\begin{subfigure}{0.4\textwidth}
+		\centering
+		\centering\includegraphics[width=0.9\linewidth]{img/figures/flip/14_1088.png}
+		\subcaption{\label{fig:teddybefore}}
+	\end{subfigure}
+	\begin{subfigure}{0.4\textwidth}
+		\centering
+		\centering\includegraphics[width=0.9\linewidth]{img/figures/flip/1088.png}
+		\subcaption{\label{fig:teddybefore1}}
+	\end{subfigure}
+	%\begin{subfigure}{0.4\textwidth}
+	%	\centering
+	%	\centering\includegraphics[width=0.9\linewidth]{img/figures/flip/14_1094.png}
+	%	\subcaption{\label{fig:teddyafter}}
+	%\end{subfigure}
+	%\begin{subfigure}{0.4\textwidth}
+	%	\centering
+	%	\centering\includegraphics[width=0.9\linewidth]{img/figures/flip/1094.png}
+	%	\subcaption{\label{fig:teddyafter1}}
+	%\end{subfigure}
+	\begin{subfigure}{0.4\textwidth}
+		\centering
+		\centering\includegraphics[width=0.9\linewidth]{img/figures/flip/14_1172.png}
+		\subcaption{\label{fig:teddylast}}
+	\end{subfigure}
+	\begin{subfigure}{0.4\textwidth}
+		\centering
+		\centering\includegraphics[width=0.9\linewidth]{img/figures/flip/1172.png}
+		\subcaption{\label{fig:teddylast1}}
+	\end{subfigure}
+	\caption{\label{fig:teddyflip} An example of invalid depth estimation after system reinitialization. Warm colors denote large edge distance from the camera. \protect\subref{fig:teddyfirst}, \protect\subref{fig:teddyfirst1} Well\=/estimated depth, as background is warmer (cyan) and foreground is cooler (blue), \protect\subref{fig:teddybefore}, \protect\subref{fig:teddybefore1} Depth is reset with random values due to motion blur,
+	%\protect\subref{fig:teddyafter}, \protect\subref{fig:teddyafter1} Depth after the reinitialization,
+		\protect\subref{fig:teddylast},~\protect\subref{fig:teddylast1} Invalid depth after few frames~\==~depth of the bear is estimated to be larger than the objects that are situated behind it in reality}
+\end{figure}
+
+Places where rototranslation is lost due to reinitialization prevent usage of SLAM loop closure methods, as the curves are very far from closing. For instance, in Fig.~\ref{fig:loop}, an expected loop and obtained trajectory are compared.
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/loop.png}
+	\caption{ 3D trajectory obtained from TUM fr3\_long\_office\_household, which features a closed loop. Red points marks estimated position; blue~\==~ground truth }
+	\label{fig:loop}
+\end{figure}
+
+
+The KITTI dataset was far more challenging than TUM. It very often happens that through many consecutive frames, one half of images systematically lack Keylines, affecting the algorithm. As camera was mounted on a car, individual displacements are more rapid. It is even possible that rolling shutter problem is present, although this was not tested. Another issue is that when car is moving forward, many Keylines are present in the middle of the field of view. They undergo little to no displacement between frames, therefore they might bias the minimization and prevent other Keylines from being matched (in the described scenario edges moderately close to image border contain most information about motion of the camera, due to visible disparity). A trajectory estimated for one of KITTI sequences in depicted in Fig~\ref{fig:kitti_3}. These results are rather disheartening, as they show that algorithm needs to be improved before it can be used in urban scenarios for which it was originally planned in this thesis.
+
+
+
+\begin{figure}[ht]
+	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/kitti.png}
+	\caption{ Estimated trajectory of KITTI 01 sequence, fitted to ground truth. Red line marks estimated position; blue~\==~ground truth. Due to large distance traveled, individual subplots have different scales }
+	\label{fig:kitti_3}
+\end{figure}
+
+% moze cos o tym household, ja tego nie mam
+%  KITTI tez by bylo ok
+
+
+
+
+
+%sredni blad/dryft
+%jakas tabelka moze? trzeba to w sensie sredniokwadratowym obliczyc
+
+%long office ok3- 3.6038m/s
+%teddy long - 1.8033m/s
+%teddy short - 0.57838m/s
+%desk with person outlier rej - 0.43574m/s
+%				 outlier depth - 0.092159m/s
+
+
+
+%nok, figura z  edgefindera
+
+%ciekawostki
+
+
+
+
