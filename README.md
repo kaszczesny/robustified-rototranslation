@@ -5,6 +5,8 @@ Master of Science Thesis by Krzysztof Szczęsny and Jan Twardowski: *Algorithm f
 AGH University of Science and Technology, Department of Telecommunications.
 Supervisor: Jarosław Bułat, PhD.
 
+The algorithm is based on code and paper by J.J. Tarrio & S. Pedre.
+
 # Installation
 Run `./install.sh` (without sudo - because we don't want the build files to be owned by root). It will:
  * install dependencies and tools,
@@ -15,16 +17,20 @@ Run `./install.sh` (without sudo - because we don't want the build files to be o
 
 # Subprojects
 Each subproject contains `run.sh` script to build it. They are all checked by Travis.
- * `android/` - an Android project that uses our library,
- * `library/` - the C++ library,
+ * `octave/` - the algorithm prototype. Though not included in CI, could be [in](https://github.com/scottclowe/MOxUnit) [future](https://github.com/scottclowe/matlab-continuous-integration),
+ * ~~`android/` - an Android project that uses our library,~~ (obsolete)
+ * ~~`library/` - the C++ library,~~ (obsolete)
  * `tex/` - thesis sources.
 
 # Other folders
- * `data/` - unit test bulk data too large for normal storage (whole directory uses Git LFS), yet too small for external download,
- * `octave/` - library prototype. Though not included in CI, could be [in](https://github.com/scottclowe/MOxUnit) [future](https://github.com/scottclowe/matlab-continuous-integration),
+ * `data/` - ~~unit test~~ bulk data too large for normal storage (whole directory uses Git LFS), yet too small for external download,
  * `opencv/` - OpenCV 3.1 sources & binaries (after installation binaries are also available in `/usr/local`). 
 
-# Building the C++ library
+# Running the Octave prototype
+ * adjust the `Config.m` file,
+ * run `main.m` script.
+
+# Building the C++ library (obsolete)
 In the `library/` directory execute:
  * `make all` to compile the library,
  * `make test` to compile the library and unit tests (`./test` executable),
