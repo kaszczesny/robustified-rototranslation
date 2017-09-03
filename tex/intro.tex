@@ -4,7 +4,7 @@
 
 
 %Uzasadnienie podjęcia tematu – musimy odpowiedzieć na pytanie, jak i dlaczego ważne jest to, o czym napisaliśmy.
-GPS applications struggle with precision during rapid changes of motion, e.g.~while sharp turns are made during roundabout exit. Yet driver needs feedback from the positioning system particularly at such moments.
+GPS applications (e.g. car navigation) struggle with precision during rapid changes of motion, e.g.~when sharp turns are made during roundabout exit. Yet driver needs feedback from the positioning system particularly at such moments.
 Visual Odometry systems are usually more accurate (quick to act) than GPS in this regard.
 %Problem badawczy – napiszmy jasno, jaki był cel badania, co badaliśmy, jaki problem intelektualny/praktyczny staraliśmy się rozwiązać.
 This work performs in-depth analysis of a chosen state-of-the-art, real-time VO algorithm and proposes some improvements that are especially suited for road scenarios.
@@ -21,11 +21,11 @@ Tests show that algorithm converges quickly to the expected trajectory shape. So
 
 \section*{Abstrakt}
 
-Aplikacje korzystające z GPS nie radzą sobie z dokładno\'scią lokalizacji podczas gwałtownych ruchów, np. przy zjeżdżaniu z ronda. A przecież wła\'snie wtedy informacja o pozycji jest dla kierowcy najwazniejsza.
-Systemy odometri wizyjnej zazwyczaj przewyższają w tym zakresie GPS.
-W niniejszej pracy przeprowadzono dogłębną analizę wybranego nowoczesnego algorytmu odometrii wizyjnej, mogącego pracować w czasie rzeczywistym na urządzeniu mobilnym. Na podstawie badań zaproponowano ulepszenia algorytmu, które znajdą zastosowanie szczególne w warunkach drogowych.
-Analizowany algorytm został zaimplementowany w \'srodowisku GNU Octave oraz przetestowany z użyciem popularnych sekwencji testowych. Podczas analizy dużą uwagi po\'swięcono \'sródwynikom poszczególnych kroków algorytmu.
-Testy wykazały, że algorytm jest szybko zbiega do oczekiwanej trajektorii. Nie udało się poprawić wszystkich błędów, jakie mogą wystąpić w sekwencjach nagrywanych na jezdni, ale wskazano możliwe rozwiązania.
+Aplikacje korzystające z GPS (np. nawiagcja samochodowa) mają niską dokładno\'sć lokalizacji podczas gwałtownych ruchów, np. przy zjeżdżaniu z ronda, chociaż wła\'snie wtedy informacja o pozycji jest dla kierowcy najważniejsza.
+Systemy odometrii wizyjnej zazwyczaj przewyższają w tym zakresie GPS.
+W niniejszej pracy przeprowadzono dogłębną analizę wybranego nowoczesnego algorytmu odometrii wizyjnej, mogącego pracować w czasie rzeczywistym na urządzeniu mobilnym. Na podstawie przeprowadzonych badań zaproponowano ulepszenia algorytmu, które mogą być przydatne szczególne w warunkach drogowych.
+Analizowany algorytm został zaimplementowany w \'srodowisku GNU Octave oraz przetestowany z użyciem popularnych sekwencji testowych. Podczas analizy dużo uwagi po\'swięcono \'wynikom pośrednim poszczególnych kroków algorytmu.
+Testy wykazały, że algorytm szybko zbiega do oczekiwanej trajektorii. Nie udało się wyeliminować wszystkich błędów, jakie mogą wystąpić w sekwencjach nagrywanych kamerą umieszczoną w samochodzie, ale wskazano możliwe rozwiązania.
 
 \textbf{S\l{}owa kluczowe}~\==~odometria wizyjna, estymacja ruchu, wykrywanie kraw\k{e}dzi
 
@@ -43,11 +43,11 @@ Odometry is a term describing measurement of distance (from Greek: \textit{odos}
 Main advantage of visual approach to odometry is ubiquity of cameras embedded into virtually every mobile device -- be it a smarphone, game console or even a smartwatch. Not every of those devices has a gyroscope, and even if a GPS (Global Positioning System) chip is present, its locational accuracy is low. Practical applications of visual odometry include:
 \begin{enumerate}
 	\itemsep0em
-	\item SLAM (Self\=/Localization And Mapping) used by autonomous robots, e.g. Mars Exploration Rovers, drones or self-driving cars. Calculation and maintenance of such maps is usually a computationally demanding task, however.
+	\item SLAM (Simultaneous\=/Localization And Mapping) used by autonomous robots, e.g. Mars Exploration Rovers, drones or self-driving cars. Calculation and maintenance of such maps is usually a computationally demanding task, however.
 	
 	\item Handheld video stabilization, realized in software.
 	
-	\item AR (Augmented Reality) -- last year in particular saw the emergence of \textit{Pok\'emon`GO}~\cite{pineco}, an acclaimed mobile game. Recently Google has released \textit{ARCore}~\cite{androidvr} , a software development kit, that internally uses many VO ideas.
+	\item AR (Augmented Reality) -- last year in particular saw the emergence of \textit{Pok\'emon GO}~\cite{pineco}, an acclaimed mobile game. Recently Google has released \textit{ARCore}~\cite{androidvr} , a software development kit that internally uses many VO ideas.
 \end{enumerate}
 
 

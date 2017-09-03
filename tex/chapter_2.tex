@@ -716,7 +716,7 @@ where:
 
 Depth has been constrained in \cite{jose2015realtime} between $\frac{1}{20}$ and $1000$. However, it has been observed that Keylines too close to the camera can disturb the algorithm convergence. Much better results were obtained when minimal allowed depth was raised to $1$. These values are relativ to initial depth in the first frame (mean value of the used distribution) and to other algorithm parameters.
 
- todo; @kwant: only missing and not finished part of Chapter 2 is this section
+% todo; @kwant: only missing and not finished part of Chapter 2 is this section
  % kalman fiter
 
  % inverse depth is constrained between certain min and max, didn't work well if min was too low (by min I mean too close to camera)
@@ -739,7 +739,7 @@ This however entails additional, heavy computing cost and would not fit the desi
 
 
 % ----------------------
-\subsection{Tests on artificial data}
+\section{Tests on artificial data}
 
 Along with data from KITTI and TUM datasets, some tests on generated data were performed, mainly for the edge detector. That way difficult edges (circles or sharp angles shaped like letters \texttt{T}, \texttt{Y} and \texttt{L}) could be examined -- how they were thinned, joined, fragmented and how gradient of such edges behaved.
 
@@ -748,7 +748,7 @@ Along with data from KITTI and TUM datasets, some tests on generated data were p
 Rendering a full 3D sequence using e.g. a game engine was also considered, but due to antialiasing, too simple lighting techniques, texturing simplifications (bump-mapping) and lack of raytracing, obtained results could be unreliable. Therefore instead popular datasets with well-defined ground truth data were chosen.
 
 
-\subsection{Trajectory fitting}
+\section{Trajectory fitting}
 \label{sec:fitting}
 
 In order to assess algorithm accuracy as it processes new frames, estimated camera trajectory is systematically compared with ground truth data after each frame. An optimal isotropic scaling and Euclidean transformation between two trajectories is searched for. Obtained parameters do not influence future algorithm iterations, as in real world applications such data is simply unavailable. They are calculated only for visualization purposes. These visualizations are used throughout Chapter~\ref{cha:results}.

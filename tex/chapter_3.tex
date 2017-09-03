@@ -10,7 +10,7 @@ All of the tested sequences include ground truth (either laser positioning syste
 
 As the main goal of the algorithm is to estimate transformation between images, most care was put into making sure that the system correctly calculates position of the camera in respect to ground truth. Obtained trajectory was fitted onto ground truth trajectory using method explained in Section~\ref{sec:fitting}.
 
-Algorithm itself was implemented in the GNU Octave environment. The OpenCV \cite{opencv} library was also used; it was complied to MEX files, that can be executed by Octave. Choice of programming language enabled fast prototyping and easy visualization, but prevented the algorithm from achieving real-time performance. Based on results in \cite{jose2015realtime} it is estimated that implementation in a compiled language such as C++ would accomplish such goal even on a~consumer-grade smartphone.
+Algorithm itself was implemented in the GNU Octave environment. The OpenCV \cite{opencv} library was also used; it was compiled to MEX files, that can be executed by Octave. Choice of programming language enabled fast prototyping and easy visualization, but prevented the algorithm from achieving real-time performance. Based on results in \cite{jose2015realtime} it is estimated that implementation in a compiled language such as C++ would accomplish such goal even on a~consumer-grade smartphone.
 
 In order to speed up computations, images were first scaled down. This removed some false edges, while retaining only the strongest ones, thus greatly reducing the number of Keylines. In \cite{jose2015realtime} it was already shown that algorithm run time depends linearly on Keyline number. The biggest downscaling factor was reduction of size by 80\%, resulting in an 128 by 96 pixels wide image. Although such images are too small to be easily interpreted by humans, algorithm results were still satisfactory.
 
@@ -45,7 +45,7 @@ Presented results consists mainly from the following sequences. Selected values 
 		\caption{Algorithm results for selected parts of sequences}
 		\label{tab:drift}
 		
-		\begin{tabularx}{0.9\textwidth}{C{0.5} C{0.2} C{0.15} C{0.15}}
+		\begin{tabularx}{0.9\textwidth}{C{0.5} C{0.25} C{0.1} C{0.15}}
 			\toprule
 			\thead{Sequence} & \thead{Average drift\tnote{a} [$\frac{m}{s}$]} & \thead{Scale} & \thead{ATE\tnote{b} [${m}$]}\\
 			\midrule

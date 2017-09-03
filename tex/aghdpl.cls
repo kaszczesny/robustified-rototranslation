@@ -76,9 +76,9 @@ Opiekun pracy: & {\itshape \@supervisor}\\
 
 \def\thesistable{
 \begin{tabular}{p{45mm}l}
-Authors: & {\itshape \@author}\\[-1mm]
-Degree programme: & {\itshape \@degreeprogramme}\\[-1mm]
-Supervisor: & {\itshape \@supervisor}\\
+Autorzy: & {\itshape \@author}\\[-1mm]
+Kierunek studi\'{o}w: & {\itshape \@degreeprogramme}\\[-1mm]
+Opiekun pracy: & {\itshape \@supervisor}\\
 \end{tabular}
 }
 }
@@ -96,8 +96,8 @@ Supervisor: & {\itshape \@supervisor}\\
 
 \vspace*{2mm}
 
-%{\sffamily{\large{\bfseries{\scshape Akademia G\'{o}rniczo-Hutnicza im. Stanis\l{}awa Staszica w Krakowie}}}
-{\sffamily{\large{\bfseries{\scshape AGH University of Science and Technology}}}
+{\sffamily{\large{\bfseries{\scshape Akademia G\'{o}rniczo-Hutnicza im. Stanis\l{}awa Staszica w Krakowie}}}
+%{\sffamily{\large{\bfseries{\scshape AGH University of Science and Technology}}}
 
 \vspace*{1mm}
 
@@ -107,13 +107,13 @@ Supervisor: & {\itshape \@supervisor}\\
 {\small{\MakeUppercase{\@department}}}
 \vspace*{12mm}
 
-{\sffamily\Large \@thesistype}
+{\sffamily\bfseries \MakeUppercase{\@thesistype}}
 \vspace*{9mm}
 
-{\sffamily\Large\itshape \@titlePL}
+{\sffamily\Large\itshape \@titleEN}
 \vspace*{1mm}
 
-{\sffamily\Large\itshape \@titleEN}
+{\sffamily\itshape \@titlePL}
 \vspace{\fill}
 \end{center}
 
