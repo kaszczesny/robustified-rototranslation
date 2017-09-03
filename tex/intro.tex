@@ -7,39 +7,53 @@
 Egomotion is an underlying problem behind SLAM systems and in some cases can be more accurate than GPS systems.
 
 %Problem badawczy – napiszmy jasno, jaki był cel badania, co badaliśmy, jaki problem intelektualny/praktyczny staraliśmy się rozwiązać.
-Problem present in most GPS applications is accuracy of the readings while making sharp turns, for example on roundabouts, which may lead to taking the wrong route. To increase this accuracy, Visual Odometry could be used. Rebvo algorithm was tested for that routine, as creators of said algorithm point out its real-time capabilities.
+Problem present in most GPS applications is accuracy estimated position while making sharp turns, for example on roundabouts, where driver needs quicky feedback on whether he took the appropriate turn. To increase this accuracy, Visual Odometry could be used. This work performs in-depth analysis of a state-of-the-art VO algorithm and proposes some improvements that are especially suited for road scenarios.
+
+
+%Rebvo algorithm was tested for that routine, as creators of said algorithm point out its real-time capabilities.
 
 %Metodologia – należy opisać jak staraliśmy się odpowiedzieć na pytanie z poprzedniego punktu. Perspektywa, metody, techniki.
-Rebvo algorithm was implemented in Octave/OpenCV/mex to test how it behaves under specific conditions and whether it will suit aforementioned environment.
+Analyzed algorithm was implemented in GNU Octave and tested using popular datasets. Much attention has been paid to intermediate results.
 
 %Wyniki – streszczamy to, co nasze badanie wykazało.
 %Implikacje – abstrakt zamykamy wnioskami, które płyną z naszej pracy.
 Tests show convergence with algorithm authors' publication, and conclude that said algorithm would work well under conditions mentioned before, making it useful in implementation of GPS units' performance increasing system.
 
+Tests show that algorithm converges quickly. Some challenges of urban scenarios were not solved, but ways for improvement are suggested.
+
+
 %Słowa kluczowe – dla porządku i ułatwienia sklasyfikowania naszej pracy opisujemy ją słowami kluczowymi.
-Keywords: Visual odometry, egomotion, motion estimation, SLAM
+\textbf{Keywords}~\==~visual odometry, egomotion, motion estimation, SLAM, edge detection
 
 \addcontentsline{toc}{chapter}{Introduction}
 \chapter*{Introduction}
 
 
-Odometry is a term describing measurement of distance (from Greek: \textit{odos}~\==~ ``path``, \textit{metron}~\==~``measure``). For instance, car odometer is a device that calculates total traveled distance through multiplication of wheel diameter by the number of wheel spins. Visual odometry aims to determine the \textit{egomotion} of an object -- its position relative to a rigid scene -- by observing changes in video registered by one or more cameras attached to said object.
+Odometry is a term describing measurement of distance (from Greek: \textit{odos}~\==~ ``path``, \textit{metron}~\==~``measure``). For instance, car odometer is a device that calculates total traveled distance through multiplication of wheel diameter by the number of wheel spins. Visual odometry (VO) aims to determine the \textit{egomotion} of an object -- its position relative to a rigid scene -- by observing changes in video registered by one or more cameras attached to said object.
 
 % to proste i tanie rozwiazanie dla lokalizacji kamery w porownaniu do gpsow, zyroskopow etc, a do tego kazdy ma durzo kamer bo sa wszedzie. jest wykorzystywana do stabilizacji obrazu, augmented reality albo po prostu w systemach SLAM(Self LOcalization And Mapping) wykorzystywanego w robotach/dronach do pomocy w autonomicznym poruszaniu sie czegos takiego lub mapowania pomieszczen. w tym paperze zajmujemy sie jednak tylko pozycja kamery ale nie jako system slam, bo nie trzymamy historii.
 % POKEMON GO TO THE MAGISTERKA
 
 Main advantage of visual approach to odometry is ubiquity of cameras embedded into virtually every mobile device -- be it a smarphone, game console or even a smartwatch. Not every of those devices has a gyroscope, and even if a GPS (Global Positioning System) chip is present, its locational accuracy is low. Practical applications of visual odometry include:
-\begin{itemize}
-	\item SLAM (Self\=/Localization And Mapping) used by autonomous robots, e.g. Mars Exploration Rovers, drones or self-driving cars.
+\begin{enumerate}
+	\itemsep0em
+	\item SLAM (Self\=/Localization And Mapping) used by autonomous robots, e.g. Mars Exploration Rovers, drones or self-driving cars. Calculation and maintenance of such maps is usually a computationally demanding task, however.
 	
 	\item Handheld video stabilization, realized in software.
 	
-	\item AR (Augmented Reality) -- last year in particular saw the emergence of \textit{Pok\'emon`GO} \cite{pineco}, an acclaimed mobile game. Recently Google has released \textit{ARCore}~\cite{androidvr} , a software development kit, który jest przeznaczony na telefony obficie czerpie z rozwiązań wizualnej odometrii.
-\end{itemize}
+	\item AR (Augmented Reality) -- last year in particular saw the emergence of \textit{Pok\'emon`GO} \cite{pineco}, an acclaimed mobile game. Recently Google has released \textit{ARCore}~\cite{androidvr} , a software development kit, that internally uses many VO ideas.
+\end{enumerate}
 
 
-Following this trend of mobile cośtam, a vision-based driving assistance system was envisioned ktory by korzystal tylko z tego co ma kazdy tel: kamera i gps, oczywiscie dzialajac real time. zastosowaniem mialo byc wspieranie gps ....
+Following this trend of development for mobile devices, a vision-based driving assistance system was initially envisioned for this thesis. It was meant to use peripherals available in every smartphone. Its purpose would have been a real-time navigation aid for consumer-grade smartphones -- assistance for GPS in places where more precision is needed, e.g. on a roundabout, where exit roads are located too close to each other. Ultimately only a prototype of pure visual odometry system was created, but results and ideas for future improvement do not invalidate the original concept.
 
+The developed and analyzed algorithm is very closely based on a solution presented in \cite{jose2015realtime}. This work was chosen as it presented a novel approach, similar to efficient semi-dense methods.
+
+Each step of the algorithm flow was analyzed and tested on video sequences from publicly available datasets that also contain ground truth data for validation purposes.
+
+Thesis is divided into four chapters. Chapter~\ref{cha:intro} contains theoretical introduction and state-of-the-art. It is also explained what are the challenges of monocular vision that set it apart from the more popular stereo approach. Details of the presented algorithm are elaborated upon in Chapter~\ref{cha:intro2}. Final obtained results are given and commented in Chapter~\ref{cha:results}. The concluding Chapter~\ref{cha:conclusion} contains final remarks and directions of future development.
+
+During algorithm development, Jan Twardowski was mainly responsible for edge joining (Sec.~\ref{sec:joining}), post-minimization edge matching (Sec.~\ref{sec:directed}) and regularization (Sec.~\ref{sec:regul}); while Krzysztof Szcz\k{e}sny~\==~for energy minimization (Sec.~\ref{sec:energyminim}) and depth reestimation (Sec.~\ref{sec:kalman}). Other algorithm sections and testing were performed jointly. 
 
 %Full SLAM systems are often computationally demanding and are best suited for dedicated devices, which smartphones are not. Instead we looked for a lightweight solution for increasing accuracy of GPS data for better navigation, for example on roundabouts.
 
@@ -52,14 +66,14 @@ Following this trend of mobile cośtam, a vision-based driving assistance system
 
 
 %nasz paper zawiera analize zmodyfkowanej wersji REBWO, nie jest na telefonie bo jestesmy slabiaki (cieniasy?), nasza implementacja to tylko prototyp bo mialo byc na telefony ale nie jest szypkie ale tez bylo niby realtime wiec to bylby rozwoj programu, analiza tego algorytmu obejmuje wszystkie kroki po akwizycji obrazu bo po chuj nam drona a z drugiej strony chcemy zaczac od obrazu stricte
-We chose Rebvo algorithm, created by Tarrio and Pedre, since they presented a quick, accurate, and most importantly unique algorithm for visual odometry. This paper contains detailed analysis of Rebvo algorithm which is a prototype for smartphone application. Their implementation is supposed to be real-time on low-end processors (ARM).
-Each step of the algorithm flow from image capture was analyzed and tested on video sequences from publicly available datasets containing ground truth for validating results. Our results were comparable to those achieved from state-of-the-art algorithms, which ensures that this implementation would make a good basis for aforementioned application.
+%We chose Rebvo algorithm, created by Tarrio and Pedre, since they presented a quick, accurate, and most importantly unique algorithm for visual odometry. This paper contains detailed analysis of Rebvo algorithm which is a prototype for smartphone application. Their implementation is supposed to be real-time on low-end processors (ARM).
+
 %podsumujemy sobie ze testowalismy a sekwencjach z dwoch datasetow a wyniki sa spoko jak sa spoko, bo jak sie zepsuje to nie XD
 
-This thesis is organized as follows:
+%This thesis is organized as follows:
 
-PODZIAL PRACY
- edgefinder jointly, joiner ja, minimizer ty, matcher ja, kalman ty :S
+%PODZIAL PRACY
+% edgefinder jointly, joiner ja, minimizer ty, matcher ja, kalman ty :S
 
 
 
