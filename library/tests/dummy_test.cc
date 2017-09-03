@@ -35,8 +35,11 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "tests.h"
+#include "../src/RobustifiedRototranslation.h"
 
 using namespace cv;
+
+namespace UnitTests {
 
 /**
  * Sanity check whether OpenCV works.
@@ -96,6 +99,18 @@ bool dummy_test2(void *arg) {
 }
 
 /**
+ * Tests whether librr is available (i.e. linked properly).
+ * @param[in] arg unused
+ * @return always true (this is compile-time test)
+ */
+bool library_dummy_test(void *arg) {
+	(void)arg; //avoid unused argument error
+	
+	RobustifiedRototranslation rr;
+	return true;
+}
+
+/**
  * A test to show how to use tests with arguments.
  * @param[in] n number to be tested
  * @return false if n is odd
@@ -124,3 +139,6 @@ bool dummy_are_even(dummy_are_even_t s) {
 bool dummy_addition(dummy_addition_t s) {
 	return s.a + s.b == s.c;
 }
+
+} //namespace UnitTests
+

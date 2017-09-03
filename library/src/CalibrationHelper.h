@@ -1,11 +1,13 @@
 /**
- * @file tests.h Definitions of unit test functions
+ * @file CalibrationHelper.h CalibrationHelper class definition.
+ * This header can be included by application using the library.
  *
- * @author Krzysztof Szczęsny
- * @date Created on: 6 March 2017
+ * @author Krzysztof Szczęsny, Jan Twardowski
+ * @date Created on: 14 March 2017
  * @version 1.0
  * @copyright Copyright (c) 2017 Krzysztof Szczęsny, Jan Twardowski
  * @pre OpenCV 3.1
+ * @pre C++11
  * @par License
  *
  * MIT License
@@ -31,43 +33,35 @@
  * SOFTWARE.
  */
 
-#ifndef TESTS_H
-#define TESTS_H
+#ifndef CALIBRATION_HELPER_H_
+#define CALIBRATION_HELPER_H_
 
-/// Everything unit-test related (exluding the main function)
-namespace UnitTests {
-
-bool dummy_test(void *);
-bool dummy_test2(void *);
-bool library_dummy_test(void *);
-bool dummy_is_even(int n);
-/**
- * @brief Example structure that could be passed into unit test function as argument
- */
-struct dummy_are_even_t {
-	/// There must be a constructor that takes an int (default_arg)
-	dummy_are_even_t(int) {}; 
-	/// Facilitates vector initialization
-	dummy_are_even_t(int a, int b, const char* c): a(a), b(b), c(c) {};
-	int a; ///< field checked for parity
-	int b; ///< field checked for parity
-	const char* c; ///< message to be printed
-};
-bool dummy_are_even(dummy_are_even_t s);
+#include "common.h"
 
 /**
- * @brief Example structure that could be passed into unit test function as argument but different
+ * Collects photos of checkerboard pattern photos, performs OpenCV calibration,
+ * computes undistortion map and saves it along with intrinsic camera parameters.
+ * @todo everything
+ * @todo somehow facilitate nonparametric calibration?
+ * @todo native resolution?
  */
-struct dummy_addition_t {
-	/// There must be a constructor that takes an int (default_arg)
-	dummy_addition_t(int) {}; 
-	/// Facilitates vector initialization
-	dummy_addition_t(int a, int b, int c): a(a), b(b), c(c) {};
-	int a; ///< addend
-	int b; ///< addend
-	int c; ///< expected sum of and b
+class CalibrationHelper {
+	public:
+		/**
+		 * Constructor.
+		 * @note use case: pass configuration (pattern size, winsize, zerozone, FAST_CHECK etc
+		 */
+		CalibrationHelper();
+		
+		/**
+		 * Dealloc everything.
+		 */
+		~CalibrationHelper();
+		
+	#ifndef TEST
+	private:
+	#endif
+		
 };
-bool dummy_addition(dummy_addition_t s);
 
-} //namespace UnitTests
 #endif
