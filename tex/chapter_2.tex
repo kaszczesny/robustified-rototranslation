@@ -426,6 +426,8 @@ where:
 	\item[$Q$] 3D world point (3-vector).
 \end{eqwhere}
 
+\newpage
+
 \begin{equation}
 \psi(\vec{v}, \vec{\omega}, Q) = \mathfrak{exp} \left ( \left[ \vec{\omega} \right ]_{s} \right ) Q + \vec{v}
 \label{eq:rototr}
@@ -482,6 +484,8 @@ During each iteration of minimization, reprojected old Keylines and new Keylines
 	\caption{ Minimization tests results. Pixel colors: dark blue -- not Keyline; blue~\==~ $\sigma_{\rho}$ too high; cyan -- too short history; teal -- 2D reprojection lies outside the image; orange -- no corresponding Keyline in next frame's auxiliary image; red -- gradients dissimilar; dark red -- successful matching }
 	\label{fig:minim_why}
 \end{figure}
+
+\newpage
 
 \subsection{Energy minimization}
 \label{sec:energyminim}
@@ -551,10 +555,13 @@ This was tested in GNU Octave, using OpenCV \cite{opencv} linear algebra routine
 	\end{threeparttable}
 \end{table}
 
+\newpage
 
 After optimal transformation parameters have been found, uncertainty of the result is estimated as covariance matrix in form $\left( \tmmathbf{J}^T \tmmathbf{J} \right) ^ {-1}$. \textbf{If the matrix being converted is ill-conditioned, then it is assumed that minimization has failed.} For example, this can happen if no matches at all were found. Then all residuals will be equal and $\zeta$ will be completely flat locally. Usually minimization fails only if number of input Keylines is too low.
 
 Moreover, after last minimization iteration, the $m_{pf}$ field of previous Keylines is populated. For every Keyline that was successfully matched to a current Keyline, reference to this current Keyline is saved in the said field.
+
+\newpage
 
 \subsection{Initial conditions}
 

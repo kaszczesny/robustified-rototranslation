@@ -1,46 +1,45 @@
 
 \addcontentsline{toc}{chapter}{Abstract}
-\chapter*{Abstract}
+\section*{Abstract}
 
 
 %Uzasadnienie podjęcia tematu – musimy odpowiedzieć na pytanie, jak i dlaczego ważne jest to, o czym napisaliśmy.
-GPS applications struggle during rapid changes of motion, e.g.~while sharp turns are made. Yet driver needs feedback from the positioning system particularly at such moments.
+GPS applications struggle with precision during rapid changes of motion, e.g.~while sharp turns are made during roundabout exit. Yet driver needs feedback from the positioning system particularly at such moments.
 Visual Odometry systems are usually more accurate (quick to act) than GPS in this regard.
 %Problem badawczy – napiszmy jasno, jaki był cel badania, co badaliśmy, jaki problem intelektualny/praktyczny staraliśmy się rozwiązać.
-This work performs in-depth analysis of a chosen state-of-the-art VO algorithm and proposes some improvements that are especially suited for road scenarios.
+This work performs in-depth analysis of a chosen state-of-the-art, real-time VO algorithm and proposes some improvements that are especially suited for road scenarios.
 %Rebvo algorithm was tested for that routine, as creators of said algorithm point out its real-time capabilities.
 %Metodologia – należy opisać jak staraliśmy się odpowiedzieć na pytanie z poprzedniego punktu. Perspektywa, metody, techniki.
 Analyzed algorithm was implemented in GNU Octave and tested using popular datasets. Much attention was paid to intermediate results.
 %Wyniki – streszczamy to, co nasze badanie wykazało.
 %Implikacje – abstrakt zamykamy wnioskami, które płyną z naszej pracy.
 %Tests show convergence with algorithm authors' publication, and conclude that said algorithm would work well under conditions mentioned before, making it useful in implementation of GPS units' performance increasing system.
-Tests show that algorithm converges quickly. Some challenges of urban scenarios were not solved, but ways for improvement were suggested.
-
+Tests show that algorithm converges quickly to the expected trajectory shape. Some challenges of urban scenarios were not solved, but solutions were suggested.
 
 %Słowa kluczowe – dla porządku i ułatwienia sklasyfikowania naszej pracy opisujemy ją słowami kluczowymi.
-\textbf{Keywords}~\==~visual odometry, egomotion, motion estimation, edge detection
+\textbf{Keywords}~\==~visual odometry, motion estimation, edge detection
 
-GPS applications struggle during rapid changes of motion, e.g.~while sharp turns are made. Yet driver needs feedback from the positioning system particularly at such moments.
-Visual Odometry systems are usually more accurate (quick to act) than GPS in this regard.
-%Problem badawczy – napiszmy jasno, jaki był cel badania, co badaliśmy, jaki problem intelektualny/praktyczny staraliśmy się rozwiązać.
-This work performs in-depth analysis of a chosen state-of-the-art VO algorithm and proposes some improvements that are especially suited for road scenarios.
-%Rebvo algorithm was tested for that routine, as creators of said algorithm point out its real-time capabilities.
-%Metodologia – należy opisać jak staraliśmy się odpowiedzieć na pytanie z poprzedniego punktu. Perspektywa, metody, techniki.
-Analyzed algorithm was implemented in GNU Octave and tested using popular datasets. Much attention was paid to intermediate results.
-%Wyniki – streszczamy to, co nasze badanie wykazało.
-%Implikacje – abstrakt zamykamy wnioskami, które płyną z naszej pracy.
-%Tests show convergence with algorithm authors' publication, and conclude that said algorithm would work well under conditions mentioned before, making it useful in implementation of GPS units' performance increasing system.
-Tests show that algorithm converges quickly. Some challenges of urban scenarios were not solved, but ways for improvement were suggested.
+\section*{Abstrakt}
 
+Aplikacje korzystające z GPS nie radzą sobie z dokładnością lokalizacji podczas gwałtownych ruchów, np. przy zjeżdżaniu z ronda. A przecież właśnie wtedy informacja o pozycji jest dla kierowcy najwazniejsza.
+Systemy odometri wizyjnej zazwyczaj przewyższają w tym zakresie GPS.
+W niniejszej pracy przeprowadzono dogłębną analizę wybranego nowoczesnego algorytmu odometrii wizyjnej, mogącego pracować w czasie rzeczywistym na urządzeniu mobilnym. Na podstawie badań zaproponowano ulepszenia algorytmu, które znajdą zastosowanie szczególne w warunkach drogowych.
+Analizowany algorytm został zaimplementowany w środowisku GNU Octave oraz przetestowany z użyciem popularnych sekwencji testowych. Podczas analizy dużą uwagi poświęcono śródwynikom poszczególnych kroków algorytmu.
+Testy wykazały, że algorytm jest szybko zbieżny do oczekiwanej trajektorii. Nie udało się poprawić wszystkich błędów, jakie mogą wystąpić w sekwencjach nagrywanych na jezdni, ale wskazano możliwe rozwiązania.
+
+\textbf{S\l{}owa kluczowe}~\==~odometria wizyjna, estymacja ruchu, wykrywanie kraw\k{e}dzi
+
+\newpage
+
+\section*{Introduction}
 \addcontentsline{toc}{chapter}{Introduction}
-\chapter*{Introduction}
 
 
 Odometry is a term describing measurement of distance (from Greek: \textit{odos}~\==~ ``path``, \textit{metron}~\==~``measure``). For instance, car odometer is a device that calculates total traveled distance through multiplication of wheel diameter by the number of wheel spins. Visual odometry (VO) aims to determine the \textit{egomotion} of an object -- its position relative to a rigid scene -- by observing changes in video registered by one or more cameras attached to said object.
 
 % to proste i tanie rozwiazanie dla lokalizacji kamery w porownaniu do gpsow, zyroskopow etc, a do tego kazdy ma durzo kamer bo sa wszedzie. jest wykorzystywana do stabilizacji obrazu, augmented reality albo po prostu w systemach SLAM(Self LOcalization And Mapping) wykorzystywanego w robotach/dronach do pomocy w autonomicznym poruszaniu sie czegos takiego lub mapowania pomieszczen. w tym paperze zajmujemy sie jednak tylko pozycja kamery ale nie jako system slam, bo nie trzymamy historii.
 % POKEMON GO TO THE MAGISTERKA
-
+%\cite{jose2015realtime}
 Main advantage of visual approach to odometry is ubiquity of cameras embedded into virtually every mobile device -- be it a smarphone, game console or even a smartwatch. Not every of those devices has a gyroscope, and even if a GPS (Global Positioning System) chip is present, its locational accuracy is low. Practical applications of visual odometry include:
 \begin{enumerate}
 	\itemsep0em
@@ -48,7 +47,7 @@ Main advantage of visual approach to odometry is ubiquity of cameras embedded in
 	
 	\item Handheld video stabilization, realized in software.
 	
-	\item AR (Augmented Reality) -- last year in particular saw the emergence of \textit{Pok\'emon`GO} \cite{pineco}, an acclaimed mobile game. Recently Google has released \textit{ARCore}~\cite{androidvr} , a software development kit, that internally uses many VO ideas.
+	\item AR (Augmented Reality) -- last year in particular saw the emergence of \textit{Pok\'emon`GO}~\cite{pineco}, an acclaimed mobile game. Recently Google has released \textit{ARCore}~\cite{androidvr} , a software development kit, that internally uses many VO ideas.
 \end{enumerate}
 
 
