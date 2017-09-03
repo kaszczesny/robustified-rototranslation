@@ -6,7 +6,8 @@ Overall, presented algorithm continues the novel take on lightweight and pure vi
 Results are promising, especially in cases of complicated motion, which was primary problem on assumed designation of implementation of said algorithm. Trajectories fit nicely onto the ground truth to some degree, which means that instantaneous azimuths are being estimated adequately. They are crucial, because absolute camera position was originally supposed to be acquired from a GPS unit, and camera orientation~\==~from odometry. Algorithm needs to be robustified against challenges of urban scenes, though. Presented implementation is publicly available via a Git repository: \url{https://github.com/kaszczesny/robustified-rototranslation}, so that it can be independently verified, or perhaps further developed.
 
 Additions to the original implementation \cite{jose2015realtime} that were described in Chapter~\ref{cha:results} include:
-\begin{itemize}
+\begin{itemize}[topsep=0.5em]
+	\itemsep-0.25em
 	\item removal of aritifical border edges possibly created during image rectification (applied before any edge detection substep),
 	\item one more edge detection test, that removes the need of having to later handle division by zero (or by numbers close to zero),
 	\item simpler, but a little bit more effective edge detection threshold control mechanism (instead of hysteresis),
@@ -21,7 +22,8 @@ Additions to the original implementation \cite{jose2015realtime} that were descr
 %Jest całkiem spoko, ale trzeba nad tym wiecej popracowac zeby dostosowac do zalozenia. Wyniki sa obiecujace, szczegolnie rotacja na co wskazuje poprawne dopasowywanie sie trajektorii, a odleglosc i tak chcielismy wziac z gpsa.
 
 A handful of possible ways to further improve presented solution have been addressed also throughout the Chapter~\ref{cha:results}:
-\begin{itemize}
+\begin{itemize}[topsep=0.5em]
+	\itemsep-0.25em
 	\item incorporation of fuzzy logic into edge detection,
 	\item feature-based depth initialization (deemed unnecessary),
 	\item usage of full pinhole camera model in projection and back-projection functions,

@@ -683,6 +683,32 @@ During tests some datasets exhibited salt-and-pepper noise in estimated depth ma
 \subsection{Depth reestimation}
 \label{sec:kalman}
 
+Depth can not be simply copied to current Keylines from corresponding previous ones, as camera has moved between frames, changing distance from the origin to 3D points. An EKF (Extended Kalman Filter) is separately used for each Keyline in estimate current depths; depth uncertainty is reestimated as well. Uncertainty of estimated translation and rotation, obtained in Section~\ref{sec:energyminim}, is taken into account. Prediction and correction equations for $\rho$ are (\ref{eq:kalmanpred}) and (\ref{eq:kalmancor}), respectively
+
+\begin{equation}
+ F(\rho_{p}, \vec{v}) = \left( \frac{1}{\frac{1}{\rho_{p}} + v_z} \right) N(1,Q_{rel}) + N(0,Q_{abs})
+\label{eq:kalmanpred}
+\end{equation}
+where:
+\begin{eqwhere}[2cm]
+	\item[$F$] prediction function,
+	\item[$N(\mu, \sigma)$] normal-distributed random variable with mean $\mu$ and standard deviation $\sigma$, 
+	\item[$Q_{rel}$] multiplicative noise standard deviation (constant),
+	\item[$Q_{abs}$] additive noise standard deviation (constant).
+\end{eqwhere}
+
+
+\begin{equation}
+H(\rho_{c}, \vec{v}) = \left( \left( f \left[ v_x,\ \ v_y \right] ^T - h_{c} v_z \right )  \bullet \frac{\vec{g_p}}{\norm{\vec{g_p}}} \right) \rho_{c} + N(0,1)
+\label{eq:kalmancor}
+\end{equation}
+where:
+\begin{eqwhere}[2cm]
+	\item[$H$] correction function.
+\end{eqwhere}
+
+Depth has been constrained in \cite{jose2015realtime} between $\frac{1}{20}$ and $1000$. However, it has been observed that Keylines too close to the camera can disturb the algorithm convergence. Much better results were obtained when minimal allowed depth was raised to $1$. These values are relativ to initial depth in the first frame (mean value of the used distribution) and to other algorithm parameters.
+
  todo; @kwant: only missing and not finished part of Chapter 2 is this section
  % kalman fiter
 
@@ -696,7 +722,7 @@ Tests have concluded that $\Xi$ oscillates too much while the system is initiali
 
 This does not remedy the fundamental problem of scale ambiguity in monocular systems. To fix this issue, dimensions of real-life objects present the scene need to be known a priori. Excellent example of such objects, with well defined shape and size, are \textbf{traffic signs and license plates}, ever-present in urban environments that the algorithm was originally envisioned for. Solutions for identifying those objects are:
 \begin{itemize}
-	\item Haar feature-based cascade classifier combined with descriptor ORB (Oriented FAST and Rotated BRIEF) \cite{opencv},
+	\item Haar feature-based cascade classifier combined with ORB (Oriented FAST and Rotated BRIEF) descriptor \cite{opencv},
 	\item machine learning methods: SVM (Support Vector Machine) and neural networks,
 	\item rectangle detection by the means of Hough transform,
 	\item sliding window applied over image saliency \cite{lin2010robust}.
