@@ -137,7 +137,7 @@ In case of DoG, these \textbf{artificial edges need to be removed} before Gaussi
 \subsection{Difference of Gaussians strength tests}
 \label{sec:dog_tests}
 
-After necessary preprocessing, edge detection can be started. Generally edge detection works by finding positions in image where pixel intensity changes most rapidly. Basic idea of DoG is to approximate image second derivative (the Laplacian) \cite{szeliski} \cite{jain1995machine}. The zero-crossing of Laplacian corresponds to such positions. Example based on real data, reduced to one dimension for clarity, is presented on Fig.~\ref{fig:slice}. Other approaches to edge detection involve curve fitting~\cite{fabijanska}~\cite{devernay1995non}~\cite{wei2010two}.
+After necessary preprocessing, edge detection can be started. Generally edge detection works by finding positions in image where pixel intensity changes most rapidly. Basic idea of DoG is to approximate image second derivative (the Laplacian) \cite{szeliski} \cite{jain1995machine}. The zero-crossing of Laplacian corresponds to such positions. Example based on real data, reduced to one dimension for clarity, is presented on Fig.~\ref{fig:slice}. Other approaches to edge detection involve curve fitting~\cite{fabijanska}~\cite{devernay1995non}.
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth, trim={1.5cm 1.5cm 1.5cm 1.0cm},clip]{img/figures/subpixelslice.png}
@@ -231,7 +231,7 @@ Then DoG values are approximated by a plane using linear regression -- (\ref{eq:
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth]{img/figures/zeroc2.png}
-	\caption{ Zero-crossing search. Local approximation of DoG values has been depicted with a colored plane. It intersects the $z=0$ plane, creating a red line. Blue line also lies on the $z=0$ plane; it passes through the origin (cyan point) and is perpendicular to red line. Intersection these two lines (black point) is the zero crossing }
+	\caption{ Geometric interpretation of zero-crossing search. Local approximation of DoG values has been depicted with a colored plane. It intersects the $z=0$ plane, creating the red line. Blue line also lies on the $z=0$ plane; it passes through the origin (cyan point) and is perpendicular to red line. Intersection of these two lines (black point) is the zero crossing }
 	\label{fig:zeroc}
 \end{figure}
 
@@ -253,14 +253,7 @@ where:
 
 
 \begin{equation}
-\begin{bmatrix}
-x_s \\
-y_s 
-\end{bmatrix} = 
-\begin{bmatrix}
-\frac{-\theta_{x} \theta{y}}{\theta_x^2 + \theta_y^2} \\
-\frac{-\theta_{y} \theta{y}}{\theta_x^2 + \theta_y^2}
-\end{bmatrix}
+\left[ x_s,\ \ y_s \right]^T = \left[ \frac{-\theta_{x} \theta{y}}{\theta_x^2 + \theta_y^2},\ \ \frac{-\theta_{y} \theta{y}}{\theta_x^2 + \theta_y^2} \right]^T
 \label{eq:zerocross}
 \end{equation}
 where:
@@ -305,7 +298,7 @@ where:
 
 \subsubsection*{Edge detection tests summary}
 
-Colored regions visible in Fig.~\ref{fig:edgeprob} do resemble to some degree a probability distribution -- the probability that given pixel contains an edge. Thus initially \textbf{use of fuzzy logic was considered}. Ultimately, as already mentioned, detected edges were deemed to be acceptable, so this idea was not pursued. Such approach would also require more processing power, making it less suitable for mobile devices.
+Colored regions visible in Fig.~\ref{fig:edgeprob} do resemble to some degree a probability distribution~\==~the probability that given pixel contains an edge. Thus initially \textbf{use of fuzzy logic was considered}. Ultimately, as already mentioned, detected edges were deemed to be acceptable, so this idea was not pursued. Such approach would also require more processing power, making it less suitable for mobile devices.
 
 
 
@@ -398,7 +391,7 @@ Joined Keylines are used for pruning. First of all, edges consisting of 3 pixels
 In later steps, the algorithm considers only individual Keylines, not joined edges (as mentioned in Section~\ref{sec:rebvo_outline}). Information about neighbors is used after edge detection only once -- in Regularization step, where $\rho$ and $\sigma_{\rho}$
 are averaged over Keyline and its 2 immediate neighbors.
 
-Initially \textbf{more edge joining strategies had been considered}: morphological operations on Keylines, loop avoidance and edge segmentation (into parts with similar gradient). However, once it was understood that edge joining takes such small part in algorithm flow and that by-pixel approach is preferable \cite{harris}, this direction of research was abandoned.
+Initially \textbf{more edge joining strategies had been considered}: morphological operations on Keylines, loop avoidance and edge segmentation (into parts with similar gradient). However, once it was understood that edge joining takes such small part in algorithm flow and that by\=/pixel approach is preferable \cite{harris}, this direction of research was abandoned.
 
 
 %--
@@ -674,7 +667,7 @@ After forward matching and directed matching, the number of valid matches must e
 
 \begin{figure}[ht]
 	\centering\includegraphics[width=1.0\linewidth, trim={1.5cm 1.5cm 1.5cm 1cm},clip]{img/figures/match_.png}
-	\caption{ Matches laid over an image from the TUM~\cite{tum} dataset. Red pixels denote Keylines in this frame; blue~\==~Keylines in next frame (not transformed in any way); pink~\==~positions occupied by a Keyline in both frames, regardless if these Keylines are related; green vectors~\==~directed matches between Keylines. Not matched Keylines are still visible. }
+	\caption{ Matches laid over an image from the TUM~\cite{tum} dataset. Red pixels denote Keylines in this frame; blue~\==~Keylines in next frame (not transformed in any way); pink~\==~positions occupied by a Keyline in both frames, regardless if these Keylines are related; green vectors~\==~directed matches between Keylines. Not matched Keylines are still visible }
 	\label{fig:match}
 \end{figure}
 
@@ -725,7 +718,7 @@ Rendering a full 3D sequence using e.g. a game engine was also considered, but d
 \subsection{Trajectory fitting}
 \label{sec:fitting}
 
-In order to assess algorithm accuracy as it processes new frames, estimated camera trajectory is systematically compared with ground truth data after each frame. An optimal isotropic scaling and Euclidean transformation between two trajectories is searched for. Obtained parameters do not influence future algorithm iterations, as in real world applications such data is simply unavailable. They are calculated only for visualization purposes.
+In order to assess algorithm accuracy as it processes new frames, estimated camera trajectory is systematically compared with ground truth data after each frame. An optimal isotropic scaling and Euclidean transformation between two trajectories is searched for. Obtained parameters do not influence future algorithm iterations, as in real world applications such data is simply unavailable. They are calculated only for visualization purposes. These visualizations are used throughout Chapter~\ref{cha:results}.
 
-In \cite{arun1987least} it is described how to find an optimal (in the least square sense) translation and rotation between two trajectories 3D using SVD. Scaling factor can determined using \texttt{fminsearch}, a~black-box minimization routine available in the GNU Octave environment. Usually first 5 trajectory samples are not taken into account, as they are very noisy, because system is not yet initialized. Generally if system does converge at all, then good conformance with ground truth is achieved only after just a few frames. Mean residual distance between optimized trajectories is the final accuracy measure that is used in Chapter~\ref{cha:results}.
+In \cite{arun1987least} it is described how to find an optimal (in the least square sense) rotation and translation between two trajectories 3D using SVD. Scaling factor can determined using \texttt{fminsearch}, a~black-box minimization routine available in the GNU Octave environment. Usually first 5 trajectory samples are not taken into account, as they are very noisy because of system being not yet initialized. Generally if system does converge at all, then some level of conformance with ground truth is achieved only after just a few frames.
 

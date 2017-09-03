@@ -27,7 +27,7 @@ A few system parameters had to be adjusted between TUM and KITTI datasets, but t
 
 \section{Trajectory comparison}
 
-Presented results consists mainly from the following sequences. Selected values have been collected in Table~\ref{tab:drift} - first two were used only for visualization as discussed in Section~\ref{sec:fitting}, last one was obtained from evaluation script $evaluate\_ate$ available in TUM evaluation benchmark \cite{TUM}. It should be noted that these numbers are scores for only parts of said sequences.
+Presented results consists mainly from the following sequences. Selected values have been collected in Table~\ref{tab:drift} - first two were used only for visualization as discussed in Section~\ref{sec:fitting}, last one was obtained from evaluation script $evaluate\_ate$ available in TUM evaluation benchmark \cite{tum}. It should be noted that these numbers are scores for only parts of said sequences.
 \begin{itemize}
 	\item TUM fr1\_xyz - only translatory motions are present here, as stated by creators of this dataset "\textit{it's mainly for debugging purposes}",
 	\item TUM fr2\_desk - slow sweep around an office desk,
@@ -47,7 +47,7 @@ Presented results consists mainly from the following sequences. Selected values 
 		
 		\begin{tabularx}{0.9\textwidth}{C{0.5} C{0.2} C{0.15} C{0.15}}
 			\toprule
-			\thead{Sequence} & \thead{Average drift [$\frac{m}{s}$]} & \thead{Scale} & \thead{ATE\tnote{a} [${m}$]}\\
+			\thead{Sequence} & \thead{Average drift\tnote{a} [$\frac{m}{s}$]} & \thead{Scale} & \thead{ATE\tnote{b} [${m}$]}\\
 			\midrule
 			TUM fr3\_long\_office\_household & $3.6$ & 1.6 &  0.302 \\
 			TUM fr3\_teddy (long subsequence) & $1.8$ & 1.1 & 0.287 \\
@@ -59,14 +59,15 @@ Presented results consists mainly from the following sequences. Selected values 
 		
 		\begin{tablenotes}
 			\footnotesize
-			\item[a] Absolute Trajectory Error
+			\item[a] Mean squared distance between fitted trajectory points, multiplied by the frame rate (FPS)
+			\item[b] Absolute Trajectory Error -- todo jtwardow
 		\end{tablenotes}
 		
 	\end{threeparttable}
 \end{table}
 
 Overall, the algorithm performed well in scenarios where camera underwent complex movement, instead of simple linear translations. This is due to the fact that in the former case disparities between frames generally make it easier to recover the egomotion, independently from employed odometry algorithm. For example, a view from top of a trajectory is presented in Fig.~\ref{fig:traject}. Despite the low number of frame, complex motion has been recovered relatively closely. Even in a~dataset containing outliers (independently moving objects), odometry was correct (see Fig.~\ref{fig:trajectxyz}).
-in particular
+
 \begin{figure}[ht]
 	\centering\includegraphics[width=0.75\linewidth, trim={1.0cm 1.0cm 1.5cm 1.0cm},clip]{img/figures/deskperson_trajectory.png}
 	\caption{ Example trajectory comparison between obtained results and ground truth from dataset TUM fr2\_desk\_with\_person, projected on the $y=0$ plane, as camera height was the least significant motion component. }

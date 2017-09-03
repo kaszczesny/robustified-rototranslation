@@ -3,18 +3,18 @@
 
 Overall, presented algorithm continues the novel take on lightweight and pure visual odometry from \cite{jose2015realtime}. An easier way of implementing VO would have been the classic approach: extracting feature points using one of available feature detectors, matching them and then estimating the rototranslation; possibly including IMU and/or input from the other camera along the way. However, a lot of research by the scientific community has already been performed in this area (but of course existing solutions are still being perfected). This was covered in Chapter~\ref{cha:intro}. Studies described in this thesis aimed to explore an approach that was off the beaten track and could operate in real time on mobile devices, instead of high-end personal computers.
 
-Results are promising, especially in cases of complicated motion, which was primary problem on assumed designation of implementation of said algorithm. Trajectories fit nicely onto the ground truth to some degree, which means that instantaneous azimuths are being estimated adequately. They are crucial, because absolute camera position was originally supposed to be acquired from a GPS unit, and camera orientation~\==~from odometry. Algorithm needs to be robustified against challenges of urban scenes, though.
+Results are promising, especially in cases of complicated motion, which was primary problem on assumed designation of implementation of said algorithm. Trajectories fit nicely onto the ground truth to some degree, which means that instantaneous azimuths are being estimated adequately. They are crucial, because absolute camera position was originally supposed to be acquired from a GPS unit, and camera orientation~\==~from odometry. Algorithm needs to be robustified against challenges of urban scenes, though. Presented implementation is publicly available via a Git repository: \url{https://github.com/kaszczesny/robustified-rototranslation}, so that it can be independently verified, or perhaps further developed.
 
 Additions to the original implementation \cite{jose2015realtime} that were described in Chapter~\ref{cha:results} include:
 \begin{itemize}
-	\item Removal of aritifical border edges possibly created during image rectification (applied before any edge detection substep).
-	\item One more edge detection test, that removes the need of having to later handle division by zero (or by numbers close to zero).
-	\item Simpler, but a little bit more effective edge detection threshold control mechanism (instead of hysteresis).
-	\item Depth initialization with normal-distributed random numbers in the first frame of the sequence, instead of a constant.
-	\item Creation of (marginally) more accurate lookup table for minimization.
-	\item Minor speed optimization -- usage of Cholesky decomposition instead of SVD, based on the observation that decomposed matrix is positive definite \cite{madsen2004methods}.
-	\item Optional median filter applied to edge depths before further regularization.
-	\item Proposition of depth bounds that perform better.
+	\item removal of aritifical border edges possibly created during image rectification (applied before any edge detection substep),
+	\item one more edge detection test, that removes the need of having to later handle division by zero (or by numbers close to zero),
+	\item simpler, but a little bit more effective edge detection threshold control mechanism (instead of hysteresis),
+	\item depth initialization with normal-distributed random numbers in the first frame of the sequence, instead of a constant,
+	\item creation of (marginally) more accurate lookup table for minimization,
+	\item minor speed optimization -- usage of Cholesky decomposition instead of SVD, based on the observation that decomposed matrix is positive definite \cite{madsen2004methods},
+	\item optional median filter applied to edge depths before further regularization,
+	\item proposition of estimated depth bounds that perform better.
 \end{itemize}
 
 
@@ -22,10 +22,10 @@ Additions to the original implementation \cite{jose2015realtime} that were descr
 
 A handful of possible ways to further improve presented solution have been addressed also throughout the Chapter~\ref{cha:results}:
 \begin{itemize}
-	\item Incorporation of fuzzy logic into edge detection.
-	\item Feature-based depth initialization (deemed unnecessary).
-	\item Usage of full pinhole camera model in projection and back-projection functions.
-	\item Scale ambiguity resolution by using a priori knowledge of traffic signs and license plates sizes.
+	\item incorporation of fuzzy logic into edge detection,
+	\item feature-based depth initialization (deemed unnecessary),
+	\item usage of full pinhole camera model in projection and back-projection functions,
+	\item scale ambiguity resolution by using a priori knowledge of traffic signs and license plates sizes.
 \end{itemize}
 
 Some more general enhancements can also be proposed:
@@ -33,6 +33,7 @@ Some more general enhancements can also be proposed:
 	\item Instead of direct Jacobian calculation like Tarrio and Pedre, a black-box approach can be taken and Jacobians could be calculated numerically, e.g. using the Secant version of Levenberg-Marquardt algothim \cite{madsen2004methods}. Alternatively, an entirely different minimization algorithm could be picked, but this might affect time performance.
 	\item Many algorithm steps are performed independently for each Keyline. This suggests that they could be parallelized in the GPU (Graphics Processing Unit), taking performance to a whole new level. Nowadays GPUs are present not only in personal computer, but also in mobile devices.
 	\item Algorithm is configured with roughly 30 parameters, that affect final outcomes in varying degrees. Most of their values have been simply acquired from \cite{jose2015realtime}. An extensive search for their optimal values, performed over large datasets, could be undertaken.
+	\item As far as visualizations are concerned, another color map should be used. Many of the figures presented in Chapter~\ref{cha:intro2} (and all images that were created automatically by the implementation) used the default \texttt{jet} colormap, or colors were chosen manually. Authors are aware that \texttt{jet} should not be used to represent dense fields \cite{rainbow}. Figures did depict only individual edges, but still their visual appeal could be enhanced.
 	\item Keyline matching criteria (especially during the minimization step) could be dynamically changed, so that distant, but well-matched Keylines do not bias the outcome as it was observed when KITTI \cite{kitti} dataset was used.
 	\item Obtained trajectory can be Kalman-filtered, e.g. as in \cite{min2015visual}.
 	\item System could be transformed to a SLAM one. As long as only a few of best features would be remembered, real time would not be hindered \cite{monoslam}. As it is not expected to form closed loops in real life navigation scenarios, saved features could be instead used to tackle occlusions.
