@@ -105,7 +105,7 @@ function [] = VisualizeMatches( KL_prev, KL, use_m_id )
       imshow(im1_);
       hold on
       
-      quiver(y, x, vec_y, vec_x, 0, 'color', [0.3 1 0.3]);
+      quiver(y, x, vec_y, vec_x, 0, 'color', [0.3 1 0.3], 'linewidth', 2);
       
       hold off;
       title(title_string);
