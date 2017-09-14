@@ -28,10 +28,12 @@ function [score, R, T] = fit3d(do_plot, scale, points_groundtruth, points_algo, 
     trans = R*p + T;
 
     if do_plot
-      figure(18)
+      %figure(18)
+      figure()
       plot3( trans(1,:), trans(3,:), trans(2,:), 'k.-',
-        p(1,:), p(3,:), p(2,:), 'b.-', ...
+        %p(1,:), p(3,:), p(2,:), 'b.-', ...
         p_(1,:), p_(3,:), p_(2,:), 'r.-');
+      legend('estymowana trajektoria', 'prawdziwa trajektoria')
       axis equal
       
       %
